@@ -20,9 +20,9 @@ npm i zeed-dom
 
 ## Related projects
 
-- [zeed](github.com/holtwick/zeed) - Foundation library
-- [zerva](github.com/holtwick/zerva) - Event driven server
-- [hostic](github.com/holtwick/hostic) - Static site generator
+- [zeed](https://github.com/holtwick/zeed) - Foundation library
+- [zerva](https://github.com/holtwick/zerva) - Event driven server
+- [hostic](https://github.com/holtwick/hostic) - Static site generator
 
 Used by [TipTap](https://www.tiptap.dev/) in its [html-package](https://github.com/ueberdosis/tiptap/tree/aac0193050228a8b6237d84f1eb587cfc0d08e24/packages/html).
 
