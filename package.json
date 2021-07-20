@@ -1,6 +1,6 @@
 {
   "name": "zeed-dom",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "🌱 Lightweight offline DOM",
   "author": {
     "name": "Dirk Holtwick",
@@ -38,13 +38,11 @@
   "sideEffects": false,
   "dependencies": {
     "css-what": "^5.0.1",
-    "he": "^1.2.0",
-    "tslib": "^2.3.0"
+    "he": "^1.2.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.24",
     "@types/node": "^16.3.3",
-    "debug": "^4.3.2",
     "jest": "^27.0.6",
     "jest-ts-webcompat-resolver": "^1.0.0",
     "prettier": "^2.3.2",

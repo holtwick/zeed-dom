@@ -18,6 +18,14 @@
 npm i zeed-dom
 ```
 
+## Related projects
+
+- [zeed](github.com/holtwick/zeed) - Foundation library
+- [zerva](github.com/holtwick/zerva) - Event driven server
+- [hostic](github.com/holtwick/hostic) - Static site generator
+
+Used by [TipTap](https://www.tiptap.dev/) in its [html-package](https://github.com/ueberdosis/tiptap/tree/aac0193050228a8b6237d84f1eb587cfc0d08e24/packages/html).
+
 ## Example
 
 A simple example without JSX:
@@ -141,7 +149,7 @@ In [`tsconfig.json`](https://www.typescriptlang.org/docs/handbook/compiler-optio
 }
 ```
 
-### ESBuild
+### [ESBuild](https://github.com/evanw/esbuild)
 
 In options:
 
@@ -161,18 +169,6 @@ The JSX factory can also be used to directly create HTML DOM nodes in the browse
 const { hFactory } = require("zeed-dom")
 
 export let h = hFactory({ document })
-```
-
-### Unpkg
-
-`zeed-dom` is also available via **unpkg** via <https://unpkg.com/zeed-dom>. The global name provided here is `zeedDOM` i.e. you can easily use it like this:
-
-```html
-<script crossorigin src="https://unpkg.com/zeed-dom"></script>
-<script>
-  const { h } = zeedDOM
-  // Your code here
-</script>
 ```
 
 ## Misc
