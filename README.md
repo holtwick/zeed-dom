@@ -1,6 +1,7 @@
 # 🌱 zeed-dom
 
-- Lightweight virtual DOM
+- Lightweight virtual / offline DOM (Document Object Model)
+- Great to use in node or exporting to plain strings
 - Written in Typescript
 - Generates HTML and XML
 - Parses HTML

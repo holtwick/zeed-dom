@@ -21,7 +21,6 @@ function _h(
 ): string {
   if (typeof tag === "function") {
     return tag.call(null, {
-      // @ts-ignore
       props: { ...attrs, children },
       attrs,
       children,
@@ -105,7 +104,6 @@ export function hArgumentParser(tag: any, attrs: any, ...children: any[]) {
   return {
     tag,
     attrs,
-    // @ts-ignore
     children: children.flat(Infinity),
   }
 }
@@ -117,7 +115,6 @@ export function hArgumentParser(tag: any, attrs: any, ...children: any[]) {
 export function hFactory(context: Context) {
   // let context = { document }
   context.h = function h(itag: any, iattrs: any, ...ichildren: any[]) {
-    // @ts-ignore
     let { tag, attrs, children } = hArgumentParser(itag, iattrs, ichildren)
     return _h(context, tag, attrs, children)
   }
