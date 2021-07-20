@@ -11,6 +11,12 @@
 
 **Does not aim for completeness!**
 
+## Get started
+
+```sh
+npm i zeed-dom
+```
+
 ## Example
 
 A simple example without JSX:
