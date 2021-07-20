@@ -144,7 +144,6 @@ export function markup(xmlMode, tag, attrs, children) {
 }
 
 export function html(itag: string, iattrs?: object, ...ichildren: any[]) {
-  // @ts-ignore
   let { tag, attrs, children } = hArgumentParser(itag, iattrs, ichildren)
   return markup(false, tag, attrs, children)
 }

@@ -119,17 +119,14 @@ export class HtmlParser {
     this.scanner.startElement(tagName, attrs, isSelfColse, match[0])
   }
 
-  // @ts-ignore
   parseEndTag(input, tagName) {
     this.scanner.endElement(tagName)
   }
 
-  // @ts-ignore
   parseAttributes(tagName, input) {
     const attrs = {}
     input.replace(
       this.attrRe,
-      // @ts-ignore
       (attr, name, c2, value, c4, valueInQuote, c6, valueInSingleQuote) => {
         attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
       }

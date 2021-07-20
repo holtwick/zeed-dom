@@ -18,7 +18,6 @@ export function vdom(obj: VNode | Buffer | string | null = null): VNode {
   if (obj instanceof VNode) {
     return obj
   }
-  // @ts-ignore
   if (obj instanceof Buffer) {
     obj = obj.toString("utf-8")
   }
@@ -32,7 +31,7 @@ export function vdom(obj: VNode | Buffer | string | null = null): VNode {
 export function parseHTML(html: string): VDocumentFragment | VDocument {
   let frag = html.startsWith("<!") ? new VDocument() : new VDocumentFragment() // !hack
 
-  let stack = [frag]
+  let stack: VNode[] = [frag]
 
   let parser = new HtmlParser({
     // the for methods must be implemented yourself
@@ -64,7 +63,6 @@ export function parseHTML(html: string): VDocumentFragment | VDocument {
         if (
           !(SELF_CLOSING_TAGS.includes(tagName.toLowerCase()) || isSelfClosing)
         ) {
-          // @ts-ignore
           stack.push(element)
         }
       },
