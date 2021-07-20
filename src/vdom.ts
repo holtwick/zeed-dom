@@ -30,6 +30,9 @@ let DEFAULTS = {
   // 'tt': C
 }
 
+let toCamelCase = (s: string) =>
+  s.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+
 export class VNode {
   static ELEMENT_NODE = 1
   static TEXT_NODE = 3
@@ -43,7 +46,7 @@ export class VNode {
   _parentNode: any
   _childNodes: any[]
 
-  get nodeType() {
+  get nodeType(): number {
     console.error("Subclasses should define nodeType!")
     return 0
   }
@@ -98,7 +101,6 @@ export class VNode {
     }
 
     if (node instanceof VDocumentFragment) {
-      // @ts-ignore
       for (let c of [...node._childNodes]) {
         // Don't iterate over the original! Do [...el]
         this.appendChild(c)
@@ -259,7 +261,8 @@ export class VNode {
 
 export class VTextNode extends VNode {
   _text: string
-  get nodeType() {
+
+  get nodeType(): number {
     return VNode.TEXT_NODE
   }
 
@@ -335,7 +338,7 @@ export class VNodeQuery extends VNode {
 export class VElement extends VNodeQuery {
   _originalTagName: string
   _nodeName: any
-  _attributes: object
+  _attributes: Record<string, string>
   _styles: any
 
   get nodeType() {
@@ -409,9 +412,7 @@ export class VElement extends VNodeQuery {
           let name = m[1]
           let value = m[2].trim()
           styles[name] = value
-          let camel = (s: string) => s.replace(/[A-Z]/g, "-$&").toLowerCase()
-          // @ts-ignore
-          styles[camel] = value
+          styles[toCamelCase(name)] = value
         }
       }
       this._styles = styles
@@ -423,24 +424,22 @@ export class VElement extends VNodeQuery {
     return this._nodeName
   }
 
-  get id(): string {
-    // @ts-ignore
-    return this._attributes.id
+  get id(): string | null {
+    return this._attributes.id || null
   }
 
-  set id(value) {
-    // @ts-ignore
-    this._attributes.id = value
+  set id(value: string | null) {
+    if (value == null) delete this._attributes.id
+    else this._attributes.id = value
   }
 
-  get src() {
-    // @ts-ignore
+  get src(): string | null {
     return this._attributes.src
   }
 
-  set src(value) {
-    // @ts-ignore
-    this._attributes.src = value
+  set src(value: string | null) {
+    if (value == null) delete this._attributes.src
+    else this._attributes.src = value
   }
 
   //
@@ -474,11 +473,11 @@ export class VElement extends VNodeQuery {
 
   // class
 
-  get className() {
+  get className(): string {
     return this._attributes["class"] || ""
   }
 
-  set className(name) {
+  set className(name: string | string[]) {
     if (Array.isArray(name)) {
       name = name.filter((n) => !!n).join(" ")
     } else if (typeof name === "object") {
@@ -532,8 +531,7 @@ export class VDocType extends VNode {
   publicId: any
   systemId: any
 
-  get nodeName() {
-    // @ts-ignore
+  get nodeName(): string {
     return super.nodeName
   }
 
@@ -541,7 +539,7 @@ export class VDocType extends VNode {
     return super.nodeValue
   }
 
-  get nodeType() {
+  get nodeType(): number {
     return VDocType.DOCUMENT_TYPE_NODE
   }
 
