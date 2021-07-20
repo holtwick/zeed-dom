@@ -1,5 +1,7 @@
-import { removeBodyContainer } from "./utils"
-import { createHTMLDocument } from "./vdom"
+// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
+
+import { removeBodyContainer } from "./utils.js"
+import { createHTMLDocument } from "./vdom.js"
 
 describe("Utils", () => {
   it("should remove doc stuff", () => {

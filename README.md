@@ -1,16 +1,15 @@
-# hostic-dom
+# 🌱 zeed-dom
 
-- Lightweight virtual DOM in pure Javascript
+- Lightweight virtual DOM
+- Written in Typescript
 - Generates HTML and XML
 - Parses HTML
 - Supports CSS selectors and queries
-- Can be used with JSX
+- JSX compatible
 - Easy content manipulation (e.g. through `element.handle` helper)
 - Pretty print HTML (`tidyDOM`)
 
 **Does not aim for completeness!**
-
-This is a side project of [hostic](https://github.com/holtwick/hostic), the static website generator.
 
 ## Example
 

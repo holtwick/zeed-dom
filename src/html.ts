@@ -7,8 +7,8 @@
 
 // TODO: Probably use this instead of html.js
 
-import { hArgumentParser } from "./h"
-import { escapeHTML } from "./encoding"
+import { hArgumentParser } from "./h.js"
+import { escapeHTML } from "./encoding.js"
 
 export const SELF_CLOSING_TAGS = [
   "area",

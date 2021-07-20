@@ -1,7 +1,9 @@
-import { matchSelector } from "./vcss"
-import { createHTMLDocument, h } from "./vdom"
+// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
 
-let _keepH = h
+import { matchSelector } from "./vcss.js"
+import { createHTMLDocument, h } from "./vdom.js"
+
+// let _keepH = h
 
 describe("CSS", () => {
   it("should parse", () => {

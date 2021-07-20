@@ -1,7 +1,9 @@
+// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
+
 import { tidyDOM } from "./tidy"
 import { createHTMLDocument, h } from "./vdom"
 
-let _keepH = h
+// let _keepH = h
 
 describe("Tidy", () => {
   it("should look nicer", () => {

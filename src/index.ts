@@ -1,3 +1,5 @@
+// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
+
 export * from "./vdom"
 export * from "./h"
 export * from "./utils"

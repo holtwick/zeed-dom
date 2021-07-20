@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
-import { VDocument, VDocumentFragment } from "./vdom"
+import { VDocument, VDocumentFragment } from "./vdom.js"
 
 /*
  * Abstraction for h/jsx like DOM descriptions.

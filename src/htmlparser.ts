@@ -12,10 +12,11 @@ const endTagRe = /^<\/([^>\s]+)[^>]*>/m
 // 1. must start with <tagName
 // 2. optional attrbutes
 // 3. /> or >
-const startTagRe = /^<([^>\s\/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*\/?\s*>/m
+const startTagRe =
+  /^<([^>\s\/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*\/?\s*>/m
 const selfCloseTagRe = /\s*\/\s*>\s*$/m
 
-const mustImplementMethod = (name) => {
+const mustImplementMethod = (name: string) => {
   throw new Error(`Must implement the method ${name || ""}`)
 }
 
