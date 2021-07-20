@@ -551,7 +551,7 @@ export class VDocType extends VNode {
 }
 
 export class VDocumentFragment extends VNodeQuery {
-  docType: string
+  docType: VDocType
 
   get nodeType() {
     return VNode.DOCUMENT_FRAGMENT_NODE
@@ -584,9 +584,6 @@ export class VDocumentFragment extends VNodeQuery {
 }
 
 export class VDocument extends VDocumentFragment {
-  // @ts-ignore
-  docType: VDocType
-
   get nodeType() {
     return VNode.DOCUMENT_NODE
   }
