@@ -7,8 +7,8 @@
 
 // TODO: Probably use this instead of html.js
 
-import { hArgumentParser } from "./h"
-import { escapeHTML } from "./encoding"
+import { hArgumentParser } from "./h.js"
+import { escapeHTML } from "./encoding.js"
 
 export const SELF_CLOSING_TAGS = [
   "area",
@@ -28,9 +28,9 @@ export const SELF_CLOSING_TAGS = [
   "wbr",
   "command",
 ]
-let USED_JSX = [] // HACK:dholtwick:2016-08-23
+let USED_JSX: string[] = [] // HACK:dholtwick:2016-08-23
 
-export function CDATA(s) {
+export function CDATA(s: string) {
   s = "<![CDATA[" + s + "]]>"
   USED_JSX.push(s)
   return s

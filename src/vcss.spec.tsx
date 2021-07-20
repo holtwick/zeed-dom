@@ -1,7 +1,9 @@
-import { matchSelector } from "./vcss"
-import { createHTMLDocument, h } from "./vdom"
+// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
 
-let _keepH = h
+import { matchSelector } from "./vcss.js"
+import { createHTMLDocument, h } from "./vdom.js"
+
+// let _keepH = h
 
 describe("CSS", () => {
   it("should parse", () => {
@@ -85,7 +87,7 @@ describe("CSS", () => {
 
   it("should query meta", () => {
     let document = createHTMLDocument()
-    document.head.replaceWith(
+    document.head?.replaceWith(
       <head>
         <meta charSet="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />

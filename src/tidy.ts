@@ -1,4 +1,6 @@
-import { VNode, VTextNode } from "./vdom"
+// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
+
+import { VNode, VTextNode } from "./vdom.js"
 
 function level(element) {
   let indent = ""

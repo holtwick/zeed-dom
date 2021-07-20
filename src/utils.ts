@@ -1,4 +1,6 @@
-import { VDocumentFragment, VNodeQuery } from "./vdom"
+// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
+
+import { VDocumentFragment, VNodeQuery } from "./vdom.js"
 
 export function removeBodyContainer(body: VNodeQuery): VNodeQuery {
   let ehead = body.querySelector("head")

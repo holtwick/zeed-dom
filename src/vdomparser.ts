@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
-import { unescapeHTML } from "./encoding"
-import { SELF_CLOSING_TAGS } from "./html"
-import { HtmlParser } from "./htmlparser"
+import { unescapeHTML } from "./encoding.js"
+import { SELF_CLOSING_TAGS } from "./html.js"
+import { HtmlParser } from "./htmlparser.js"
 import {
   document,
   VDocType,
@@ -10,12 +10,11 @@ import {
   VDocumentFragment,
   VElement,
   VNode,
-  VNodeQuery,
   VTextNode,
-} from "./vdom"
+} from "./vdom.js"
 
 // Makes sure we operate on VNodes
-export function vdom(obj = null): VNode {
+export function vdom(obj: VNode | Buffer | string | null = null): VNode {
   if (obj instanceof VNode) {
     return obj
   }
@@ -30,7 +29,7 @@ export function vdom(obj = null): VNode {
   return new VDocumentFragment()
 }
 
-export function parseHTML(html: string): VDocumentFragment {
+export function parseHTML(html: string): VDocumentFragment | VDocument {
   let frag = html.startsWith("<!") ? new VDocument() : new VDocumentFragment() // !hack
 
   let stack = [frag]
@@ -38,7 +37,11 @@ export function parseHTML(html: string): VDocumentFragment {
   let parser = new HtmlParser({
     // the for methods must be implemented yourself
     scanner: {
-      startElement(tagName, attrs, isSelfClosing) {
+      startElement(
+        tagName: string,
+        attrs: Record<string, string>,
+        isSelfClosing: boolean
+      ) {
         const lowerTagName = tagName.toLowerCase()
 
         if (lowerTagName === "!doctype") {
@@ -65,10 +68,10 @@ export function parseHTML(html: string): VDocumentFragment {
           stack.push(element)
         }
       },
-      endElement(tagName) {
+      endElement(tagName: string) {
         stack.pop()
       },
-      characters(text) {
+      characters(text: string) {
         text = unescapeHTML(text)
         let parentNode = stack[stack.length - 1]
         if (parentNode?.lastChild?.nodeType === VNode.TEXT_NODE) {
@@ -77,7 +80,7 @@ export function parseHTML(html: string): VDocumentFragment {
           parentNode.appendChild(new VTextNode(text))
         }
       },
-      comment(text) {},
+      comment(text: string) {},
     },
   })
   parser.parse(html)
