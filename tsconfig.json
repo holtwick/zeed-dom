@@ -1,29 +1,24 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "target": "es5",
-    "allowJs": true,
-    "checkJs": false,
-    "strict": false,
+    "baseUrl": ".",
+    "target": "es2019",
     "declaration": true,
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-    "types": ["jest", "node"],
-    "paths": {
-      "@/*": ["src/*"]
-    },
+    "isolatedModules": true,
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
-    "baseUrl": "src",
-    "rootDirs": ["src"],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "outDir": "dist/esm",
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "strict": false,
+    "types": ["node", "jest"],
+    "allowJs": true,
     "jsx": "react",
     "jsxFactory": "h",
-    "jsxFragmentFactory": "Fragment",
-    "outDir": "dist"
+    "jsxFragmentFactory": "Fragment"
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*", "index.ts"],
+  "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]
 }

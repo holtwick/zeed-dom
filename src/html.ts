@@ -28,9 +28,9 @@ export const SELF_CLOSING_TAGS = [
   "wbr",
   "command",
 ]
-let USED_JSX = [] // HACK:dholtwick:2016-08-23
+let USED_JSX: string[] = [] // HACK:dholtwick:2016-08-23
 
-export function CDATA(s) {
+export function CDATA(s: string) {
   s = "<![CDATA[" + s + "]]>"
   USED_JSX.push(s)
   return s

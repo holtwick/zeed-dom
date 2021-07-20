@@ -53,7 +53,7 @@ export class VNode {
     return ""
   }
 
-  get nodeValue() {
+  get nodeValue(): string | null {
     return null
   }
 
@@ -76,7 +76,7 @@ export class VNode {
     this._childNodes.forEach((node) => (node._parentNode = this))
   }
 
-  insertBefore(newNode, node = null) {
+  insertBefore(newNode: null, node = null) {
     if (newNode !== node) {
       let index = node ? this._childNodes.indexOf(node) : 0
       if (index < 0) index = 0
@@ -85,7 +85,8 @@ export class VNode {
     }
   }
 
-  appendChild(node) {
+  appendChild(node: VNode | VNode[] | string | string[] | null | undefined) {
+    if (node == null) return
     if (node === this) {
       console.warn("Cannot appendChild to self")
       return
@@ -125,7 +126,7 @@ export class VNode {
     this._fixChildNodesParent()
   }
 
-  removeChild(node) {
+  removeChild(node: { _parentNode: null }) {
     let i = this._childNodes.indexOf(node)
     if (i >= 0) {
       node._parentNode = null
@@ -139,14 +140,14 @@ export class VNode {
     return this
   }
 
-  replaceChildren(...nodes) {
+  replaceChildren(...nodes: any[]) {
     this._childNodes = nodes.map((n) =>
       typeof n === "string" ? new VTextNode(n) : n.remove()
     )
     this._fixChildNodesParent()
   }
 
-  replaceWith(...nodes) {
+  replaceWith(...nodes: any[]) {
     let p = this._parentNode
     if (p) {
       let index = this._indexInParent()
@@ -204,13 +205,13 @@ export class VNode {
     return null
   }
 
-  flatten({ condition = (node) => node instanceof VElement } = {}) {
-    let elements = []
-    if (condition(this)) {
+  flatten(): VElement[] {
+    let elements: VElement[] = []
+    if (this instanceof VElement) {
       elements.push(this)
     }
     for (let child of this._childNodes) {
-      elements.push(...child.flatten({ condition }))
+      elements.push(...child.flatten())
     }
     return elements
   }
@@ -219,7 +220,7 @@ export class VNode {
     return ""
   }
 
-  get textContent() {
+  get textContent(): string | null {
     return this._childNodes.map((c) => c.textContent).join("")
   }
 
@@ -230,7 +231,7 @@ export class VNode {
     }
   }
 
-  contains(otherNode) {
+  contains(otherNode: this) {
     if (otherNode === this) return true
     // if (this._childNodes.includes(otherNode)) return true
     return this._childNodes.some((n) => n.contains(otherNode))
@@ -246,7 +247,7 @@ export class VNode {
     return this?._parentNode?.ownerDocument
   }
 
-  toString() {
+  toString(): string {
     return `${this.nodeName}`
     // return `${this.nodeName}: ${JSON.stringify(this.nodeValue)}`
   }
@@ -266,11 +267,11 @@ export class VTextNode extends VNode {
     return "#text"
   }
 
-  get nodeValue() {
+  get nodeValue(): string | null {
     return this._text || ""
   }
 
-  get textContent() {
+  get textContent(): string | null {
     return this.nodeValue
   }
 
@@ -295,7 +296,7 @@ export class VNodeQuery extends VNode {
     return this.flatten().find((e) => e._attributes["id"] === name)
   }
 
-  getElementsByClassName(name) {
+  getElementsByClassName(name: any) {
     return this.flatten().filter((e) => e.classList.contains(name))
   }
 
@@ -303,17 +304,17 @@ export class VNodeQuery extends VNode {
     return matchSelector(selector, this)
   }
 
-  querySelectorAll(selector) {
+  querySelectorAll(selector: any) {
     return this.flatten().filter((e) => e.matches(selector))
   }
 
-  querySelector(selector) {
+  querySelector(selector: string) {
     return this.flatten().find((e) => e.matches(selector))
   }
 
   //
 
-  parent(selector) {
+  parent(selector: string) {
     if (this.matches(selector)) {
       return this
     }
@@ -323,7 +324,7 @@ export class VNodeQuery extends VNode {
     return this.parentNode?.parent(selector)
   }
 
-  handle(selector, handler) {
+  handle(selector: any, handler: (arg0: VElement, arg1: number) => void) {
     let i = 0
     for (let el of this.querySelectorAll(selector)) {
       handler(el, i++)
@@ -332,7 +333,7 @@ export class VNodeQuery extends VNode {
 }
 
 export class VElement extends VNodeQuery {
-  _originalTagName
+  _originalTagName: string
   _nodeName: any
   _attributes: object
   _styles: any
@@ -365,34 +366,36 @@ export class VElement extends VNodeQuery {
     return this._attributes
   }
 
-  _findAttributeName(name) {
+  _findAttributeName(name: string) {
     const search = name.toLowerCase()
-    return Object.keys(this._attributes).find(
-      (name) => search === name.toLowerCase()
+    return (
+      Object.keys(this._attributes).find(
+        (name) => search === name.toLowerCase()
+      ) || null
     )
   }
 
-  setAttribute(name, value) {
+  setAttribute(name: string, value: string) {
     this.removeAttribute(name)
     this._attributes[name] = value
     this._styles = null
   }
 
-  getAttribute(name) {
+  getAttribute(name: string): string | null {
     const originalName = this._findAttributeName(name)
-    return this._attributes[originalName]
+    return originalName ? this._attributes[originalName] : null
   }
 
-  removeAttribute(name) {
-    const originalName = this._findAttributeName(name)
+  removeAttribute(name: string | number) {
+    const originalName = this._findAttributeName(String(name))
     if (originalName) {
       delete this._attributes[name]
     }
   }
 
-  hasAttribute(name) {
+  hasAttribute(name: any) {
     const originalName = this._findAttributeName(name)
-    return this._attributes[originalName] != null
+    return originalName ? this._attributes[originalName] != null : false
   }
 
   get style() {
@@ -400,13 +403,13 @@ export class VElement extends VNodeQuery {
       let styles = Object.assign({}, DEFAULTS[this.tagName.toLowerCase()] || {})
       let styleString = this.getAttribute("style")
       if (styleString) {
-        let m
+        let m: string[] | null
         let re = /\s*([\w-]+)\s*:\s*([^;]+)/g
         while ((m = re.exec(styleString))) {
           let name = m[1]
           let value = m[2].trim()
           styles[name] = value
-          let camel = (s) => s.replace(/[A-Z]/g, "-$&").toLowerCase()
+          let camel = (s: string) => s.replace(/[A-Z]/g, "-$&").toLowerCase()
           // @ts-ignore
           styles[camel] = value
         }
@@ -442,7 +445,7 @@ export class VElement extends VNodeQuery {
 
   //
 
-  getElementsByTagName(name) {
+  getElementsByTagName(name: string) {
     name = name.toUpperCase()
     let elements = this.flatten()
     if (name !== "*") {
@@ -453,7 +456,7 @@ export class VElement extends VNodeQuery {
 
   // html
 
-  setInnerHTML(html) {
+  setInnerHTML(html: string) {
     throw "setInnerHTML is not implemented; see vdomparser for an example"
   }
 
@@ -492,16 +495,16 @@ export class VElement extends VNodeQuery {
     let classNames = (this.className || "").trim().split(/\s+/g) || []
     // log('classList', classNames)
     return {
-      contains(s) {
+      contains(s: any) {
         return classNames.includes(s)
       },
-      add(s) {
+      add(s: any) {
         if (!classNames.includes(s)) {
           classNames.push(s)
           self.className = classNames
         }
       },
-      remove(s) {
+      remove(s: any) {
         let index = classNames.indexOf(s)
         if (index >= 0) {
           classNames.splice(index, 1)
@@ -525,17 +528,16 @@ export class VElement extends VNodeQuery {
 export class VDocType extends VNode {
   //todo
 
-  name
-  publicId
-  systemId
+  name: any
+  publicId: any
+  systemId: any
 
   get nodeName() {
     // @ts-ignore
     return super.nodeName
   }
 
-  get nodeValue() {
-    // @ts-ignore
+  get nodeValue(): string | null {
     return super.nodeValue
   }
 
@@ -582,7 +584,8 @@ export class VDocumentFragment extends VNodeQuery {
 }
 
 export class VDocument extends VDocumentFragment {
-  docType
+  // @ts-ignore
+  docType: VDocType
 
   get nodeType() {
     return VNode.DOCUMENT_NODE
@@ -624,12 +627,13 @@ export class VHTMLDocument extends VDocument {
     return this.querySelector("body")
   }
 
-  get title() {
-    return this.querySelector("title")?.textContent
+  get title(): string {
+    return this.querySelector("title")?.textContent || ""
   }
 
-  set title(title) {
-    this.querySelector("title").textContent = title
+  set title(title: string) {
+    const titleElement = this.querySelector("title")
+    if (titleElement) titleElement.textContent = title
   }
 
   get head() {

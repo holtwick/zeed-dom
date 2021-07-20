@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/holtwick/hostic-dom.git"
+    "url": "https://github.com/holtwick/zeed-dom.git"
   },
   "license": "MIT",
   "funding": {
@@ -17,9 +17,9 @@
     "url": "https://github.com/sponsors/holtwick"
   },
   "bugs": {
-    "url": "https://github.com/holtwick/hostic-dom/issues"
+    "url": "https://github.com/holtwick/zeed-dom/issues"
   },
-  "homepage": "https://github.com/holtwick/hostic-dom",
+  "homepage": "https://github.com/holtwick/zeed-dom",
   "engines": {
     "node": ">=14.13.1"
   },

@@ -28,12 +28,15 @@ describe("VDOM", () => {
   it("should have functional factory", () => {
     let doc = createHTMLDocument()
 
-    doc.body.replaceChildren(
+    doc.body?.replaceChildren(
       h("p", { class: "lorem" }, "Hello ", h("b", { id: "foo" }, "World")),
       h("hr")
     )
 
     let r = doc.body
+
+    expect(r).not.toBeNull()
+    if (!r) return
 
     expect(r.render()).toBe(
       '<body><p class="lorem">Hello <b id="foo">World</b></p><hr></body>'
@@ -47,7 +50,7 @@ describe("VDOM", () => {
     expect(r.getElementsByTagName("b")[0].outerHTML).toEqual(
       '<b id="foo">World</b>'
     )
-    expect(r.getElementById("foo").outerHTML).toEqual('<b id="foo">World</b>')
+    expect(r.getElementById("foo")?.outerHTML).toEqual('<b id="foo">World</b>')
     expect(r.getElementsByClassName("lorem")[0].outerHTML).toEqual(
       '<p class="lorem">Hello <b id="foo">World</b></p>'
     )
@@ -55,19 +58,19 @@ describe("VDOM", () => {
     expect(r.matches("body")).toBe(true)
     expect(r.matches("b")).toBe(false)
 
-    expect(r.querySelector("b").outerHTML).toEqual('<b id="foo">World</b>')
-    expect(r.querySelector("#foo").outerHTML).toEqual('<b id="foo">World</b>')
-    expect(r.querySelector(".lorem").outerHTML).toEqual(
+    expect(r.querySelector("b")?.outerHTML).toEqual('<b id="foo">World</b>')
+    expect(r.querySelector("#foo")?.outerHTML).toEqual('<b id="foo">World</b>')
+    expect(r.querySelector(".lorem")?.outerHTML).toEqual(
       '<p class="lorem">Hello <b id="foo">World</b></p>'
     )
 
-    r.querySelector("#foo").replaceWith("Surprise")
+    r.querySelector("#foo")?.replaceWith("Surprise")
     expect(r.render()).toBe(
       '<body><p class="lorem">Hello Surprise</p><hr></body>'
     )
 
-    expect(doc.body.tagName).toBe("BODY")
-    expect(doc.head.tagName).toBe("HEAD")
+    expect(doc.body?.tagName).toBe("BODY")
+    expect(doc.head?.tagName).toBe("HEAD")
     expect(doc.documentElement.tagName).toBe("HTML")
     expect(doc.title).toBe("")
   })

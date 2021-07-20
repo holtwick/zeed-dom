@@ -87,7 +87,7 @@ describe("CSS", () => {
 
   it("should query meta", () => {
     let document = createHTMLDocument()
-    document.head.replaceWith(
+    document.head?.replaceWith(
       <head>
         <meta charSet="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />

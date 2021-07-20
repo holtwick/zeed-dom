@@ -8,13 +8,13 @@ import { createHTMLDocument, h } from "./vdom"
 describe("Tidy", () => {
   it("should look nicer", () => {
     let document = createHTMLDocument()
-    document.head.appendChild(
+    document.head?.appendChild(
       <fragment>
         <link rel="alternate" hrefLang="de" href="https://holtwick.de/de/" />
         <meta name="twitter:site" content="@holtwick" />
       </fragment>
     )
-    document.body.appendChild(
+    document.body?.appendChild(
       <fragment>
         <h1>Hello</h1>
         <p>
