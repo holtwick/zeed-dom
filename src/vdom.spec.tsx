@@ -32,11 +32,13 @@ describe("VDOM", () => {
     p.setAttribute("style", "text-align: center; background-color: red;")
     frag.appendChild(p)
     let html = frag.render()
-    expect(p.style.textAlign).toBe('center')
-    expect(p.style.backgroundColor).toBe('red')
-    expect(html).toBe('<p style="text-align: center; background-color: red;"></p>')
+    expect(p.style.textAlign).toBe("center")
+    expect(p.style.backgroundColor).toBe("red")
+    expect(html).toBe(
+      '<p style="text-align: center; background-color: red;"></p>'
+    )
   })
-  
+
   it("should have functional factory", () => {
     let doc = createHTMLDocument()
 
@@ -56,6 +58,18 @@ describe("VDOM", () => {
 
     let elements = r.flatten().map((e) => e.tagName)
     expect(elements).toEqual(["BODY", "P", "B", "HR"])
+
+    let nodes = r.flattenNodes().map((e) => e.nodeName)
+    expect(nodes).toMatchInlineSnapshot(`
+      Array [
+        "BODY",
+        "P",
+        "#text",
+        "B",
+        "#text",
+        "HR",
+      ]
+    `)
 
     expect(r.ownerDocument).toBe(doc)
 
@@ -128,10 +142,10 @@ describe("VDOM", () => {
   })
 
   it("should JSX components", () => {
-    function Welcome({ props, h }:any) {
+    function Welcome({ props, h }: any) {
       return <h1>Hello, {props.name}</h1>
     }
- 
+
     let x = <Welcome name="Sara" />
     expect(x.render()).toEqual("<h1>Hello, Sara</h1>")
   })
