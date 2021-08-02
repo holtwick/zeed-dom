@@ -218,6 +218,15 @@ export class VNode {
     return elements
   }
 
+  flattenNodes(): VNode[] {
+    let nodes: VNode[] = []
+    nodes.push(this)
+    for (let child of this._childNodes) {
+      nodes.push(...child.flattenNodes())
+    }
+    return nodes
+  }
+
   render() {
     return ""
   }
