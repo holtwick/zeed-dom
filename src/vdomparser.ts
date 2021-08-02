@@ -29,7 +29,13 @@ export function vdom(obj: VNode | Buffer | string | null = null): VNode {
 }
 
 export function parseHTML(html: string): VDocumentFragment | VDocument {
-  let frag = html.startsWith("<!") ? new VDocument() : new VDocumentFragment() // !hack
+  if (typeof html !== "string") {
+    console.error("parseHTML requires string, found", html)
+    throw new Error("parseHTML requires string")
+  }
+
+  let frag =
+    html.indexOf("<!") === 0 ? new VDocument() : new VDocumentFragment() // !hack
 
   let stack: VNode[] = [frag]
 
