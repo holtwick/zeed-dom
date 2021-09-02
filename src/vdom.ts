@@ -79,7 +79,7 @@ export class VNode {
     this._childNodes.forEach((node) => (node._parentNode = this))
   }
 
-  insertBefore(newNode: null, node = null) {
+  insertBefore(newNode: VNode, node?: VNode) {
     if (newNode !== node) {
       let index = node ? this._childNodes.indexOf(node) : 0
       if (index < 0) index = 0
@@ -313,7 +313,7 @@ export class VNodeQuery extends VNode {
   }
 
   matches(selector: string) {
-    return matchSelector(selector, this)
+    return matchSelector(selector, this as any)
   }
 
   querySelectorAll(selector: any) {
