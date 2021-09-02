@@ -119,7 +119,7 @@ export class HtmlParser {
     this.scanner.startElement(tagName, attrs, isSelfColse, match[0])
   }
 
-  parseEndTag(input, tagName) {
+  parseEndTag(input, tagName: string) {
     this.scanner.endElement(tagName)
   }
 

@@ -1,7 +1,7 @@
 // (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
 
 import { parse } from "css-what"
-import { VNodeQuery } from "./vdom.js"
+import { VElement } from "./vdom.js"
 
 // Alternative could be https://github.com/leaverou/parsel
 
@@ -20,7 +20,7 @@ export function parseSelector(selector: string) {
 
 export function matchSelector(
   selector: string,
-  element: VNodeQuery,
+  element: VElement,
   { debug = false } = {}
 ) {
   for (let rules of parseSelector(selector)) {
@@ -30,8 +30,8 @@ export function matchSelector(
       console.log("Element:", element)
     }
 
-    const handleRules = (element, rules) => {
-      let success = false
+    const handleRules = (element: VElement, rules: any[]) => {
+      let success: boolean = false
       for (let part of rules) {
         const { type, name, action, value, ignoreCase = true, data } = part
         if (type === "attribute") {
@@ -39,17 +39,17 @@ export function matchSelector(
             success = element.getAttribute(name) === value
             if (debug) console.log("Attribute equals", success)
           } else if (action === "start") {
-            success = element.getAttribute(name)?.startsWith(value)
+            success = !!element.getAttribute(name)?.startsWith(value)
             if (debug) console.log("Attribute start", success)
           } else if (action === "end") {
-            success = element.getAttribute(name)?.endsWith(value)
+            success = !!element.getAttribute(name)?.endsWith(value)
             if (debug) console.log("Attribute start", success)
           } else if (action === "element") {
             if (name === "class") {
               success = element.classList.contains(value)
               if (debug) console.log("Attribute class", success)
             } else {
-              success = element.getAttribute(name)?.includes(value)
+              success = !!element.getAttribute(name)?.includes(value)
               if (debug) console.log("Attribute element", success)
             }
           } else if (action === "exists") {

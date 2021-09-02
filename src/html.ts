@@ -46,7 +46,12 @@ export function HTML(s) {
 // }
 
 // https://reactjs.org/docs/jsx-in-depth.html
-export function markup(xmlMode, tag, attrs, children) {
+export function markup(
+  xmlMode: boolean,
+  tag: string,
+  attrs: any = {},
+  children?: any[]
+) {
   // console.log('markup', xmlMode, tag, attrs, children)
   const hasChildren = children && children.length > 0
   let s = ""
@@ -107,7 +112,7 @@ export function markup(xmlMode, tag, attrs, children) {
   }
 
   // Append children
-  if (hasChildren) {
+  if (children && children.length > 0) {
     for (let child of children) {
       if (child != null && child !== false) {
         if (!Array.isArray(child)) {
