@@ -37,19 +37,21 @@
   "main": "dist/index.cjs",
   "sideEffects": false,
   "dependencies": {
-    "css-what": "^5.0.1",
+    "css-what": "^5.1.0"
+  },
+  "optionalDependencies": {
     "he": "^1.2.0"
   },
   "devDependencies": {
     "@types/he": "^1.1.2",
-    "@types/jest": "^26.0.24",
-    "@types/node": "^16.7.10",
-    "jest": "^27.1.0",
+    "@types/jest": "^27.0.2",
+    "@types/node": "^16.11.6",
+    "jest": "^27.3.1",
     "jest-ts-webcompat-resolver": "^1.0.0",
-    "prettier": "^2.3.2",
-    "ts-jest": "^27.0.5",
-    "tsup": "^4.14.0",
-    "typescript": "^4.4.2"
+    "prettier": "^2.4.1",
+    "ts-jest": "^27.0.7",
+    "tsup": "^5.5.0",
+    "typescript": "^4.4.4"
   },
   "scripts": {
     "start": "npm run watch",
