@@ -55,15 +55,13 @@
   },
   "scripts": {
     "start": "npm run watch",
+    "watch": "npm run build:tsup -- --watch",
     "build": "npm run clean && npm run build:tsup",
-    "build:esm": "tsc -p tsconfig.json",
-    "build:tsup": "tsup src/index.ts src/index.browser.ts --dts --sourcemap --format esm,cjs",
+    "build:tsup": "tsup src/index.ts --dts --sourcemap --format esm,cjs",
     "check": "tsc --noEmit -p tsconfig.json",
     "clean": "rm -rf dist",
-    "watch": "tsc -w -p tsconfig.json",
     "prepublishOnly": "npm test && npm run build",
-    "test": "jest src",
-    "global": "pnpm -g ln"
+    "test": "jest src"
   },
   "files": [
     "dist"
