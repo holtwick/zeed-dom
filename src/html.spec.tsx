@@ -5,8 +5,8 @@ import { html as h } from "./html"
 
 describe("HTML", () => {
   it("should generate a string", () => {
-    let s = h("a", { href: "example.com" }, "Welcome")
-    expect(s).toEqual('<a href="example.com">Welcome</a>')
+    let s = h("a", { href: "example.com" }, "Welcome & Hello &amp; Ciao")
+    expect(s).toEqual('<a href="example.com">Welcome &amp; Hello &amp;amp; Ciao</a>') // the second & is correct, because plain string should be unescaped
   })
 
   it("should nest", () => {
