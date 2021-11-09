@@ -5,8 +5,6 @@
 // 2. Attribute name '__' gets transformed to ':' for namespace emulation
 // 3. Emulate CDATA by <cdata> element
 
-// TODO: Probably use this instead of html.js
-
 import { hArgumentParser } from "./h.js"
 import { escapeHTML } from "./encoding.js"
 
@@ -28,16 +26,17 @@ export const SELF_CLOSING_TAGS = [
   "wbr",
   "command",
 ]
-let USED_JSX: string[] = [] // HACK:dholtwick:2016-08-23
+
+let USED_JSX: Record<string, boolean> = {} // HACK:dholtwick:2016-08-23
 
 export function CDATA(s: string) {
   s = "<![CDATA[" + s + "]]>"
-  USED_JSX.push(s)
+  USED_JSX[s] = true
   return s
 }
 
-export function HTML(s) {
-  USED_JSX.push(s)
+export function HTML(s: string) {
+  USED_JSX[s] = true
   return s
 }
 
@@ -96,7 +95,7 @@ export function markup(
     if (tag !== "cdata") {
       if (xmlMode && !hasChildren) {
         s += " />"
-        USED_JSX.push(s)
+        USED_JSX[s] = true
         return s
       } else {
         s += `>`
@@ -105,7 +104,7 @@ export function markup(
 
     if (!xmlMode) {
       if (SELF_CLOSING_TAGS.includes(tag)) {
-        USED_JSX.push(s)
+        USED_JSX[s] = true
         return s
       }
     }
@@ -119,11 +118,7 @@ export function markup(
           child = [child]
         }
         for (let c of child) {
-          if (
-            USED_JSX.indexOf(c) !== -1 ||
-            tag === "script" ||
-            tag === "style"
-          ) {
+          if (USED_JSX[c] || tag === "script" || tag === "style") {
             s += c
           } else {
             s += escapeHTML(c.toString())
@@ -144,7 +139,7 @@ export function markup(
       s += "]]>"
     }
   }
-  USED_JSX.push(s)
+  USED_JSX[s] = true
   return s
 }
 
