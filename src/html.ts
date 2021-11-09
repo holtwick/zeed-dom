@@ -27,18 +27,8 @@ export const SELF_CLOSING_TAGS = [
   "command",
 ]
 
-let USED_JSX: Record<string, boolean> = {} // HACK:dholtwick:2016-08-23
-
-export function CDATA(s: string) {
-  s = "<![CDATA[" + s + "]]>"
-  USED_JSX[s] = true
-  return s
-}
-
-export function HTML(s: string) {
-  USED_JSX[s] = true
-  return s
-}
+export const CDATA = (s: string) => "<![CDATA[" + s + "]]>"
+export const HTML = (s: string) => s
 
 // export function prependXMLIdentifier(s) {
 //   return '<?xml version="1.0" encoding="utf-8"?>\n' + s
@@ -51,15 +41,17 @@ export function markup(
   attrs: any = {},
   children?: any[]
 ) {
-  // console.log('markup', xmlMode, tag, attrs, children)
   const hasChildren = children && children.length > 0
-  let s = ""
+
+  let parts: string[] = []
   tag = tag.replace(/__/g, ":")
-  if (tag !== "noop") {
+
+  // React fragment <>...</> and ours: <noop>...</noop>
+  if (tag !== "noop" && tag !== "") {
     if (tag !== "cdata") {
-      s += `<${tag}`
+      parts.push(`<${tag}`)
     } else {
-      s += "<![CDATA["
+      parts.push("<![CDATA[")
     }
 
     // Add attributes
@@ -74,39 +66,37 @@ export function markup(
         }
         name = name.replace(/__/g, ":")
         if (v === true) {
-          // s += ` ${name}="${name}"`
-          s += ` ${name}`
+          // s.push( ` ${name}="${name}"`)
+          parts.push(` ${name}`)
         } else if (name === "style" && typeof v === "object") {
-          s += ` ${name}="${Object.keys(v)
-            .filter((k) => v[k] != null)
-            .map((k) => {
-              let vv = v[k]
-              vv = typeof vv === "number" ? vv + "px" : vv
-              return `${k
-                .replace(/([a-z])([A-Z])/g, "$1-$2")
-                .toLowerCase()}:${vv}`
-            })
-            .join(";")}"`
+          parts.push(
+            ` ${name}="${Object.keys(v)
+              .filter((k) => v[k] != null)
+              .map((k) => {
+                let vv = v[k]
+                vv = typeof vv === "number" ? vv + "px" : vv
+                return `${k
+                  .replace(/([a-z])([A-Z])/g, "$1-$2")
+                  .toLowerCase()}:${vv}`
+              })
+              .join(";")}"`
+          )
         } else if (v !== false && v != null) {
-          s += ` ${name}="${escapeHTML(v.toString())}"`
+          parts.push(` ${name}="${escapeHTML(v.toString())}"`)
         }
       }
     }
     if (tag !== "cdata") {
       if (xmlMode && !hasChildren) {
-        s += " />"
-        USED_JSX[s] = true
-        return s
+        parts.push(" />")
+        return parts.join("")
       } else {
-        s += `>`
+        parts.push(">")
       }
     }
 
-    if (!xmlMode) {
-      if (SELF_CLOSING_TAGS.includes(tag)) {
-        USED_JSX[s] = true
-        return s
-      }
+    if (!xmlMode && SELF_CLOSING_TAGS.includes(tag)) {
+      return parts.join("")
     }
   }
 
@@ -118,10 +108,10 @@ export function markup(
           child = [child]
         }
         for (let c of child) {
-          if (USED_JSX[c] || tag === "script" || tag === "style") {
-            s += c
+          if (c.startsWith("<") || tag === "script" || tag === "style") {
+            parts.push(c)
           } else {
-            s += escapeHTML(c.toString())
+            parts.push(escapeHTML(c.toString()))
           }
         }
       }
@@ -129,18 +119,17 @@ export function markup(
   }
 
   if (attrs.html) {
-    s += attrs.html
+    parts.push(attrs.html)
   }
 
   if (tag !== "noop") {
     if (tag !== "cdata") {
-      s += `</${tag}>`
+      parts.push(`</${tag}>`)
     } else {
-      s += "]]>"
+      parts.push("]]>")
     }
   }
-  USED_JSX[s] = true
-  return s
+  return parts.join("")
 }
 
 export function html(itag: string, iattrs?: object, ...ichildren: any[]) {
