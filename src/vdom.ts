@@ -129,6 +129,8 @@ export class VNode {
     this._fixChildNodesParent()
   }
 
+  append = this.appendChild
+
   removeChild(node: { _parentNode: null }) {
     let i = this._childNodes.indexOf(node)
     if (i >= 0) {
@@ -629,8 +631,18 @@ export class VHTMLDocument extends VDocument {
     }
   }
 
-  get body() {
-    return this.querySelector("body")
+  get body(): VElement {
+    let body = this.querySelector("body")
+    if (!body) {
+      let html = this.querySelector("html")
+      if (!html) {
+        html = new VElement("html")
+        this.appendChild(html)
+      }
+      body = new VElement("body")
+      html.appendChild(html)
+    }
+    return body
   }
 
   get title(): string {
@@ -642,8 +654,18 @@ export class VHTMLDocument extends VDocument {
     if (titleElement) titleElement.textContent = title
   }
 
-  get head() {
-    return this.querySelector("head")
+  get head(): VElement {
+    let head = this.querySelector("head")
+    if (!head) {
+      let html = this.querySelector("html")
+      if (!html) {
+        html = new VElement("html")
+        this.appendChild(html)
+      }
+      head = new VElement("head")
+      html.insertBefore(html)
+    }
+    return head
   }
 }
 
