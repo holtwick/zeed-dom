@@ -1,7 +1,8 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
+import { escapeHTML } from "./encoding.js"
 import { hFactory } from "./h.js"
-import { html } from "./html.js"
+import { html, htmlVDOM } from "./html.js"
 import { matchSelector } from "./vcss.js"
 
 // For node debugging
@@ -293,7 +294,7 @@ export class VTextNode extends VNode {
   }
 
   render() {
-    return this._text
+    return escapeHTML(this._text)
   }
 
   cloneNode(deep = false) {
@@ -477,7 +478,7 @@ export class VElement extends VNodeQuery {
   }
 
   get outerHTML() {
-    return this.render(html)
+    return this.render(htmlVDOM)
   }
 
   // class
@@ -524,11 +525,11 @@ export class VElement extends VNodeQuery {
 
   //
 
-  render(h = html) {
+  render(h = htmlVDOM) {
     return h(
       this._originalTagName || this.tagName,
       this.attributes,
-      this.childNodes.map((c) => c.render(h))
+      this._childNodes.map((c) => c.render(h)).join("") // children:string is not escaped again
     )
   }
 }
@@ -568,7 +569,7 @@ export class VDocumentFragment extends VNodeQuery {
     return "#document-fragment"
   }
 
-  render(h = html) {
+  render(h = htmlVDOM) {
     return this._childNodes.map((c) => c.render(h) || []).join("")
   }
 
@@ -603,7 +604,7 @@ export class VDocument extends VDocumentFragment {
     return this.firstChild
   }
 
-  render(h = html) {
+  render(h = htmlVDOM) {
     let content = super.render(h)
     if (this.docType) {
       content = this.docType.render() + content

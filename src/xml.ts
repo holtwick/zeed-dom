@@ -8,6 +8,8 @@ export function xml(itag: string, iattrs?: object, ...ichildren: any[]) {
   return markup(true, tag, attrs, children)
 }
 
+// export const xmlVDOM = markup.bind(null, true)
+
 xml.firstLine = '<?xml version="1.0" encoding="utf-8"?>'
 xml.xml = true
 

@@ -91,7 +91,7 @@ export function hArgumentParser(tag: any, attrs: any, ...children: any[]) {
     attrs = tag.attrs
   }
   if (Array.isArray(attrs)) {
-    children = attrs
+    children = [attrs]
     attrs = {}
   } else if (attrs) {
     if (attrs.attrs) {
@@ -104,13 +104,10 @@ export function hArgumentParser(tag: any, attrs: any, ...children: any[]) {
   return {
     tag,
     attrs,
-    children: children.flat(Infinity),
+    children:
+      typeof children[0] === "string" ? children : children.flat(Infinity),
   }
 }
-
-// global.hh = function (...args) {
-//   console.log('hh', args)
-// }
 
 export function hFactory(context: Context) {
   // let context = { document }
