@@ -138,7 +138,7 @@ export function markup(
     parts.push(attrs.html)
   }
 
-  if (tag !== "noop") {
+  if (tag !== "noop" && tag !== "") {
     if (tag !== "cdata") {
       parts.push(`</${tag}>`)
     } else {
