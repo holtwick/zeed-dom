@@ -6,9 +6,9 @@ import { HtmlParser } from "./htmlparser.js"
 import {
   document,
   VDocType,
-  VDocument,
   VDocumentFragment,
   VElement,
+  VHTMLDocument,
   VNode,
   VTextNode,
 } from "./vdom.js"
@@ -28,14 +28,14 @@ export function vdom(obj: VNode | Buffer | string | null = null): VNode {
   return new VDocumentFragment()
 }
 
-export function parseHTML(html: string): VDocumentFragment | VDocument {
+export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
   if (typeof html !== "string") {
     console.error("parseHTML requires string, found", html)
     throw new Error("parseHTML requires string")
   }
 
   let frag =
-    html.indexOf("<!") === 0 ? new VDocument() : new VDocumentFragment() // !hack
+    html.indexOf("<!") === 0 ? new VHTMLDocument(true) : new VDocumentFragment() // !hack
 
   let stack: VNode[] = [frag]
 
@@ -81,14 +81,18 @@ export function parseHTML(html: string): VDocumentFragment | VDocument {
         if (parentNode?.lastChild?.nodeType === VNode.TEXT_NODE) {
           parentNode.lastChild._text += text
         } else {
-          parentNode.appendChild(new VTextNode(text))
+          if (parentNode) {
+            parentNode.appendChild(new VTextNode(text))
+            // } else {
+            //   console.trace(parentNode, stack)
+          }
         }
       },
       comment(text: string) {},
     },
   })
   parser.parse(html)
-  // console.log('frag', frag.innerHTML)
+  // console.log("frag", frag)
   return frag
 }
 

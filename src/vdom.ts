@@ -1,7 +1,8 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
+import { escapeHTML } from "./encoding.js"
 import { hFactory } from "./h.js"
-import { html } from "./html.js"
+import { html, htmlVDOM } from "./html.js"
 import { matchSelector } from "./vcss.js"
 
 // For node debugging
@@ -127,6 +128,8 @@ export class VNode {
     }
     this._fixChildNodesParent()
   }
+
+  append = this.appendChild
 
   removeChild(node: { _parentNode: null }) {
     let i = this._childNodes.indexOf(node)
@@ -293,7 +296,7 @@ export class VTextNode extends VNode {
   }
 
   render() {
-    return this._text
+    return escapeHTML(this._text)
   }
 
   cloneNode(deep = false) {
@@ -477,7 +480,7 @@ export class VElement extends VNodeQuery {
   }
 
   get outerHTML() {
-    return this.render(html)
+    return this.render(htmlVDOM)
   }
 
   // class
@@ -524,11 +527,11 @@ export class VElement extends VNodeQuery {
 
   //
 
-  render(h = html) {
+  render(h = htmlVDOM) {
     return h(
       this._originalTagName || this.tagName,
       this.attributes,
-      this.childNodes.map((c) => c.render(h))
+      this._childNodes.map((c) => c.render(h)).join("") // children:string is not escaped again
     )
   }
 }
@@ -568,7 +571,7 @@ export class VDocumentFragment extends VNodeQuery {
     return "#document-fragment"
   }
 
-  render(h = html) {
+  render(h = htmlVDOM) {
     return this._childNodes.map((c) => c.render(h) || []).join("")
   }
 
@@ -603,7 +606,7 @@ export class VDocument extends VDocumentFragment {
     return this.firstChild
   }
 
-  render(h = html) {
+  render(h = htmlVDOM) {
     let content = super.render(h)
     if (this.docType) {
       content = this.docType.render() + content
@@ -613,22 +616,33 @@ export class VDocument extends VDocumentFragment {
 }
 
 export class VHTMLDocument extends VDocument {
-  // doctype
-
-  constructor() {
+  constructor(empty: boolean = false) {
     super()
-    let html = new VElement("html")
-    let body = new VElement("body")
-    let head = new VElement("head")
-    let title = new VElement("title")
-    html.appendChild(head)
-    head.appendChild(title)
-    html.appendChild(body)
-    this.appendChild(html)
+    this.docType = new VDocType()
+    if (!empty) {
+      let html = new VElement("html")
+      let body = new VElement("body")
+      let head = new VElement("head")
+      let title = new VElement("title")
+      html.appendChild(head)
+      head.appendChild(title)
+      html.appendChild(body)
+      this.appendChild(html)
+    }
   }
 
-  get body() {
-    return this.querySelector("body")
+  get body(): VElement {
+    let body = this.querySelector("body")
+    if (!body) {
+      let html = this.querySelector("html")
+      if (!html) {
+        html = new VElement("html")
+        this.appendChild(html)
+      }
+      body = new VElement("body")
+      html.appendChild(html)
+    }
+    return body
   }
 
   get title(): string {
@@ -640,17 +654,18 @@ export class VHTMLDocument extends VDocument {
     if (titleElement) titleElement.textContent = title
   }
 
-  get head() {
-    return this.querySelector("head")
-  }
-
-  render(h = html) {
-    let content = super.render(h)
-    if (h.firstLine) {
-      // !hack, should be doctype
-      content = h.firstLine + "\n" + content
+  get head(): VElement {
+    let head = this.querySelector("head")
+    if (!head) {
+      let html = this.querySelector("html")
+      if (!html) {
+        html = new VElement("html")
+        this.appendChild(html)
+      }
+      head = new VElement("head")
+      html.insertBefore(html)
     }
-    return content
+    return head
   }
 }
 

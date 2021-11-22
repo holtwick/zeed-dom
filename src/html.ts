@@ -39,9 +39,15 @@ export function markup(
   xmlMode: boolean,
   tag: string,
   attrs: any = {},
-  children?: any[]
+  children?: any[] | string
 ) {
-  const hasChildren = children && children.length > 0
+  const hasChildren = !(
+    (typeof children === "string" && children === "") ||
+    (Array.isArray(children) &&
+      (children.length === 0 ||
+        (children.length === 1 && children[0] === ""))) ||
+    children == null
+  )
 
   let parts: string[] = []
   tag = tag.replace(/__/g, ":")
@@ -86,6 +92,7 @@ export function markup(
         }
       }
     }
+
     if (tag !== "cdata") {
       if (xmlMode && !hasChildren) {
         parts.push(" />")
@@ -101,17 +108,26 @@ export function markup(
   }
 
   // Append children
-  if (children && children.length > 0) {
-    for (let child of children) {
-      if (child != null && child !== false) {
-        if (!Array.isArray(child)) {
-          child = [child]
-        }
-        for (let c of child) {
-          if (c.startsWith("<") || tag === "script" || tag === "style") {
-            parts.push(c)
-          } else {
-            parts.push(escapeHTML(c.toString()))
+  if (hasChildren) {
+    if (typeof children === "string") {
+      parts.push(children)
+    } else if (children && children.length > 0) {
+      for (let child of children) {
+        if (child != null && child !== false) {
+          if (!Array.isArray(child)) {
+            child = [child]
+          }
+          for (let c of child) {
+            // todo: this fails if textContent starts with `<` and ends with `>`
+            if (
+              (c.startsWith("<") && c.endsWith(">")) ||
+              tag === "script" ||
+              tag === "style"
+            ) {
+              parts.push(c)
+            } else {
+              parts.push(escapeHTML(c.toString()))
+            }
           }
         }
       }
@@ -122,7 +138,7 @@ export function markup(
     parts.push(attrs.html)
   }
 
-  if (tag !== "noop") {
+  if (tag !== "noop" && tag !== "") {
     if (tag !== "cdata") {
       parts.push(`</${tag}>`)
     } else {
@@ -136,6 +152,8 @@ export function html(itag: string, iattrs?: object, ...ichildren: any[]) {
   let { tag, attrs, children } = hArgumentParser(itag, iattrs, ichildren)
   return markup(false, tag, attrs, children)
 }
+
+export const htmlVDOM = markup.bind(null, false)
 
 html.firstLine = "<!DOCTYPE html>"
 html.html = true

@@ -16,12 +16,4 @@ var unescapeHTML = (s: string): string =>
     .replace(/&apos;/gi, "'")
     .replace(/&amp;/gi, "&")
 
-try {
-  var he = require("he")
-  if (he) {
-    escapeHTML = he.escape
-    unescapeHTML = he.unescape
-  }
-} catch (err) {}
-
 export { escapeHTML, unescapeHTML }
