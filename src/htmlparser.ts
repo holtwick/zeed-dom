@@ -43,7 +43,7 @@ export class HtmlParser {
     this.options = Object.assign({}, this.defaults, options)
   }
 
-  parse(html) {
+  parse(html: string) {
     let treatAsChars = false
     let index, match, characters
     while (html.length) {

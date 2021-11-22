@@ -8,11 +8,13 @@ describe("Utils", () => {
     let doc = createHTMLDocument()
     doc.body?.appendChild(["Hello ", "world"])
     doc.title = "Hello Title"
-    expect(doc.render()).toEqual(
-      "<!DOCTYPE html>\n<html><head><title>Hello Title</title></head><body>Hello world</body></html>"
+    expect(doc.render()).toMatchInlineSnapshot(
+      `"<!DOCTYPE html><html><head><title>Hello Title</title></head><body>Hello world</body></html>"`
     )
 
     let body = removeBodyContainer(doc)
-    expect(body.render()).toEqual("<title>Hello Title</title>Hello world")
+    expect(body.render()).toMatchInlineSnapshot(
+      `"<title>Hello Title</title>Hello world"`
+    )
   })
 })

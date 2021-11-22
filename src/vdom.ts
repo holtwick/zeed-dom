@@ -613,18 +613,19 @@ export class VDocument extends VDocumentFragment {
 }
 
 export class VHTMLDocument extends VDocument {
-  // doctype
-
-  constructor() {
+  constructor(empty: boolean = false) {
     super()
-    let html = new VElement("html")
-    let body = new VElement("body")
-    let head = new VElement("head")
-    let title = new VElement("title")
-    html.appendChild(head)
-    head.appendChild(title)
-    html.appendChild(body)
-    this.appendChild(html)
+    this.docType = new VDocType()
+    if (!empty) {
+      let html = new VElement("html")
+      let body = new VElement("body")
+      let head = new VElement("head")
+      let title = new VElement("title")
+      html.appendChild(head)
+      head.appendChild(title)
+      html.appendChild(body)
+      this.appendChild(html)
+    }
   }
 
   get body() {
@@ -642,15 +643,6 @@ export class VHTMLDocument extends VDocument {
 
   get head() {
     return this.querySelector("head")
-  }
-
-  render(h = html) {
-    let content = super.render(h)
-    if (h.firstLine) {
-      // !hack, should be doctype
-      content = h.firstLine + "\n" + content
-    }
-    return content
   }
 }
 

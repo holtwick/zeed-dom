@@ -26,6 +26,6 @@ describe("VDOM Parser", () => {
     let frag = parseHTML(html)
     let rhtml = frag.render()
     // expect(rhtml).toBe('Xyz <script type="text/javascript">var foo = \'<<bar>>\';</script>')
-    expect(rhtml).toBe(html)
+    expect(rhtml).toEqual(html)
   })
 })
