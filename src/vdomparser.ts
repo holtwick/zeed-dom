@@ -64,12 +64,16 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
           }
         }
         let parentNode = stack[stack.length - 1]
-        const element = document.createElement(tagName, attrs)
-        parentNode.appendChild(element)
-        if (
-          !(SELF_CLOSING_TAGS.includes(tagName.toLowerCase()) || isSelfClosing)
-        ) {
-          stack.push(element)
+        if (parentNode) {
+          const element = document.createElement(tagName, attrs)
+          parentNode.appendChild(element)
+          if (
+            !(
+              SELF_CLOSING_TAGS.includes(tagName.toLowerCase()) || isSelfClosing
+            )
+          ) {
+            stack.push(element)
+          }
         }
       },
       endElement(tagName: string) {

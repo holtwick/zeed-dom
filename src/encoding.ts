@@ -5,7 +5,7 @@ var escapeHTML = (s: string): string =>
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/'/g, "&apos;")
+    // .replace(/'/g, "&apos;")
     .replace(/"/g, "&quot;")
 
 var unescapeHTML = (s: string): string =>
