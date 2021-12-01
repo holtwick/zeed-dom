@@ -16,10 +16,6 @@ const startTagRe =
   /^<([^>\s\/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*\/?\s*>/m
 const selfCloseTagRe = /\s*\/\s*>\s*$/m
 
-const mustImplementMethod = (name: string) => {
-  throw new Error(`Must implement the method ${name || ""}`)
-}
-
 /**
  * This is a simple html parser. Will read and parse html string.
  *
@@ -134,21 +130,3 @@ export class HtmlParser {
     return attrs
   }
 }
-
-// HtmlParser.defaults = {
-//   ignoreWhitespaceText: false,
-// }
-// HtmlParser.prototype.scanner = {
-//   startElement() {
-//     mustImplementMethod("startElement")
-//   },
-//   endElement() {
-//     mustImplementMethod("endElement")
-//   },
-//   characters() {
-//     mustImplementMethod("characters")
-//   },
-//   comment() {
-//     mustImplementMethod("comment")
-//   },
-// }
