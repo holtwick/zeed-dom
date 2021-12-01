@@ -1,3 +1,7 @@
+---
+lastmod: "2021-12-01T22:01:13.568Z"
+---
+
 # 🌱 zeed-dom
 
 - Lightweight virtual / offline DOM (Document Object Model)
@@ -169,6 +173,27 @@ The JSX factory can also be used to directly create HTML DOM nodes in the browse
 const { hFactory } = require("zeed-dom")
 
 export let h = hFactory({ document })
+```
+
+## Performance
+
+The parser isn't doing too bad, according to the benchmarks of [htmlparser-benchmark](https://github.com/holtwick/htmlparser-benchmark) ;)
+
+```
+tl                 : 0.604997 ms/file ± 0.354912
+node-html-parser   : 1.05665 ms/file ± 0.630199
+html5parser        : 1.10241 ms/file ± 1.56392
+neutron-html5parser: 1.23513 ms/file ± 0.740172
+htmlparser2        : 1.34399 ms/file ± 1.75102
+html-dom-parser    : 1.44560 ms/file ± 1.95806
+htmlparser2-dom    : 1.47874 ms/file ± 2.10367
+zeed-dom           : 2.59217 ms/file ± 1.68060
+htmljs-parser      : 2.80344 ms/file ± 2.98693
+parse5             : 4.67946 ms/file ± 3.21618
+html-parser        : 12.5826 ms/file ± 9.69709
+htmlparser         : 18.8608 ms/file ± 148.564
+saxes              : 33.3792 ms/file ± 95.4125
+html5              : 67.9304 ms/file ± 89.0686
 ```
 
 ## Misc
