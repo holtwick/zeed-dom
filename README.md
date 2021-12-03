@@ -1,5 +1,5 @@
 ---
-lastmod: "2021-12-01T22:01:13.568Z"
+lastmod: "2021-12-03T07:55:41.610Z"
 ---
 
 # 🌱 zeed-dom
@@ -177,23 +177,24 @@ export let h = hFactory({ document })
 
 ## Performance
 
-The parser isn't doing too bad, according to the benchmarks of [htmlparser-benchmark](https://github.com/holtwick/htmlparser-benchmark) ;)
+The parser isn't doing too bad, according to the benchmarks of [htmlparser-benchmark](https://github.com/AndreasMadsen/htmlparser-benchmark/blob/master/stats.txt) ;)
 
 ```
-tl                 : 0.604997 ms/file ± 0.354912
-node-html-parser   : 1.05665 ms/file ± 0.630199
-html5parser        : 1.10241 ms/file ± 1.56392
-neutron-html5parser: 1.23513 ms/file ± 0.740172
-htmlparser2        : 1.34399 ms/file ± 1.75102
-html-dom-parser    : 1.44560 ms/file ± 1.95806
-htmlparser2-dom    : 1.47874 ms/file ± 2.10367
-zeed-dom           : 2.59217 ms/file ± 1.68060
-htmljs-parser      : 2.80344 ms/file ± 2.98693
-parse5             : 4.67946 ms/file ± 3.21618
-html-parser        : 12.5826 ms/file ± 9.69709
-htmlparser         : 18.8608 ms/file ± 148.564
-saxes              : 33.3792 ms/file ± 95.4125
-html5              : 67.9304 ms/file ± 89.0686
+tl                 : 1.02699 ms/file ± 0.679139
+htmlparser2        : 1.98505 ms/file ± 2.94434
+node-html-parser   : 2.24176 ms/file ± 1.52112
+neutron-html5parser: 2.36648 ms/file ± 1.38879
+html5parser        : 2.39891 ms/file ± 2.83056
+htmlparser2-dom    : 2.57523 ms/file ± 3.35587
+html-dom-parser    : 2.84910 ms/file ± 3.61615
+libxmljs           : 3.81665 ms/file ± 2.79295
+zeed-dom           : 5.05130 ms/file ± 3.57184
+htmljs-parser      : 5.58557 ms/file ± 6.47597
+parse5             : 9.07862 ms/file ± 6.50856
+htmlparser         : 21.2274 ms/file ± 150.951
+html-parser        : 30.9104 ms/file ± 24.3930
+saxes              : 49.5906 ms/file ± 141.194
+html5              : 114.771 ms/file ± 148.345
 ```
 
 ## Misc
