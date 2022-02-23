@@ -6,5 +6,4 @@ module.exports = {
       useESM: true,
     },
   },
-  resolver: "jest-ts-webcompat-resolver",
 }

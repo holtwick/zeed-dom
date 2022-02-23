@@ -5,8 +5,8 @@
 // 2. Attribute name '__' gets transformed to ':' for namespace emulation
 // 3. Emulate CDATA by <cdata> element
 
-import { hArgumentParser } from "./h.js"
-import { escapeHTML } from "./encoding.js"
+import { hArgumentParser } from "./h"
+import { escapeHTML } from "./encoding"
 
 export const SELF_CLOSING_TAGS = [
   "area",

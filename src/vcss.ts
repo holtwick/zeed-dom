@@ -1,7 +1,7 @@
 // (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
 
 import { parse } from "css-what"
-import { VElement } from "./vdom.js"
+import { VElement } from "./vdom"
 
 // Alternative could be https://github.com/leaverou/parsel
 

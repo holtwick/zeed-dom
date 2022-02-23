@@ -1,9 +1,9 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
-import { escapeHTML } from "./encoding.js"
-import { hFactory } from "./h.js"
-import { html, htmlVDOM } from "./html.js"
-import { matchSelector } from "./vcss.js"
+import { escapeHTML } from "./encoding"
+import { hFactory } from "./h"
+import { html, htmlVDOM } from "./html"
+import { matchSelector } from "./vcss"
 
 // For node debugging
 const inspect = Symbol.for("nodejs.util.inspect.custom")
