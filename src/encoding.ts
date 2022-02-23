@@ -1,19 +1,8 @@
-// Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
+import { decode, encode } from "he"
 
-var escapeHTML = (s: string): string =>
-  s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    // .replace(/'/g, "&apos;")
-    .replace(/"/g, "&quot;")
+export const escapeHTML = (text: string) =>
+  encode(text, {
+    useNamedReferences: true,
+  })
 
-var unescapeHTML = (s: string): string =>
-  s
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&apos;/gi, "'")
-    .replace(/&amp;/gi, "&")
-
-export { escapeHTML, unescapeHTML }
+export const unescapeHTML = (html: string) => decode(html)

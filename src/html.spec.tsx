@@ -38,8 +38,9 @@ describe("HTML", () => {
     let s = <cdata>{"<b>Do not escape! & </b>"}</cdata>
     expect(s).toMatchInlineSnapshot(`"<![CDATA[<b>Do not escape! & </b>]]>"`)
 
-    let s2 = <div>{  CDATA("<b>Do not escape! & </b>") }</div>
-    expect(s2).toMatchInlineSnapshot(`"<div><![CDATA[<b>Do not escape! & </b>]]></div>"`)
-
+    let s2 = <div>{CDATA("<b>Do not escape! & </b>")}</div>
+    expect(s2).toMatchInlineSnapshot(
+      `"<div><![CDATA[<b>Do not escape! & </b>]]></div>"`
+    )
   })
 })

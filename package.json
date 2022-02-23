@@ -1,6 +1,6 @@
 {
   "name": "zeed-dom",
-  "version": "0.9.19",
+  "version": "0.9.20",
   "description": "🌱 Lightweight offline DOM",
   "author": {
     "name": "Dirk Holtwick",
@@ -23,6 +23,9 @@
   "engines": {
     "node": ">=14.13.1"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "typings": "dist/index.d.ts",
   "exports": {
@@ -36,16 +39,19 @@
   "module": "dist/index.js",
   "main": "dist/index.cjs",
   "sideEffects": false,
+  "dependencies": {
+    "he": "^1.2.0",
+    "css-what": "^6.0.1"
+  },
   "devDependencies": {
-    "css-what": "^5.1.0",
-    "@types/jest": "^27.0.3",
-    "@types/node": "^16.11.11",
-    "jest": "^27.4.3",
+    "@types/jest": "^27.4.1",
+    "@types/node": "^17.0.19",
+    "jest": "^27.5.1",
     "jest-ts-webcompat-resolver": "^1.0.0",
-    "prettier": "^2.5.0",
-    "ts-jest": "^27.0.7",
-    "tsup": "^5.10.0",
-    "typescript": "^4.5.2"
+    "prettier": "^2.5.1",
+    "ts-jest": "^27.1.3",
+    "tsup": "^5.11.13",
+    "typescript": "^4.5.5"
   },
   "scripts": {
     "start": "npm run watch",
@@ -55,9 +61,6 @@
     "check": "tsc --noEmit -p tsconfig.json",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm test && npm run build",
-    "test": "jest src"
-  },
-  "files": [
-    "dist"
-  ]
+    "test": "jest src --coverage"
+  }
 }

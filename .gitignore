@@ -6,3 +6,4 @@ tmp
 *.log
 .out*
 test
+coverage
