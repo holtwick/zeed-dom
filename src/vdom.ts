@@ -296,6 +296,10 @@ export class VTextNode extends VNode {
   }
 
   render() {
+    const parentTagName = this.parentNode?.tagName
+    if (parentTagName === "SCRIPT" || parentTagName === "STYLE") {
+      return this._text
+    }
     return escapeHTML(this._text)
   }
 
