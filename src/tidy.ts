@@ -1,6 +1,6 @@
 // (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
 
-import { VDocument, VNode, VTextNode } from "./vdom.js"
+import { VDocument, VNode, VTextNode } from "./vdom"
 
 const SELECTOR_BLOCK_ELEMENTS =
   "meta,link,script,p,h1,h2,h3,h4,h5,h6,blockquote,div,ul,ol,li,article,section,footer,head,body,title,nav,section,article,hr,form"

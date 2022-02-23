@@ -61,7 +61,7 @@ describe("VDOM", () => {
 
     let nodes = r.flattenNodes().map((e) => e.nodeName)
     expect(nodes).toMatchInlineSnapshot(`
-      Array [
+      [
         "BODY",
         "P",
         "#text",
