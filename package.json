@@ -61,6 +61,6 @@
     "check": "tsc --noEmit -p tsconfig.json",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm test && npm run build",
-    "test": "jest src"
+    "test": "jest src --coverage"
   }
 }

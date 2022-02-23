@@ -2,6 +2,10 @@
 
 import { VDocument, VNode, VTextNode } from "./vdom.js"
 
+const SELECTOR_BLOCK_ELEMENTS =
+  "meta,link,script,p,h1,h2,h3,h4,h5,h6,blockquote,div,ul,ol,li,article,section,footer,head,body,title,nav,section,article,hr,form"
+const TAGS_KEEP_CONTENT = ["PRE", "CODE", "SCRIPT", "STYLE", "TT"]
+
 function level(element: VNode): string {
   let indent = ""
   while (element.parentNode) {
@@ -12,13 +16,11 @@ function level(element: VNode): string {
 }
 
 export function tidyDOM(document: VDocument) {
-  let selector =
-    "meta,link,script,p,h1,h2,h3,h4,h5,h6,blockquote,div,ul,ol,li,article,section,footer,head,body,title,nav,section,article,hr,form"
-  document.handle(selector, (e) => {
+  document.handle(SELECTOR_BLOCK_ELEMENTS, (e) => {
     // Ignore if inside PRE etc.
     let ee = e
     while (ee) {
-      if (["PRE", "CODE", "SCRIPT", "STYLE", "TT"].includes(ee.tagName)) return
+      if (TAGS_KEEP_CONTENT.includes(ee.tagName)) return
       ee = ee.parentNode
     }
 

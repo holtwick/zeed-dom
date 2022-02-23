@@ -22,6 +22,13 @@ describe("htmlparser", () => {
       `"<!DOCTYPE html><html><head><title></title></head><body>&lt;/&lt;/</body></html>"`
     )
   })
+
+  it("should handle entities correctly", () => {
+    // https://github.com/holtwick/zeed-dom/issues/3
+    let dom = parseHTML("<p>Let&#x27;s go</p>") as VHTMLDocument
+    expect(dom.textContent).toMatchInlineSnapshot(`"Let's go"`)
+    expect(dom.render()).toMatchInlineSnapshot(`"<p>Let&apos;s go</p>"`)
+  })
 })
 
 const sample = `<!DOCTYPE html>
