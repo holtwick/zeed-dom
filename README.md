@@ -1,7 +1,3 @@
----
-lastmod: "2021-12-03T07:55:41.610Z"
----
-
 # 🌱 zeed-dom
 
 - Lightweight virtual / offline DOM (Document Object Model)
