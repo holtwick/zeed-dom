@@ -1,4 +1,4 @@
-import { decode } from "he"
+import { decode } from "./encoding-he"
 
 export const escapeHTML = (text: string) =>
   text
