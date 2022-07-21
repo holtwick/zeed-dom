@@ -1,0 +1,17 @@
+{
+  "name": "zeed-dom-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx index.tsx"
+  },
+  "author": "Dirk Holtwick",
+  "license": "MIT",
+  "devDependencies": {
+    "tsx": "^3.8.0"
+  },
+  "dependencies": {
+    "zeed-dom": "^0.9.24"
+  }
+}
