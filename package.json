@@ -24,7 +24,8 @@
     "node": ">=14.13.1"
   },
   "files": [
-    "dist"
+    "dist",
+    "jsx-runtime"
   ],
   "type": "module",
   "typings": "dist/index.d.ts",

@@ -1,4 +1,4 @@
-import {h} from 'zeed-dom/jsx-runtime'
+import {jsx} from 'zeed-dom/jsx-runtime'
 
 let dom = (
   <ol className="projects">
