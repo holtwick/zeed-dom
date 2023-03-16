@@ -12,8 +12,7 @@ const endTagRe = /^<\/([^>\s]+)[^>]*>/m
 // 1. must start with <tagName
 // 2. optional attrbutes
 // 3. /> or >
-const startTagRe
-  = /^<([^>\s\/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*\/?\s*>/m
+const startTagRe = /^<([^>\s\/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*\/?\s*>/m
 const selfCloseTagRe = /\s*\/\s*>\s*$/m
 
 /**
@@ -30,12 +29,12 @@ export class HtmlParser {
   startTagRe = startTagRe
   defaults = { ignoreWhitespaceText: false }
 
-  constructor(options) {
-    options = options || {}
-    if (options.scanner) {
+  constructor(options: {
+    scanner?: any
+    ignoreWhitespaceText?: boolean
+  } = {}) {
+    if (options.scanner)
       this.scanner = options.scanner
-      options.scanner = null
-    }
     this.options = Object.assign({}, this.defaults, options)
   }
 
@@ -106,7 +105,7 @@ export class HtmlParser {
     }
   }
 
-  parseStartTag(input, tagName, match) {
+  parseStartTag(input: string, tagName: string, match: any) {
     const isSelfColse = selfCloseTagRe.test(input)
     let attrInput = match[2]
     if (isSelfColse)
@@ -116,18 +115,17 @@ export class HtmlParser {
     this.scanner.startElement(tagName, attrs, isSelfColse, match[0])
   }
 
-  parseEndTag(input, tagName: string) {
+  parseEndTag(input: string, tagName: string) {
     this.scanner.endElement(tagName)
   }
 
-  parseAttributes(tagName, input) {
-    const attrs = {}
-    input.replace(
-      this.attrRe,
-      (attr, name, c2, value, c4, valueInQuote, c6, valueInSingleQuote) => {
-        attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
-      },
-    )
+  parseAttributes(tagName: string, input: string) {
+    const attrs: Record<string, any> = {}
+    input.replace(this.attrRe, (...m: any[]) => {
+      const [_attr, name, _c2, value, _c4, valueInQuote, _c6, valueInSingleQuote] = m
+      attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
+      return undefined as any // hack
+    })
     return attrs
   }
 }
