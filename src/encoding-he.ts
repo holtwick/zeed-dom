@@ -1,6 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
+import { hasOwn } from './utils'
+
 /* eslint-disable no-misleading-character-class */
 /* eslint-disable no-control-regex */
 /*! https://mths.be/he v1.2.0 by @mathias | MIT license */
@@ -3837,12 +3839,6 @@ const invalidReferenceCodePoints = [
 
 const stringFromCharCode = String.fromCharCode
 
-const object = {}
-const hasOwnProperty = object.hasOwnProperty
-const has = function (object, propertyName) {
-  return hasOwnProperty.call(object, propertyName)
-}
-
 const contains = function (array, value) {
   let index = -1
   const length = array.length
@@ -3862,7 +3858,7 @@ function merge(options, defaults) {
   for (key in defaults) {
     // A `hasOwnProperty` check is not needed here, since only recognized
     // option names are used anyway. Any others are ignored.
-    result[key] = has(options, key) ? options[key] : defaults[key]
+    result[key] = hasOwn(options, key) ? options[key] : defaults[key]
   }
   return result
 }
@@ -3880,7 +3876,7 @@ const codePointToSymbol = function (codePoint, strict) {
 
     return '\uFFFD'
   }
-  if (has(decodeMapNumeric, codePoint)) {
+  if (hasOwn(decodeMapNumeric, codePoint)) {
     if (strict)
       parseError('disallowed character reference')
 
@@ -3931,7 +3927,7 @@ const encode = function (string, options) {
     // Encode ASCII symbols.
     string = string.replace(regexAsciiWhitelist, (symbol) => {
       // Use named references if requested & possible.
-      if (useNamedReferences && has(encodeMap, symbol))
+      if (useNamedReferences && hasOwn(encodeMap, symbol))
         return `&${encodeMap[symbol]};`
 
       return escapeBmpSymbol(symbol)
@@ -3948,7 +3944,7 @@ const encode = function (string, options) {
     if (useNamedReferences) {
       // Encode non-ASCII symbols that can be replaced with a named reference.
       string = string.replace(regexEncodeNonAscii, (string) => {
-        // Note: there is no need to check `has(encodeMap, string)` here.
+        // Note: there is no need to check `hasOwn(encodeMap, string)` here.
         return `&${encodeMap[string]};`
       })
     }
@@ -3959,7 +3955,7 @@ const encode = function (string, options) {
     // Encode `<>"'&` using named character references.
     if (!allowUnsafeSymbols) {
       string = string.replace(regexEscape, (string) => {
-        return `&${encodeMap[string]};` // no need to check `has()` here
+        return `&${encodeMap[string]};` // no need to check `hasOwn()` here
       })
     }
     // Shorten escapes that represent two symbols, of which at least one is
@@ -3969,7 +3965,7 @@ const encode = function (string, options) {
       .replace(/&lt;\u20D2/g, '&nvlt;')
     // Encode non-ASCII symbols that can be replaced with a named reference.
     string = string.replace(regexEncodeNonAscii, (string) => {
-      // Note: there is no need to check `has(encodeMap, string)` here.
+      // Note: there is no need to check `hasOwn(encodeMap, string)` here.
       return `&${encodeMap[string]};`
     })
   }
@@ -4020,7 +4016,7 @@ export function decode(html: string, options?: any) {
 
       if ($1) {
         reference = $1
-        // Note: there is no need to check `has(decodeMap, reference)`.
+        // Note: there is no need to check `hasOwn(decodeMap, reference)`.
         return decodeMap[reference]
       }
 
@@ -4042,7 +4038,7 @@ export function decode(html: string, options?: any) {
               'named character reference was not terminated by a semicolon',
             )
           }
-          // Note: there is no need to check `has(decodeMapLegacy, reference)`.
+          // Note: there is no need to check `hasOwn(decodeMapLegacy, reference)`.
           return decodeMapLegacy[reference] + (next || '')
         }
       }
@@ -4088,7 +4084,7 @@ decode.options = {
 
 export function escape(string) {
   return string.replace(regexEscape, ($0) => {
-    // Note: there is no need to check `has(escapeMap, $0)` here.
+    // Note: there is no need to check `hasOwn(escapeMap, $0)` here.
     return escapeMap[$0]
   })
 }

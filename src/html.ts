@@ -7,6 +7,7 @@
 
 import { hArgumentParser } from './h'
 import { escapeHTML } from './encoding'
+import { hasOwn } from './utils'
 
 export const SELF_CLOSING_TAGS = [
   'area',
@@ -61,7 +62,7 @@ export function markup(
 
     // Add attributes
     for (let name in attrs) {
-      if (name && Object.hasOwn(attrs, name)) {
+      if (name && hasOwn(attrs, name)) {
         const v = attrs[name]
         if (name === 'html')
           continue

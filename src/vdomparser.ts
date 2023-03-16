@@ -3,6 +3,7 @@
 import { unescapeHTML } from './encoding'
 import { SELF_CLOSING_TAGS } from './html'
 import { HtmlParser } from './htmlparser'
+import { hasOwn } from './utils'
 import {
   VDocType,
   VDocumentFragment,
@@ -55,7 +56,7 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
         }
 
         for (const name in attrs) {
-          if (Object.hasOwn(attrs, name)) {
+          if (hasOwn(attrs, name)) {
             const value = attrs[name]
             // console.log(name, value)
             if (typeof value === 'string')

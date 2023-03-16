@@ -14,3 +14,11 @@ export function removeBodyContainer(body: VNodeQuery): VNodeQuery {
   }
   return body
 }
+
+const object = {}
+const hasOwnProperty = object.hasOwnProperty
+
+/** Fallback for Object.hasOwn */
+export function hasOwn(object: any, propertyName: string) {
+  return hasOwnProperty.call(object, propertyName)
+}
