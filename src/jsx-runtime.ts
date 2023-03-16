@@ -1,4 +1,4 @@
-import { h } from "./html"
+import { h } from './html'
 
 // See
 // https://esbuild.github.io/api/#jsx-import-source

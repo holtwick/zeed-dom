@@ -1,5 +1,6 @@
 {
   "name": "zeed-dom/jsx-runtime",
+  "type": "module",
   "version": "0.9.26",
   "description": "🌱 Lightweight offline DOM",
   "author": {
@@ -7,25 +8,24 @@
     "email": "dirk.holtwick@gmail.com",
     "url": "https://holtwick.de"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/holtwick/zeed-dom.git"
-  },
   "license": "MIT",
   "funding": {
     "type": "GitHub Sponsors ❤",
     "url": "https://github.com/sponsors/holtwick"
   },
+  "homepage": "https://github.com/holtwick/zeed-dom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holtwick/zeed-dom.git"
+  },
   "bugs": {
     "url": "https://github.com/holtwick/zeed-dom/issues"
   },
-  "homepage": "https://github.com/holtwick/zeed-dom",
+  "sideEffects": false,
+  "main": "index.cjs",
+  "module": "index.js",
+  "types": "index.d.ts",
   "engines": {
     "node": ">=14.13.1"
-  },
-  "type": "module",
-  "types": "index.d.ts",
-  "module": "index.js",
-  "main": "index.cjs",
-  "sideEffects": false
+  }
 }

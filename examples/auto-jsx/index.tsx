@@ -1,6 +1,4 @@
-import {jsx} from 'zeed-dom/jsx-runtime'
-
-let dom = (
+const dom = (
   <ol className="projects">
     <li>hostic</li>
     <li>hostic-dom</li>

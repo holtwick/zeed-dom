@@ -1,21 +1,21 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
-import { escapeHTML } from "./encoding"
-import { hFactory } from "./h"
-import { html, htmlVDOM } from "./html"
-import { matchSelector } from "./vcss"
+import { escapeHTML } from './encoding'
+import { hFactory } from './h'
+import { html, htmlVDOM } from './html'
+import { matchSelector } from './vcss'
 
 // For node debugging
-const inspect = Symbol.for("nodejs.util.inspect.custom")
+const inspect = Symbol.for('nodejs.util.inspect.custom')
 
-let B = { fontWeight: "bold" }
-let I = { fontStyle: "italic" }
-let M = { backgroundColor: "rgb(255, 250, 165)" }
-let U = { textDecorations: "underline" }
-let S = { textDecorations: "line-through" }
+const B = { fontWeight: 'bold' }
+const I = { fontStyle: 'italic' }
+const M = { backgroundColor: 'rgb(255, 250, 165)' }
+const U = { textDecorations: 'underline' }
+const S = { textDecorations: 'line-through' }
 // let C = {}
 
-let DEFAULTS = {
+const DEFAULTS = {
   b: B,
   strong: B,
   em: I,
@@ -31,7 +31,7 @@ let DEFAULTS = {
   // 'tt': C
 }
 
-let toCamelCase = (s: string) =>
+const toCamelCase = (s: string) =>
   s.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
 
 export class VNode {
@@ -48,13 +48,13 @@ export class VNode {
   _childNodes: any[]
 
   get nodeType(): number {
-    console.error("Subclasses should define nodeType!")
+    console.error('Subclasses should define nodeType!')
     return 0
   }
 
   get nodeName() {
-    console.error("Subclasses should define nodeName!")
-    return ""
+    console.error('Subclasses should define nodeName!')
+    return ''
   }
 
   get nodeValue(): string | null {
@@ -67,62 +67,67 @@ export class VNode {
   }
 
   cloneNode(deep = false) {
-    // @ts-ignore
-    let node = new this.constructor()
+    // @ts-expect-error xxx
+    const node = new this.constructor()
     if (deep) {
-      node._childNodes = this._childNodes.map((c) => c.cloneNode(true))
+      node._childNodes = this._childNodes.map(c => c.cloneNode(true))
       node._fixChildNodesParent()
     }
     return node
   }
 
   _fixChildNodesParent() {
-    this._childNodes.forEach((node) => (node._parentNode = this))
+    this._childNodes.forEach(node => (node._parentNode = this))
   }
 
   insertBefore(newNode: VNode, node?: VNode) {
     if (newNode !== node) {
       let index = node ? this._childNodes.indexOf(node) : 0
-      if (index < 0) index = 0
+      if (index < 0)
+        index = 0
       this._childNodes.splice(index, 0, newNode)
       this._fixChildNodesParent()
     }
   }
 
   appendChild(node: VNode | VNode[] | string | string[] | null | undefined) {
-    if (node == null) return
+    if (node == null)
+      return
     if (node === this) {
-      console.warn("Cannot appendChild to self")
+      console.warn('Cannot appendChild to self')
       return
     }
     // log('appendChild', node, this)
 
-    if (node instanceof VDocument) {
-      console.warn("No defined how to append a document to a node!", node)
-    }
+    if (node instanceof VDocument)
+      console.warn('No defined how to append a document to a node!', node)
 
     if (node instanceof VDocumentFragment) {
-      for (let c of [...node._childNodes]) {
+      for (const c of [...node._childNodes]) {
         // Don't iterate over the original! Do [...el]
         this.appendChild(c)
       }
-    } else if (Array.isArray(node)) {
-      for (let c of [...node]) {
+    }
+    else if (Array.isArray(node)) {
+      for (const c of [...node]) {
         // Don't iterate over the original! Do [...el]
         this.appendChild(c)
       }
-    } else if (node instanceof VNode) {
+    }
+    else if (node instanceof VNode) {
       node.remove()
       this._childNodes.push(node)
-    } else {
+    }
+    else {
       // Fallback for unknown data
       try {
-        const text =
-          typeof node === "string" ? node : JSON.stringify(node, null, 2)
+        const text
+          = typeof node === 'string' ? node : JSON.stringify(node, null, 2)
         this._childNodes.push(new VTextNode(text))
-      } catch (err) {
+      }
+      catch (err) {
         console.error(
-          `The data ${node} to be added to ${this.render()} is problematic: ${err}`
+          `The data ${node} to be added to ${this.render()} is problematic: ${err}`,
         )
       }
     }
@@ -132,7 +137,7 @@ export class VNode {
   append = this.appendChild
 
   removeChild(node: { _parentNode: null }) {
-    let i = this._childNodes.indexOf(node)
+    const i = this._childNodes.indexOf(node)
     if (i >= 0) {
       node._parentNode = null
       this._childNodes.splice(i, 1)
@@ -146,19 +151,19 @@ export class VNode {
   }
 
   replaceChildren(...nodes: any[]) {
-    this._childNodes = nodes.map((n) =>
-      typeof n === "string" ? new VTextNode(n) : n.remove()
+    this._childNodes = nodes.map(n =>
+      typeof n === 'string' ? new VTextNode(n) : n.remove(),
     )
     this._fixChildNodesParent()
   }
 
   replaceWith(...nodes: any[]) {
-    let p = this._parentNode
+    const p = this._parentNode
     if (p) {
-      let index = this._indexInParent()
+      const index = this._indexInParent()
       if (index >= 0) {
-        nodes = nodes.map((n) =>
-          typeof n === "string" ? new VTextNode(n) : n.remove()
+        nodes = nodes.map(n =>
+          typeof n === 'string' ? new VTextNode(n) : n.remove(),
         )
         p._childNodes.splice(index, 1, ...nodes)
         this._parentNode = null
@@ -168,9 +173,9 @@ export class VNode {
   }
 
   _indexInParent() {
-    if (this._parentNode) {
+    if (this._parentNode)
       return this._parentNode.childNodes.indexOf(this)
-    }
+
     return -1
   }
 
@@ -195,69 +200,69 @@ export class VNode {
   }
 
   get nextSibling() {
-    let i = this._indexInParent()
-    if (i != null) {
+    const i = this._indexInParent()
+    if (i != null)
       return this.parentNode.childNodes[i + 1] || null
-    }
+
     return null
   }
 
   get previousSibling() {
-    let i = this._indexInParent()
-    if (i > 0) {
+    const i = this._indexInParent()
+    if (i > 0)
       return this.parentNode.childNodes[i - 1] || null
-    }
+
     return null
   }
 
   flatten(): VElement[] {
-    let elements: VElement[] = []
-    if (this instanceof VElement) {
+    const elements: VElement[] = []
+    if (this instanceof VElement)
       elements.push(this)
-    }
-    for (let child of this._childNodes) {
+
+    for (const child of this._childNodes)
       elements.push(...child.flatten())
-    }
+
     return elements
   }
 
   flattenNodes(): VNode[] {
-    let nodes: VNode[] = []
+    const nodes: VNode[] = []
     nodes.push(this)
-    for (let child of this._childNodes) {
+    for (const child of this._childNodes)
       nodes.push(...child.flattenNodes())
-    }
+
     return nodes
   }
 
   render() {
-    return ""
+    return ''
   }
 
   get textContent(): string | null {
-    return this._childNodes.map((c) => c.textContent).join("")
+    return this._childNodes.map(c => c.textContent).join('')
   }
 
   set textContent(text) {
     this._childNodes = []
-    if (text) {
+    if (text)
       this.appendChild(new VTextNode(text.toString()))
-    }
   }
 
   contains(otherNode: this) {
-    if (otherNode === this) return true
+    if (otherNode === this)
+      return true
     // if (this._childNodes.includes(otherNode)) return true
-    return this._childNodes.some((n) => n.contains(otherNode))
+    return this._childNodes.some(n => n.contains(otherNode))
   }
 
   get ownerDocument() {
     if (
-      this.nodeType === VNode.DOCUMENT_NODE ||
-      this.nodeType === VNode.DOCUMENT_FRAGMENT_NODE
-    ) {
+      this.nodeType === VNode.DOCUMENT_NODE
+      || this.nodeType === VNode.DOCUMENT_FRAGMENT_NODE
+    )
       return this
-    }
+
     return this?._parentNode?.ownerDocument
   }
 
@@ -279,32 +284,32 @@ export class VTextNode extends VNode {
   }
 
   get nodeName() {
-    return "#text"
+    return '#text'
   }
 
   get nodeValue(): string | null {
-    return this._text || ""
+    return this._text || ''
   }
 
   get textContent(): string | null {
     return this.nodeValue
   }
 
-  constructor(text = "") {
+  constructor(text = '') {
     super()
     this._text = text
   }
 
   render() {
     const parentTagName = this.parentNode?.tagName
-    if (parentTagName === "SCRIPT" || parentTagName === "STYLE") {
+    if (parentTagName === 'SCRIPT' || parentTagName === 'STYLE')
       return this._text
-    }
+
     return escapeHTML(this._text)
   }
 
   cloneNode(deep = false) {
-    let node = super.cloneNode(deep)
+    const node = super.cloneNode(deep)
     node._text = this._text
     return node
   }
@@ -312,11 +317,11 @@ export class VTextNode extends VNode {
 
 export class VNodeQuery extends VNode {
   getElementById(name: string) {
-    return this.flatten().find((e) => e._attributes["id"] === name)
+    return this.flatten().find(e => e._attributes.id === name)
   }
 
   getElementsByClassName(name: any) {
-    return this.flatten().filter((e) => e.classList.contains(name))
+    return this.flatten().filter(e => e.classList.contains(name))
   }
 
   matches(selector: string) {
@@ -324,30 +329,29 @@ export class VNodeQuery extends VNode {
   }
 
   querySelectorAll(selector: any) {
-    return this.flatten().filter((e) => e.matches(selector))
+    return this.flatten().filter(e => e.matches(selector))
   }
 
   querySelector(selector: string) {
-    return this.flatten().find((e) => e.matches(selector))
+    return this.flatten().find(e => e.matches(selector))
   }
 
   //
 
   parent(selector: string) {
-    if (this.matches(selector)) {
+    if (this.matches(selector))
       return this
-    }
-    if (this.parentNode == null) {
+
+    if (this.parentNode == null)
       return null
-    }
+
     return this.parentNode?.parent(selector)
   }
 
   handle(selector: any, handler: (arg0: VElement, arg1: number) => void) {
     let i = 0
-    for (let el of this.querySelectorAll(selector)) {
+    for (const el of this.querySelectorAll(selector))
       handler(el, i++)
-    }
   }
 }
 
@@ -365,16 +369,16 @@ export class VElement extends VNodeQuery {
     return this._nodeName
   }
 
-  constructor(name = "div", attrs = {}) {
+  constructor(name = 'div', attrs = {}) {
     super()
     this._originalTagName = name
-    this._nodeName = (name || "").toUpperCase()
+    this._nodeName = (name || '').toUpperCase()
     this._attributes = attrs || {}
     this._styles = null
   }
 
   cloneNode(deep = false) {
-    let node = super.cloneNode(deep)
+    const node = super.cloneNode(deep)
     node._originalTagName = this._originalTagName
     node._nodeName = this._nodeName
     node._attributes = Object.assign({}, this._attributes)
@@ -389,7 +393,7 @@ export class VElement extends VNodeQuery {
     const search = name.toLowerCase()
     return (
       Object.keys(this._attributes).find(
-        (name) => search === name.toLowerCase()
+        name => search === name.toLowerCase(),
       ) || null
     )
   }
@@ -407,9 +411,8 @@ export class VElement extends VNodeQuery {
 
   removeAttribute(name: string | number) {
     const originalName = this._findAttributeName(String(name))
-    if (originalName) {
+    if (originalName)
       delete this._attributes[name]
-    }
   }
 
   hasAttribute(name: any) {
@@ -419,14 +422,15 @@ export class VElement extends VNodeQuery {
 
   get style() {
     if (this._styles == null) {
-      let styles = Object.assign({}, DEFAULTS[this.tagName.toLowerCase()] || {})
-      let styleString = this.getAttribute("style")
+      const styles = Object.assign({}, DEFAULTS[this.tagName.toLowerCase()] || {})
+      const styleString = this.getAttribute('style')
       if (styleString) {
         let m: string[] | null
-        let re = /\s*([\w-]+)\s*:\s*([^;]+)/g
+        const re = /\s*([\w-]+)\s*:\s*([^;]+)/g
+        // eslint-disable-next-line no-cond-assign
         while ((m = re.exec(styleString))) {
-          let name = m[1]
-          let value = m[2].trim()
+          const name = m[1]
+          const value = m[2].trim()
           styles[name] = value
           styles[toCamelCase(name)] = value
         }
@@ -445,7 +449,8 @@ export class VElement extends VNodeQuery {
   }
 
   set id(value: string | null) {
-    if (value == null) delete this._attributes.id
+    if (value == null)
+      delete this._attributes.id
     else this._attributes.id = value
   }
 
@@ -454,7 +459,8 @@ export class VElement extends VNodeQuery {
   }
 
   set src(value: string | null) {
-    if (value == null) delete this._attributes.src
+    if (value == null)
+      delete this._attributes.src
     else this._attributes.src = value
   }
 
@@ -462,21 +468,21 @@ export class VElement extends VNodeQuery {
 
   getElementsByTagName(name: string) {
     name = name.toUpperCase()
-    let elements = this.flatten()
-    if (name !== "*") {
-      return elements.filter((e) => e.tagName === name)
-    }
+    const elements = this.flatten()
+    if (name !== '*')
+      return elements.filter(e => e.tagName === name)
+
     return elements
   }
 
   // html
 
-  setInnerHTML(html: string) {
-    throw "setInnerHTML is not implemented; see vdomparser for an example"
+  setInnerHTML(_html: string) {
+    // throw new Error('setInnerHTML is not implemented; see vdomparser for an example')
   }
 
   get innerHTML() {
-    return this._childNodes.map((c) => c.render(html)).join("")
+    return this._childNodes.map(c => c.render(html)).join('')
   }
 
   set innerHTML(html) {
@@ -490,24 +496,26 @@ export class VElement extends VNodeQuery {
   // class
 
   get className(): string {
-    return this._attributes["class"] || ""
+    return this._attributes.class || ''
   }
 
   set className(name: string | string[]) {
     if (Array.isArray(name)) {
-      name = name.filter((n) => !!n).join(" ")
-    } else if (typeof name === "object") {
+      name = name.filter(n => !!n).join(' ')
+    }
+    else if (typeof name === 'object') {
       name = Object.entries(name)
         .filter(([k, v]) => !!v)
         .map(([k, v]) => k)
-        .join(" ")
+        .join(' ')
     }
-    this._attributes["class"] = name
+    this._attributes.class = name
   }
 
   get classList() {
-    let self = this
-    let classNames = (this.className || "").trim().split(/\s+/g) || []
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    const classNames = (this.className || '').trim().split(/\s+/g) || []
     // log('classList', classNames)
     return {
       contains(s: any) {
@@ -520,7 +528,7 @@ export class VElement extends VNodeQuery {
         }
       },
       remove(s: any) {
-        let index = classNames.indexOf(s)
+        const index = classNames.indexOf(s)
         if (index >= 0) {
           classNames.splice(index, 1)
           self.className = classNames
@@ -535,13 +543,13 @@ export class VElement extends VNodeQuery {
     return h(
       this._originalTagName || this.tagName,
       this.attributes,
-      this._childNodes.map((c) => c.render(h)).join("") // children:string is not escaped again
+      this._childNodes.map(c => c.render(h)).join(''), // children:string is not escaped again
     )
   }
 }
 
 export class VDocType extends VNode {
-  //todo
+  // todo
 
   name: any
   publicId: any
@@ -560,7 +568,7 @@ export class VDocType extends VNode {
   }
 
   render() {
-    return `<!DOCTYPE html>` // hack!
+    return '<!DOCTYPE html>' // hack!
   }
 }
 
@@ -572,16 +580,16 @@ export class VDocumentFragment extends VNodeQuery {
   }
 
   get nodeName() {
-    return "#document-fragment"
+    return '#document-fragment'
   }
 
   render(h = htmlVDOM) {
-    return this._childNodes.map((c) => c.render(h) || []).join("")
+    return this._childNodes.map(c => c.render(h) || []).join('')
   }
 
   get innerHTML() {
     // for debug
-    return this._childNodes.map((c) => c.render(html)).join("")
+    return this._childNodes.map(c => c.render(html)).join('')
   }
 
   createElement(name: string, attrs = {}) {
@@ -603,7 +611,7 @@ export class VDocument extends VDocumentFragment {
   }
 
   get nodeName() {
-    return "#document"
+    return '#document'
   }
 
   get documentElement() {
@@ -612,22 +620,22 @@ export class VDocument extends VDocumentFragment {
 
   render(h = htmlVDOM) {
     let content = super.render(h)
-    if (this.docType) {
+    if (this.docType)
       content = this.docType.render() + content
-    }
+
     return content
   }
 }
 
 export class VHTMLDocument extends VDocument {
-  constructor(empty: boolean = false) {
+  constructor(empty = false) {
     super()
     this.docType = new VDocType()
     if (!empty) {
-      let html = new VElement("html")
-      let body = new VElement("body")
-      let head = new VElement("head")
-      let title = new VElement("title")
+      const html = new VElement('html')
+      const body = new VElement('body')
+      const head = new VElement('head')
+      const title = new VElement('title')
       html.appendChild(head)
       head.appendChild(title)
       html.appendChild(body)
@@ -636,37 +644,38 @@ export class VHTMLDocument extends VDocument {
   }
 
   get body(): VElement {
-    let body = this.querySelector("body")
+    let body = this.querySelector('body')
     if (!body) {
-      let html = this.querySelector("html")
+      let html = this.querySelector('html')
       if (!html) {
-        html = new VElement("html")
+        html = new VElement('html')
         this.appendChild(html)
       }
-      body = new VElement("body")
+      body = new VElement('body')
       html.appendChild(html)
     }
     return body
   }
 
   get title(): string {
-    return this.querySelector("title")?.textContent || ""
+    return this.querySelector('title')?.textContent || ''
   }
 
   set title(title: string) {
-    const titleElement = this.querySelector("title")
-    if (titleElement) titleElement.textContent = title
+    const titleElement = this.querySelector('title')
+    if (titleElement)
+      titleElement.textContent = title
   }
 
   get head(): VElement {
-    let head = this.querySelector("head")
+    let head = this.querySelector('head')
     if (!head) {
-      let html = this.querySelector("html")
+      let html = this.querySelector('html')
       if (!html) {
-        html = new VElement("html")
+        html = new VElement('html')
         this.appendChild(html)
       }
-      head = new VElement("head")
+      head = new VElement('head')
       html.insertBefore(html)
     }
     return head
@@ -681,5 +690,5 @@ export function createHTMLDocument(): VHTMLDocument {
   return new VHTMLDocument()
 }
 
-export let document = createDocument()
-export let h = hFactory({ document })
+export const document = createDocument()
+export const h = hFactory({ document })
