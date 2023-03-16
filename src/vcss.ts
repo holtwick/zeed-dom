@@ -1,11 +1,13 @@
 // (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
 
-import { parse } from "css-what"
-import { VElement } from "./vdom"
+import { parse } from 'css-what'
+import type { VElement } from './vdom'
+
+const log = (..._args: any) => {}
 
 // Alternative could be https://github.com/leaverou/parsel
 
-let cache = {}
+const cache: Record<string, any> = {}
 
 export function parseSelector(selector: string) {
   let ast = cache[selector]
@@ -21,74 +23,92 @@ export function parseSelector(selector: string) {
 export function matchSelector(
   selector: string,
   element: VElement,
-  { debug = false } = {}
+  { debug = false } = {},
 ) {
-  for (let rules of parseSelector(selector)) {
+  for (const rules of parseSelector(selector)) {
     if (debug) {
-      console.log("Selector:", selector)
-      console.log("Rules:", rules)
-      console.log("Element:", element)
+      log('Selector:', selector)
+      log('Rules:', rules)
+      log('Element:', element)
     }
 
     const handleRules = (element: VElement, rules: any[]) => {
-      let success: boolean = false
-      for (let part of rules) {
+      let success = false
+      for (const part of rules) {
         const { type, name, action, value, ignoreCase = true, data } = part
-        if (type === "attribute") {
-          if (action === "equals") {
+        if (type === 'attribute') {
+          if (action === 'equals') {
             success = element.getAttribute(name) === value
-            if (debug) console.log("Attribute equals", success)
-          } else if (action === "start") {
-            success = !!element.getAttribute(name)?.startsWith(value)
-            if (debug) console.log("Attribute start", success)
-          } else if (action === "end") {
-            success = !!element.getAttribute(name)?.endsWith(value)
-            if (debug) console.log("Attribute start", success)
-          } else if (action === "element") {
-            if (name === "class") {
-              success = element.classList.contains(value)
-              if (debug) console.log("Attribute class", success)
-            } else {
-              success = !!element.getAttribute(name)?.includes(value)
-              if (debug) console.log("Attribute element", success)
-            }
-          } else if (action === "exists") {
-            success = element.hasAttribute(name)
-            if (debug) console.log("Attribute exists", success)
-          } else {
-            console.warn("Unknown CSS selector action", action)
+            if (debug)
+              log('Attribute equals', success)
           }
-        } else if (type === "tag") {
+          else if (action === 'start') {
+            success = !!element.getAttribute(name)?.startsWith(value)
+            if (debug)
+              log('Attribute start', success)
+          }
+          else if (action === 'end') {
+            success = !!element.getAttribute(name)?.endsWith(value)
+            if (debug)
+              log('Attribute start', success)
+          }
+          else if (action === 'element') {
+            if (name === 'class') {
+              success = element.classList.contains(value)
+              if (debug)
+                log('Attribute class', success)
+            }
+            else {
+              success = !!element.getAttribute(name)?.includes(value)
+              if (debug)
+                log('Attribute element', success)
+            }
+          }
+          else if (action === 'exists') {
+            success = element.hasAttribute(name)
+            if (debug)
+              log('Attribute exists', success)
+          }
+          else {
+            console.warn('Unknown CSS selector action', action)
+          }
+        }
+        else if (type === 'tag') {
           success = element.tagName === name.toUpperCase()
-          if (debug) console.log("Is tag", success)
-        } else if (type === "universal") {
+          if (debug)
+            log('Is tag', success)
+        }
+        else if (type === 'universal') {
           success = true
-          if (debug) console.log("Is universal", success)
-        } else if (type === "pseudo") {
-          if (name === "not") {
+          if (debug)
+            log('Is universal', success)
+        }
+        else if (type === 'pseudo') {
+          if (name === 'not') {
             let ok = true
-            data.forEach((rules) => {
-              if (!handleRules(element, rules)) {
+            data.forEach((rules: any) => {
+              if (!handleRules(element, rules))
                 ok = false
-              }
             })
             success = !ok
           }
-          if (debug) console.log("Is :not", success)
+          if (debug)
+            log('Is :not', success)
           // } else if (type === 'descendant') {
           //   element = element.
-        } else {
-          console.warn("Unknown CSS selector type", type, selector, rules)
         }
-        // console.log(success, selector, part, element)
-        if (!success) break
+        else {
+          console.warn('Unknown CSS selector type', type, selector, rules)
+        }
+        // log(success, selector, part, element)
+        if (!success)
+          break
       }
       return success
     }
 
-    if (handleRules(element, rules)) {
+    if (handleRules(element, rules))
       return true
-    }
   }
   return false
 }

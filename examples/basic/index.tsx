@@ -1,17 +1,18 @@
+/* eslint-disable no-console */
 /** @jsx h */
 
-import { h, xml, vdom, tidyDOM } from "zeed-dom"
+import { h, tidyDOM, vdom, xml } from 'zeed-dom'
 
 {
-  let dom = h(
-    "ol",
+  const dom = h(
+    'ol',
     {
-      class: "projects",
+      class: 'projects',
     },
     [
-      h("li", null, "hostic ", h("img", { src: "logo.png" })),
-      h("li", null, "hostic-dom"),
-    ]
+      h('li', null, 'hostic ', h('img', { src: 'logo.png' })),
+      h('li', null, 'hostic-dom'),
+    ],
   )
 
   console.log(dom.render())
@@ -19,25 +20,24 @@ import { h, xml, vdom, tidyDOM } from "zeed-dom"
 }
 
 {
-  let dom = (
+  const dom = (
     <ol className="projects">
       <li>hostic</li>
       <li>hostic-dom</li>
     </ol>
   )
 
-  let projects = dom
-    .querySelectorAll("li")
+  const projects = dom
+    .querySelectorAll('li')
     .map((e: any) => e.textContent)
-    .join(", ")
+    .join(', ')
   console.log(projects)
 
-  dom.handle("li", (e: any) => {
-    if (!e.textContent.endsWith("-dom")) {
+  dom.handle('li', (e: any) => {
+    if (!e.textContent.endsWith('-dom'))
       e.remove()
-    } else {
-      e.innerHTML = "<b>hostic-dom</b> - great DOM helper for static content"
-    }
+    else
+      e.innerHTML = '<b>hostic-dom</b> - great DOM helper for static content'
   })
 
   console.log(dom.render())
@@ -45,7 +45,7 @@ import { h, xml, vdom, tidyDOM } from "zeed-dom"
 }
 
 {
-  let dom = vdom("<div>Hello World</div>")
+  const dom = vdom('<div>Hello World</div>')
   console.log(dom.render())
   tidyDOM(dom as any)
   console.log(dom.render())

@@ -2,16 +2,16 @@
   "name": "zeed-dom-example",
   "version": "1.0.0",
   "description": "",
+  "author": "Dirk Holtwick",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
     "start": "tsx index.tsx"
   },
-  "author": "Dirk Holtwick",
-  "license": "MIT",
-  "devDependencies": {
-    "tsx": "^3.8.0"
-  },
   "dependencies": {
     "zeed-dom": "link:../.."
+  },
+  "devDependencies": {
+    "tsx": "^3.8.0"
   }
 }

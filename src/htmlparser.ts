@@ -12,8 +12,7 @@ const endTagRe = /^<\/([^>\s]+)[^>]*>/m
 // 1. must start with <tagName
 // 2. optional attrbutes
 // 3. /> or >
-const startTagRe =
-  /^<([^>\s\/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*\/?\s*>/m
+const startTagRe = /^<([^>\s\/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*\/?\s*>/m
 const selfCloseTagRe = /\s*\/\s*>\s*$/m
 
 /**
@@ -30,12 +29,12 @@ export class HtmlParser {
   startTagRe = startTagRe
   defaults = { ignoreWhitespaceText: false }
 
-  constructor(options) {
-    options = options || {}
-    if (options.scanner) {
+  constructor(options: {
+    scanner?: any
+    ignoreWhitespaceText?: boolean
+  } = {}) {
+    if (options.scanner)
       this.scanner = options.scanner
-      options.scanner = null
-    }
     this.options = Object.assign({}, this.defaults, options)
   }
 
@@ -44,60 +43,61 @@ export class HtmlParser {
     let index, match, characters
     while (html.length) {
       // comment
-      if (html.substring(0, 4) === "<!--") {
-        index = html.indexOf("-->")
+      if (html.substring(0, 4) === '<!--') {
+        index = html.indexOf('-->')
         if (index !== -1) {
           this.scanner.comment(html.substring(4, index))
           html = html.substring(index + 3)
           treatAsChars = false
-        } else {
+        }
+        else {
           treatAsChars = true
         }
       }
       // end tag
-      else if (html.substring(0, 2) === "</") {
+      else if (html.substring(0, 2) === '</') {
         match = this.endTagRe.exec(html)
         if (match) {
-          // @ts-ignore
           html = RegExp.rightContext
           treatAsChars = false
           this.parseEndTag(RegExp.lastMatch, match[1])
-        } else {
+        }
+        else {
           treatAsChars = true
         }
       }
       // start tag
-      else if (html.charAt(0) === "<") {
+      else if (html.charAt(0) === '<') {
         match = this.startTagRe.exec(html)
         if (match) {
-          // @ts-ignore
           html = RegExp.rightContext
           treatAsChars = false
           this.parseStartTag(RegExp.lastMatch, match[1], match)
-        } else {
+        }
+        else {
           treatAsChars = true
         }
       }
 
       if (treatAsChars) {
-        index = html.indexOf("<")
+        index = html.indexOf('<')
 
         if (index === 0) {
           // First char is a < so find the next one
-          index = html.substring(1).indexOf("<")
+          index = html.substring(1).indexOf('<')
         }
 
         if (index === -1) {
           characters = html
-          html = ""
-        } else {
+          html = ''
+        }
+        else {
           characters = html.substring(0, index)
           html = html.substring(index)
         }
 
-        if (!this.options.ignoreWhitespaceText || !/^\s*$/.test(characters)) {
+        if (!this.options.ignoreWhitespaceText || !/^\s*$/.test(characters))
           this.scanner.characters(characters)
-        }
       }
 
       treatAsChars = true
@@ -105,28 +105,27 @@ export class HtmlParser {
     }
   }
 
-  parseStartTag(input, tagName, match) {
+  parseStartTag(input: string, tagName: string, match: any) {
     const isSelfColse = selfCloseTagRe.test(input)
     let attrInput = match[2]
-    if (isSelfColse) {
-      attrInput = attrInput.replace(/\s*\/\s*$/, "")
-    }
+    if (isSelfColse)
+      attrInput = attrInput.replace(/\s*\/\s*$/, '')
+
     const attrs = this.parseAttributes(tagName, attrInput)
     this.scanner.startElement(tagName, attrs, isSelfColse, match[0])
   }
 
-  parseEndTag(input, tagName: string) {
+  parseEndTag(input: string, tagName: string) {
     this.scanner.endElement(tagName)
   }
 
-  parseAttributes(tagName, input) {
-    const attrs = {}
-    input.replace(
-      this.attrRe,
-      (attr, name, c2, value, c4, valueInQuote, c6, valueInSingleQuote) => {
-        attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
-      }
-    )
+  parseAttributes(tagName: string, input: string) {
+    const attrs: Record<string, any> = {}
+    input.replace(this.attrRe, (...m: any[]) => {
+      const [_attr, name, _c2, value, _c4, valueInQuote, _c6, valueInSingleQuote] = m
+      attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
+      return undefined as any // hack
+    })
     return attrs
   }
 }

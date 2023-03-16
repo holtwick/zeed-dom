@@ -31,16 +31,16 @@ Used by [TipTap](https://www.tiptap.dev/) in its [html-package](https://github.c
 A simple example without JSX:
 
 ```js
-import { h, xml } from "zeed-dom"
+import { h, xml } from 'zeed-dom'
 
-let dom = h(
-  "ol",
+const dom = h(
+  'ol',
   {
-    class: "projects",
+    class: 'projects',
   },
   [
-    h("li", null, "zeed ", h("img", { src: "logo.png" })),
-    h("li", null, "zeed-dom"),
+    h('li', null, 'zeed ', h('img', { src: 'logo.png' })),
+    h('li', null, 'zeed-dom'),
   ]
 )
 
@@ -86,9 +86,9 @@ console.log(dom.render())
 In the second example you can see the special manipulation helper `.handle(selector, fn)` in action. You can also see HTML parsing works seamlessly. You can also parse directly:
 
 ```js
-import { vdom, tidyDOM } from "zeed-dom"
+import { tidyDOM, vdom } from 'zeed-dom'
 
-let dom = vdom("<div>Hello World</div>")
+const dom = vdom('<div>Hello World</div>')
 tidyDOM(dom)
 console.log(dom.render())
 // Output is pretty printed like: <div>
@@ -103,9 +103,9 @@ These examples are available at [/example](/example).
 Usually JSX is optimized for React i.e. it expects `React.creatElement` to exist and be the factory for generating the nodes. You can of course get the same effect here if you set up a helper like this:
 
 ```js
-import { html } from "zeed-dom"
+import { html } from 'zeed-dom'
 
-var React = {
+const React = {
   createElement: html,
 }
 ```
@@ -155,7 +155,7 @@ In options:
 
 ```js
 {
-  jsxFactory: "h"
+  jsxFactory: 'h'
 }
 ```
 
@@ -166,9 +166,9 @@ Or alternatively as [command line option](https://github.com/evanw/esbuild#comma
 The JSX factory can also be used to directly create HTML DOM nodes in the browser. Just create the `h` function and let it use the browser's `document` object:
 
 ```js
-const { hFactory } = require("zeed-dom")
+const { hFactory } = require('zeed-dom')
 
-export let h = hFactory({ document })
+export const h = hFactory({ document })
 ```
 
 ## Performance

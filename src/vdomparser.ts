@@ -1,69 +1,68 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
-import { unescapeHTML } from "./encoding"
-import { SELF_CLOSING_TAGS } from "./html"
-import { HtmlParser } from "./htmlparser"
+import { unescapeHTML } from './encoding'
+import { SELF_CLOSING_TAGS } from './html'
+import { HtmlParser } from './htmlparser'
 import {
-  document,
   VDocType,
   VDocumentFragment,
   VElement,
   VHTMLDocument,
   VNode,
   VTextNode,
-} from "./vdom"
+  document,
+} from './vdom'
 
 // Makes sure we operate on VNodes
 export function vdom(obj: VNode | Buffer | string | null = null): VNode {
-  if (obj instanceof VNode) {
+  if (obj instanceof VNode)
     return obj
-  }
-  if (obj instanceof Buffer) {
-    obj = obj.toString("utf-8")
-  }
-  if (typeof obj === "string") {
+
+  if (obj instanceof Buffer)
+    obj = obj.toString('utf-8')
+
+  if (typeof obj === 'string')
     return parseHTML(obj)
-  }
+
   // console.warn('Cannot convert to VDOM:', obj)
   return new VDocumentFragment()
 }
 
 export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
-  if (typeof html !== "string") {
-    console.error("parseHTML requires string, found", html)
-    throw new Error("parseHTML requires string")
+  if (typeof html !== 'string') {
+    console.error('parseHTML requires string, found', html)
+    throw new Error('parseHTML requires string')
   }
 
-  let frag =
-    html.indexOf("<!") === 0 ? new VHTMLDocument(true) : new VDocumentFragment() // !hack
+  const frag
+    = html.indexOf('<!') === 0 ? new VHTMLDocument(true) : new VDocumentFragment() // !hack
 
-  let stack: VNode[] = [frag]
+  const stack: VNode[] = [frag]
 
-  let parser = new HtmlParser({
+  const parser = new HtmlParser({
     // the for methods must be implemented yourself
     scanner: {
       startElement(
         tagName: string,
         attrs: Record<string, string>,
-        isSelfClosing: boolean
+        isSelfClosing: boolean,
       ) {
         const lowerTagName = tagName.toLowerCase()
 
-        if (lowerTagName === "!doctype") {
+        if (lowerTagName === '!doctype') {
           frag.docType = new VDocType()
           return
         }
 
-        for (let name in attrs) {
-          if (attrs.hasOwnProperty(name)) {
-            let value = attrs[name]
+        for (const name in attrs) {
+          if (Object.hasOwn(attrs, name)) {
+            const value = attrs[name]
             // console.log(name, value)
-            if (typeof value === "string") {
+            if (typeof value === 'string')
               attrs[name] = unescapeHTML(value)
-            }
           }
         }
-        let parentNode = stack[stack.length - 1]
+        const parentNode = stack[stack.length - 1]
         if (parentNode) {
           const element = document.createElement(tagName, attrs)
           parentNode.appendChild(element)
@@ -71,9 +70,8 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
             !(
               SELF_CLOSING_TAGS.includes(tagName.toLowerCase()) || isSelfClosing
             )
-          ) {
+          )
             stack.push(element)
-          }
         }
       },
       endElement(tagName: string) {
@@ -81,15 +79,15 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
       },
       characters(text: string) {
         text = unescapeHTML(text)
-        let parentNode = stack[stack.length - 1]
+        const parentNode = stack[stack.length - 1]
         if (parentNode?.lastChild?.nodeType === VNode.TEXT_NODE) {
           parentNode.lastChild._text += text
-        } else {
-          if (parentNode) {
+        }
+        else {
+          if (parentNode)
             parentNode.appendChild(new VTextNode(text))
             // } else {
             //   console.trace(parentNode, stack)
-          }
         }
       },
       comment(text: string) {},
@@ -137,7 +135,7 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
 // }
 
 VElement.prototype.setInnerHTML = function (html) {
-  let frag = parseHTML(html)
+  const frag = parseHTML(html)
   this._childNodes = frag._childNodes
   this._fixChildNodesParent()
 }

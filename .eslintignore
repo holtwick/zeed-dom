@@ -1,0 +1,9 @@
+dist
+node_modules
+build
+tmp
+demos
+coverage
+_archive
+*.spec.*
+vitest.config.ts

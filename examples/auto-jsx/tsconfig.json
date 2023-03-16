@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "jsxFactory": "jsx",
+    "jsx": "react-jsx",
     "jsxImportSource": "zeed-dom"
   }
 }

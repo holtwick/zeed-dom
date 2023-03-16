@@ -196,7 +196,7 @@ describe("VDOM", () => {
     )
 
     let a = el.querySelector("#a")
-    el.handle("link", (e) => a.appendChild(e))
+    el.handle("link", (e:any) => a.appendChild(e))
 
     expect(el.render()).toEqual(
       '<div><div id="a"><link rel="stylesheet" href=""></div><div id="b">Before<span>After</span></div></div>'
