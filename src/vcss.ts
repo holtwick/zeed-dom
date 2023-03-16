@@ -7,7 +7,7 @@ const log = (..._args: any) => {}
 
 // Alternative could be https://github.com/leaverou/parsel
 
-const cache = {}
+const cache: Record<string, any> = {}
 
 export function parseSelector(selector: string) {
   let ast = cache[selector]
@@ -86,7 +86,7 @@ export function matchSelector(
         else if (type === 'pseudo') {
           if (name === 'not') {
             let ok = true
-            data.forEach((rules) => {
+            data.forEach((rules: any) => {
               if (!handleRules(element, rules))
                 ok = false
             })

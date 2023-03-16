@@ -15,7 +15,7 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "sourceMap": true,
-    "strict": false,
+    "strict": true,
     "strictNullChecks": true,
     "types": [
       "node",

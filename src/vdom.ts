@@ -29,7 +29,7 @@ const DEFAULTS = {
   strike: S,
   // 'code': C,
   // 'tt': C
-}
+} as any
 
 const toCamelCase = (s: string) =>
   s.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
@@ -573,7 +573,7 @@ export class VDocType extends VNode {
 }
 
 export class VDocumentFragment extends VNodeQuery {
-  docType: VDocType
+  docType?: VDocType
 
   get nodeType() {
     return VNode.DOCUMENT_FRAGMENT_NODE

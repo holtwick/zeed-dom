@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
-import type { VDocument, VDocumentFragment } from './vdom'
+import type { VDocument, VDocumentFragment, VElement } from './vdom'
 
 /*
  * Abstraction for h/jsx like DOM descriptions.
@@ -15,10 +15,10 @@ interface Context {
 
 function _h(
   context: Context,
-  tag: string | ((a0: any) => string),
+  tag: string | ((a0: any) => VDocumentFragment | VElement),
   attrs: object,
   children: any[],
-): string {
+): VDocumentFragment | VElement {
   if (typeof tag === 'function') {
     return tag({
       props: { ...attrs, children },
@@ -29,26 +29,29 @@ function _h(
     })
   }
   else {
-    let el
+    let isElement = true
+    let el: VDocumentFragment | VElement
     if (tag) {
-      if (tag.toLowerCase() === 'fragment')
+      if (tag.toLowerCase() === 'fragment') {
         el = context.document.createDocumentFragment()
-      else
-        el = context.document.createElement(tag)
+        isElement = false
+      }
+      else { el = context.document.createElement(tag) }
     }
     else {
       el = context.document.createElement('div')
     }
-    if (attrs) {
+    if (attrs && isElement) {
+      const element = el as VElement
       for (let [key, value] of Object.entries(attrs)) {
         key = key.toString()
         const compareKey = key.toLowerCase()
         if (compareKey === 'classname') {
-          el.className = value
+          element.className = value
         }
         else if (compareKey === 'on') {
           Object.entries(value).forEach(([name, value]) => {
-            el.setAttribute(`on${name}`, value)
+            element.setAttribute(`on${name}`, String(value))
           })
           // else if (key.indexOf('on') === 0) {
           //   if (el.addEventListener) {
@@ -58,9 +61,9 @@ function _h(
         }
         else if (value !== false && value != null) {
           if (value === true)
-            el.setAttribute(key, key)
+            element.setAttribute(key, key)
           else
-            el.setAttribute(key, value.toString())
+            element.setAttribute(key, value.toString())
         }
       }
     }

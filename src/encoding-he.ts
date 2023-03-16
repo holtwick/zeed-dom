@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 /* eslint-disable no-misleading-character-class */
 /* eslint-disable no-control-regex */
 /*! https://mths.be/he v1.2.0 by @mathias | MIT license */
