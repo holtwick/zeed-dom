@@ -4006,7 +4006,7 @@ export function decode(html: string, options?: any) {
 
   return html.replace(
     regexDecode,
-    ($0, $1, $2, $3, $4, $5, $6, $7, $8) => {
+    ($0, $1, $2, $3, $4, $5, $6, $7, _$8) => {
       let codePoint
       let semicolon
       let decDigits

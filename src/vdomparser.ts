@@ -75,7 +75,7 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
             stack.push(element)
         }
       },
-      endElement(tagName: string) {
+      endElement(_tagName: string) {
         stack.pop()
       },
       characters(text: string) {
@@ -91,7 +91,7 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
             //   console.trace(parentNode, stack)
         }
       },
-      comment(text: string) {},
+      comment(_text: string) {},
     },
   })
   parser.parse(html)

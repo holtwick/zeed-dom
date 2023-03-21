@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 const dom = (
   <ol className="projects">
     <li>hostic</li>
