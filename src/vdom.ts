@@ -505,8 +505,8 @@ export class VElement extends VNodeQuery {
     }
     else if (typeof name === 'object') {
       name = Object.entries(name)
-        .filter(([k, v]) => !!v)
-        .map(([k, v]) => k)
+        .filter(([_k, v]) => !!v)
+        .map(([k, _v]) => k)
         .join(' ')
     }
     this._attributes.class = name

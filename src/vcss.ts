@@ -35,7 +35,7 @@ export function matchSelector(
     const handleRules = (element: VElement, rules: any[]) => {
       let success = false
       for (const part of rules) {
-        const { type, name, action, value, ignoreCase = true, data } = part
+        const { type, name, action, value, _ignoreCase = true, data } = part
         if (type === 'attribute') {
           if (action === 'equals') {
             success = element.getAttribute(name) === value

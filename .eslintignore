@@ -7,3 +7,5 @@ coverage
 _archive
 *.spec.*
 vitest.config.ts
+*.md
+*.yml
