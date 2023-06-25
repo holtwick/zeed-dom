@@ -69,10 +69,10 @@ export function matchSelector(
             if (debug)
               log('Attribute exists', success)
           }
-          else if(action === 'any') {
+          else if (action === 'any') {
             success = !!element.getAttribute(name)?.includes(value)
             if (debug)
-              console.log("Attribute any", success);
+              log('Attribute any', success)
           }
           else {
             console.warn('Unknown CSS selector action', action)
