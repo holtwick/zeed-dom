@@ -406,7 +406,13 @@ export class VElement extends VNodeQuery {
 
   getAttribute(name: string): string | null {
     const originalName = this._findAttributeName(name)
-    return originalName ? this._attributes[originalName] : null
+    const value = originalName ? this._attributes[originalName] : null
+    if (value == null)
+      return null
+    else if (typeof value === 'string')
+      return value
+    else
+      return ''
   }
 
   removeAttribute(name: string | number) {

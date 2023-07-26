@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
 // import Sizzle from './sizzle'
-import { createHTMLDocument, h, VDocument, VDocumentFragment } from "./vdom"
+import { createHTMLDocument, h, VDocument, VDocumentFragment, VElement } from "./vdom"
 import { parseHTML } from "./vdomparser"
 import { xml } from "./xml"
 
@@ -242,5 +242,14 @@ describe("VDOM", () => {
     expect(el.cloneNode(true).render()).toEqual(
       "<div><h1>Welcome</h1><div>Subtitle</div><p>Hallo</p></div>"
     )
+  })
+
+  it("should handle empty attrs", () => {
+    let element = new VElement("img", {"class": "avatar", "src": true, "alt": true})
+    let success = !!element.getAttribute("src")?.startsWith("data:")
+    expect(success).toBe(false)
+
+    let html = element.render()
+    expect(html).toBe('<img class="avatar" src alt>')
   })
 })
