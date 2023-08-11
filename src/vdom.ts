@@ -31,8 +31,9 @@ const DEFAULTS = {
   // 'tt': C
 } as any
 
-const toCamelCase = (s: string) =>
-  s.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+function toCamelCase(s: string): string {
+  return s.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (_m, chr) => chr.toUpperCase())
+}
 
 export class VNode {
   static ELEMENT_NODE = 1
@@ -521,7 +522,7 @@ export class VElement extends VNodeQuery {
   get classList() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
-    const classNames = (this.className || '').trim().split(/\s+/g) || []
+    const classNames = String(this.className ?? '').trim().split(/\s+/g) || []
     // log('classList', classNames)
     return {
       contains(s: any) {

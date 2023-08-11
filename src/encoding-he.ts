@@ -4050,7 +4050,7 @@ export function decode(html: string, options?: any) {
         if (strict && !semicolon)
           parseError('character reference was not terminated by a semicolon')
 
-        codePoint = parseInt(decDigits, 10)
+        codePoint = Number.parseInt(decDigits, 10)
         return codePointToSymbol(codePoint, strict)
       }
 
@@ -4061,7 +4061,7 @@ export function decode(html: string, options?: any) {
         if (strict && !semicolon)
           parseError('character reference was not terminated by a semicolon')
 
-        codePoint = parseInt(hexDigits, 16)
+        codePoint = Number.parseInt(hexDigits, 16)
         return codePointToSymbol(codePoint, strict)
       }
 
