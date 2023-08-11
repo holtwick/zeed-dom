@@ -3,7 +3,7 @@
 import { parse } from 'css-what'
 import type { VElement } from './vdom'
 
-const log = (..._args: any) => {}
+function log(..._args: any) {}
 
 // Alternative could be https://github.com/leaverou/parsel
 

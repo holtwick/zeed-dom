@@ -113,7 +113,7 @@ export function hArgumentParser(tag: any, attrs: any, ...children: any[]) {
     tag,
     attrs,
     children:
-      typeof children[0] === 'string' ? children : children.flat(Infinity),
+      typeof children[0] === 'string' ? children : children.flat(Number.POSITIVE_INFINITY),
   }
 }
 

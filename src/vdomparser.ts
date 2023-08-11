@@ -1,5 +1,7 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
+/* eslint-disable n/prefer-global/buffer */
+
 import { unescapeHTML } from './encoding'
 import { SELF_CLOSING_TAGS } from './html'
 import { HtmlParser } from './htmlparser'
