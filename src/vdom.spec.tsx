@@ -206,13 +206,13 @@ describe("VDOM", () => {
   it("should handle dataSet stuff", () => {
     let el = <div data-lang="en">Test</div>
 
-    expect(el.attributes).toEqual({ "data-lang": "en" })
+    expect(el.attributesObject).toEqual({ "data-lang": "en" })
     expect(el.render()).toEqual('<div data-lang="en">Test</div>')
 
     expect(el.querySelector("[data-lang]").textContent).toEqual("Test")
 
     let frag = parseHTML(el.render())
-    expect(frag.firstChild.attributes).toEqual({ "data-lang": "en" })
+    expect(frag.firstChild.attributesObject).toEqual({ "data-lang": "en" })
     expect(frag.render()).toEqual('<div data-lang="en">Test</div>')
   })
 

@@ -146,11 +146,13 @@ export class VNode {
     }
   }
 
+  /** Remove node */
   remove() {
     this?.parentNode?.removeChild(this)
     return this
   }
 
+  /** Replace content of node with text or nodes */
   replaceChildren(...nodes: any[]) {
     this._childNodes = nodes.map(n =>
       typeof n === 'string' ? new VTextNode(n) : n.remove(),
@@ -158,6 +160,7 @@ export class VNode {
     this._fixChildNodesParent()
   }
 
+  /** Replace node itself with nodes */
   replaceWith(...nodes: any[]) {
     const p = this._parentNode
     if (p) {
@@ -176,7 +179,6 @@ export class VNode {
   _indexInParent() {
     if (this._parentNode)
       return this._parentNode.childNodes.indexOf(this)
-
     return -1
   }
 
@@ -204,7 +206,6 @@ export class VNode {
     const i = this._indexInParent()
     if (i != null)
       return this.parentNode.childNodes[i + 1] || null
-
     return null
   }
 
@@ -212,7 +213,6 @@ export class VNode {
     const i = this._indexInParent()
     if (i > 0)
       return this.parentNode.childNodes[i - 1] || null
-
     return null
   }
 
@@ -220,10 +220,8 @@ export class VNode {
     const elements: VElement[] = []
     if (this instanceof VElement)
       elements.push(this)
-
     for (const child of this._childNodes)
       elements.push(...child.flatten())
-
     return elements
   }
 
@@ -232,7 +230,6 @@ export class VNode {
     nodes.push(this)
     for (const child of this._childNodes)
       nodes.push(...child.flattenNodes())
-
     return nodes
   }
 
@@ -356,6 +353,11 @@ export class VNodeQuery extends VNode {
   }
 }
 
+interface Attr {
+  name: string
+  value: string
+}
+
 export class VElement extends VNodeQuery {
   _originalTagName: string
   _nodeName: any
@@ -386,8 +388,13 @@ export class VElement extends VNodeQuery {
     return node
   }
 
-  get attributes() {
-    return this._attributes
+  get attributes(): Attr[] {
+    return Object.entries(this._attributes).map(([name, value]): Attr => ({ name, value }))
+    // return this._attributes
+  }
+
+  get attributesObject() {
+    return { ...this._attributes }
   }
 
   _findAttributeName(name: string) {
@@ -549,7 +556,7 @@ export class VElement extends VNodeQuery {
   render(h = htmlVDOM) {
     return h(
       this._originalTagName || this.tagName,
-      this.attributes,
+      this._attributes,
       this._childNodes.map(c => c.render(h)).join(''), // children:string is not escaped again
     )
   }
