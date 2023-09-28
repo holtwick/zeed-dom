@@ -1,1 +1,1 @@
-export type * from "../dist/jsx-runtime.d.ts"
+export type * from '../dist/jsx-runtime.d.ts'
