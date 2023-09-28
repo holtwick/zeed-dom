@@ -1,30 +1,30 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "target": "ES2019",
-    "declaration": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
     "lib": [
       "esnext",
       "dom",
       "dom.iterable",
       "scripthost"
     ],
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment",
     "module": "ESNext",
     "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "sourceMap": true,
-    "strict": true,
-    "strictNullChecks": true,
+    "baseUrl": ".",
     "types": [
       "node",
       "vitest/globals"
     ],
+    "resolveJsonModule": true,
     "allowJs": true,
-    "jsx": "react",
-    "jsxFactory": "h",
-    "jsxFragmentFactory": "Fragment"
+    "declaration": true,
+    "sourceMap": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "strictNullChecks": true
   },
   "include": [
     "src/**/*",
