@@ -458,6 +458,11 @@ export class VElement extends VNodeQuery {
     return this._nodeName
   }
 
+  /** Private function to easily change the tagName */
+  setTagName(name: string) {
+    this._nodeName = name.toUpperCase()
+  }
+
   get id(): string | null {
     return this._attributes.id || null
   }
