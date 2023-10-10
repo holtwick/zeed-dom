@@ -115,6 +115,11 @@ $('body')
       '<<<',
       '<<div',
       '<div<div',
+      '>',
+      '>>',
+      '>>>',
+      '>>div',
+      '>div>div',
     ]
 
     for (const t of tests) {
