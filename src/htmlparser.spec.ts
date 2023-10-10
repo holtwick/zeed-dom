@@ -8,8 +8,8 @@ describe("htmlparser", () => {
     <title>Test</title>
     </head>
     <body>
-    <pre><code class="lang-jsx">               
-      <span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>)}    
+    <pre><code class="lang-jsx">
+      <span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>)}
     </code></pre>
     </body>
     </html>`
@@ -106,5 +106,20 @@ $('body')
       })
       </script>"
     `)
+  })
+
+  it("should not recurse on bad fragment", () => {
+    const tests = [
+      '<',
+      '<<',
+      '<<<',
+      '<<div',
+      '<div<div',
+    ]
+
+    for (const t of tests) {
+      const { textContent: text } = parseHTML(t) as VHTMLDocument
+      expect(text).toEqual(t)
+    }
   })
 })
