@@ -81,10 +81,13 @@ export class HtmlParser {
 
       if (treatAsChars) {
         index = html.indexOf('<')
+        let offset = index
 
         if (index === 0) {
           // First char is a < so find the next one
           index = html.substring(1).indexOf('<')
+          // We're at substring(1) so add 1 to the index
+          offset = offset + 1
         }
 
         if (index === -1) {
@@ -92,8 +95,8 @@ export class HtmlParser {
           html = ''
         }
         else {
-          characters = html.substring(0, index)
-          html = html.substring(index)
+          characters = html.substring(0, offset)
+          html = html.substring(offset)
         }
 
         if (!this.options.ignoreWhitespaceText || !/^\s*$/.test(characters))
