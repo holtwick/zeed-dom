@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
-import { parseHTML } from "./vdomparser"
+import { parseHTML } from './vdomparser'
 
-describe("VDOM Parser", () => {
+describe('vDOM Parser', () => {
   // it('should work with js', () => {
   //   const html = 'Xyz <script type="text/javascript">var foo = \'<<bar>>\';</script>'
   //   let frag = parseHTML(html)
@@ -11,7 +11,7 @@ describe("VDOM Parser", () => {
   //   expect(rhtml).toBe(html)
   // })
 
-  it("should respect nested", () => {
+  it('should respect nested', () => {
     const html = `<!DOCTYPE html>
       <html lang="de">
      <body>
@@ -23,8 +23,8 @@ describe("VDOM Parser", () => {
     </body>
     </html>
     `
-    let frag = parseHTML(html)
-    let rhtml = frag.render()
+    const frag = parseHTML(html)
+    const rhtml = frag.render()
     // expect(rhtml).toBe('Xyz <script type="text/javascript">var foo = \'<<bar>>\';</script>')
     expect(rhtml).toEqual(html)
   })

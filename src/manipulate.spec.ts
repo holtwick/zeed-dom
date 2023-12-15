@@ -1,10 +1,9 @@
 // Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
-import { handleHTML } from "./manipulate"
+import { handleHTML } from './manipulate'
 
-describe("manipulate", () => {
-
-  it("should manipulate html", () => {
+describe('manipulate', () => {
+  it('should manipulate html', () => {
     const html = `<!DOCTYPE html>
     <html lang="de">
       <body>
@@ -13,15 +12,14 @@ describe("manipulate", () => {
     </html>
     `
 
-    let rhtml = handleHTML(html, document => {
-      let img = document.querySelector('.img-wrapper img')
-      console.log('img', img)
-      if (img) {
+    const rhtml = handleHTML(html, (document) => {
+      const img = document.querySelector('.img-wrapper img')
+      // console.log('img', img)
+      if (img)
         img.setAttribute('title', 'hello')
-      }
     })
 
-    expect(rhtml).toMatchInlineSnapshot( `
+    expect(rhtml).toMatchInlineSnapshot(`
       "<!DOCTYPE html>
           <html lang="de">
             <body>

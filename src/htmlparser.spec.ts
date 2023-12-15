@@ -1,7 +1,8 @@
-import { createHTMLDocument, parseHTML, VHTMLDocument, VTextNode } from "."
+import type { VHTMLDocument } from '.'
+import { VTextNode, createHTMLDocument, parseHTML } from '.'
 
-describe("htmlparser", () => {
-  it("should parse without errors", async () => {
+describe('htmlparser', () => {
+  it('should parse without errors', async () => {
     const sample = `<!DOCTYPE html>
     <html lang="de">
     <head>
@@ -13,35 +14,35 @@ describe("htmlparser", () => {
     </code></pre>
     </body>
     </html>`
-    let dom = parseHTML(sample) as VHTMLDocument
+    const dom = parseHTML(sample) as VHTMLDocument
     expect(dom != null).toBe(true)
     expect(dom.render()).toEqual(sample)
     expect(dom.head != null).toBe(true)
   })
 
-  it("should escape correctly", () => {
-    let dom = createHTMLDocument()
-    dom.body?.appendChild("</")
-    dom.body?.appendChild(new VTextNode("</"))
+  it('should escape correctly', () => {
+    const dom = createHTMLDocument()
+    dom.body?.appendChild('</')
+    dom.body?.appendChild(new VTextNode('</'))
     expect(dom.body?.firstChild?._text).toMatchInlineSnapshot(`"</"`)
     expect(dom.body?.textContent).toMatchInlineSnapshot(`"</</"`)
     expect(dom.body?.innerHTML).toMatchInlineSnapshot(`"&lt;/&lt;/"`)
     expect(dom.body?.outerHTML).toMatchInlineSnapshot(
-      `"<body>&lt;/&lt;/</body>"`
+      `"<body>&lt;/&lt;/</body>"`,
     )
     expect(dom.render()).toMatchInlineSnapshot(
-      `"<!DOCTYPE html><html><head><title></title></head><body>&lt;/&lt;/</body></html>"`
+      `"<!DOCTYPE html><html><head><title></title></head><body>&lt;/&lt;/</body></html>"`,
     )
   })
 
-  it("should handle entities correctly", () => {
+  it('should handle entities correctly', () => {
     // https://github.com/holtwick/zeed-dom/issues/3
-    let dom = parseHTML("<p>Let&#x27;s go</p>") as VHTMLDocument
+    const dom = parseHTML('<p>Let&#x27;s go</p>') as VHTMLDocument
     expect(dom.textContent).toMatchInlineSnapshot(`"Let's go"`)
     expect(dom.render()).toMatchInlineSnapshot(`"<p>Let&apos;s go</p>"`)
   })
 
-  it("should ignore escape for script etc.", () => {
+  it('should ignore escape for script etc.', () => {
     const html = `<script>
 var x = 1 & 4
 window.addEventListener('load', function () {
@@ -51,7 +52,7 @@ $('body')
   .attr('data-target', '#outline')
 })
 </script>`
-    let dom = parseHTML(html) as VHTMLDocument
+    const dom = parseHTML(html) as VHTMLDocument
     expect(dom.textContent).toMatchInlineSnapshot(`
       "
       var x = 1 & 4
@@ -108,7 +109,7 @@ $('body')
     `)
   })
 
-  it("should not recurse on bad fragment", () => {
+  it('should not recurse on bad fragment', () => {
     const tests = [
       '<',
       '<<',

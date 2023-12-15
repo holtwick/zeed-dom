@@ -45,8 +45,8 @@ export function markup(
   const hasChildren = !(
     (typeof children === 'string' && children === '')
     || (Array.isArray(children)
-      && (children.length === 0
-        || (children.length === 1 && children[0] === '')))
+    && (children.length === 0
+    || (children.length === 1 && children[0] === '')))
     || children == null
   )
 
