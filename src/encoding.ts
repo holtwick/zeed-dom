@@ -7,6 +7,8 @@ export function escapeHTML(text: string) {
     .replace(/>/g, '&gt;')
     .replace(/'/g, '&apos;')
     .replace(/"/g, '&quot;')
+    .replace(/\xA0/g, '&nbsp;')
+    .replace(/\xAD/g, '&shy;')
 }
 
 // encode(text, {

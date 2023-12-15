@@ -639,7 +639,6 @@ export class VDocument extends VDocumentFragment {
     let content = super.render(h)
     if (this.docType)
       content = this.docType.render() + content
-
     return content
   }
 }
