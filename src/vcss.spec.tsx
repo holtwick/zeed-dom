@@ -1,9 +1,9 @@
 // (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
 
 import { matchSelector } from './vcss'
-import { createHTMLDocument } from './vdom'
+import { createHTMLDocument, h } from './vdom'
 
-// let _keepH = h
+const _keepH = h
 
 describe('cSS', () => {
   it('should parse', () => {
