@@ -1,18 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2019",
+    "target": "ES2020",
     "jsx": "react",
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment",
     "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
     ],
     "baseUrl": ".",
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "types": [
       "node",
@@ -27,12 +26,12 @@
     "isolatedModules": true
   },
   "include": [
-    "src/**/*",
-    "index.ts"
+    "src/**/*"
   ],
   "exclude": [
+    "_archive",
     "node_modules",
     "dist",
-    "src/**/*.spec.ts"
+    "node_modules"
   ]
 }
