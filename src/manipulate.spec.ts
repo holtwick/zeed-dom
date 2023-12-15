@@ -23,9 +23,9 @@ describe("manipulate", () => {
 
     expect(rhtml).toMatchInlineSnapshot( `
       "<!DOCTYPE html>
-          <html lang=\\"de\\">
+          <html lang="de">
             <body>
-              <p class=\\"img-wrapper\\"><img src=\\"/assets/ocr@2x-97ede361.png\\" alt=\\"\\" width=\\"621\\" height=\\"422\\"></p>
+              <p class="img-wrapper"><img src="/assets/ocr@2x-97ede361.png" alt="" width="621" height="422"></p>
             </body>
           </html>
           "
