@@ -257,7 +257,7 @@ export class VNode {
   get ownerDocument() {
     if (
       this.nodeType === VNode.DOCUMENT_NODE
-      || this.nodeType === VNode.DOCUMENT_FRAGMENT_NODE
+        || this.nodeType === VNode.DOCUMENT_FRAGMENT_NODE
     )
       return this
 
@@ -532,25 +532,23 @@ export class VElement extends VNodeQuery {
   }
 
   get classList() {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self = this
     const classNames = String(this.className ?? '').trim().split(/\s+/g) || []
     // log('classList', classNames)
     return {
       contains(s: any) {
         return classNames.includes(s)
       },
-      add(s: any) {
+      add: (s: any) => {
         if (!classNames.includes(s)) {
           classNames.push(s)
-          self.className = classNames
+          this.className = classNames
         }
       },
-      remove(s: any) {
+      remove: (s: any) => {
         const index = classNames.indexOf(s)
         if (index >= 0) {
           classNames.splice(index, 1)
-          self.className = classNames
+          this.className = classNames
         }
       },
     }
@@ -641,7 +639,6 @@ export class VDocument extends VDocumentFragment {
     let content = super.render(h)
     if (this.docType)
       content = this.docType.render() + content
-
     return content
   }
 }

@@ -1,8 +1,10 @@
 /* eslint-disable no-console */
 'use strict'
 exports.__esModule = true
-const dom = (<ol className="projects">
+const dom = (
+  <ol className="projects">
     <li>hostic</li>
     <li>hostic-dom</li>
-  </ol>)
+  </ol>
+)
 console.log(dom)

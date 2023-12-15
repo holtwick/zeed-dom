@@ -1,45 +1,45 @@
 // (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
 
-import { matchSelector } from "./vcss"
-import { createHTMLDocument, h } from "./vdom"
+import { matchSelector } from './vcss'
+import { createHTMLDocument, h } from './vdom'
 
-// let _keepH = h
+const _keepH = h
 
-describe("CSS", () => {
-  it("should parse", () => {
-    let element = (
+describe('cSS', () => {
+  it('should parse', () => {
+    const element = (
       <div id="foo" className="foo bar" foo="bar" data-lang="en">
         ...
       </div>
     )
-    expect(matchSelector("#foo", element)).toBe(true)
-    expect(matchSelector(".foo", element)).toBe(true)
-    expect(matchSelector("div", element)).toBe(true)
-    expect(matchSelector("[id=foo]", element)).toBe(true)
-    expect(matchSelector("[id]", element)).toBe(true)
-    expect(matchSelector("div, p", element)).toBe(true)
-    expect(matchSelector(":not(h1)", element)).toBe(true)
-    expect(matchSelector("*[data-lang]", element)).toBe(true)
-    expect(matchSelector("#foo, #bar", element)).toBe(true)
-    expect(matchSelector("#bar, #foo", element)).toBe(true)
+    expect(matchSelector('#foo', element)).toBe(true)
+    expect(matchSelector('.foo', element)).toBe(true)
+    expect(matchSelector('div', element)).toBe(true)
+    expect(matchSelector('[id=foo]', element)).toBe(true)
+    expect(matchSelector('[id]', element)).toBe(true)
+    expect(matchSelector('div, p', element)).toBe(true)
+    expect(matchSelector(':not(h1)', element)).toBe(true)
+    expect(matchSelector('*[data-lang]', element)).toBe(true)
+    expect(matchSelector('#foo, #bar', element)).toBe(true)
+    expect(matchSelector('#bar, #foo', element)).toBe(true)
   })
 
-  it("should parse and fail", () => {
-    let element = <h1>...</h1>
-    expect(matchSelector("#foo", element)).toBe(false)
-    expect(matchSelector(".foo", element)).toBe(false)
-    expect(matchSelector("div", element)).toBe(false)
-    expect(matchSelector("[id=foo]", element)).toBe(false)
-    expect(matchSelector("[id]", element)).toBe(false)
-    expect(matchSelector("div, p", element)).toBe(false)
-    expect(matchSelector(":not(h1)", element)).toBe(false)
-    expect(matchSelector("*[data-lang]", element)).toBe(false)
-    expect(matchSelector("#foo, #bar", element)).toBe(false)
-    expect(matchSelector("#bar, #foo", element)).toBe(false)
+  it('should parse and fail', () => {
+    const element = <h1>...</h1>
+    expect(matchSelector('#foo', element)).toBe(false)
+    expect(matchSelector('.foo', element)).toBe(false)
+    expect(matchSelector('div', element)).toBe(false)
+    expect(matchSelector('[id=foo]', element)).toBe(false)
+    expect(matchSelector('[id]', element)).toBe(false)
+    expect(matchSelector('div, p', element)).toBe(false)
+    expect(matchSelector(':not(h1)', element)).toBe(false)
+    expect(matchSelector('*[data-lang]', element)).toBe(false)
+    expect(matchSelector('#foo, #bar', element)).toBe(false)
+    expect(matchSelector('#bar, #foo', element)).toBe(false)
   })
 
-  it("should handle hierarchy", () => {
-    let element = (
+  it('should handle hierarchy', () => {
+    const element = (
       <a>
         <b>
           <c>
@@ -48,15 +48,15 @@ describe("CSS", () => {
         </b>
       </a>
     )
-    expect(element.querySelector("a").tagName).toBe("A")
+    expect(element.querySelector('a').tagName).toBe('A')
     // expect(element.querySelector('b c').tagName).toBe('C')
   })
 
-  it("should complex attributes", () => {
-    let element = <div title="abcdefg"></div>
-    expect(matchSelector("[title]", element)).toBe(true)
-    expect(matchSelector("[title=abcdefg]", element)).toBe(true)
-    expect(matchSelector("[title=xxx]", element)).toBe(false)
+  it('should complex attributes', () => {
+    const element = <div title="abcdefg"></div>
+    expect(matchSelector('[title]', element)).toBe(true)
+    expect(matchSelector('[title=abcdefg]', element)).toBe(true)
+    expect(matchSelector('[title=xxx]', element)).toBe(false)
     expect(matchSelector('div[title="abcdefg"]', element)).toBe(true)
     expect(matchSelector('div[title="xxx"]', element)).toBe(false)
     expect(matchSelector('[title~="cd"]', element)).toBe(true)
@@ -67,14 +67,14 @@ describe("CSS", () => {
     expect(matchSelector('[title$="xxx"]', element)).toBe(false)
   })
 
-  it("should specific meta", () => {
+  it('should specific meta', () => {
     let element = (
       <meta
         name="viewport"
         content="width=device-width, initial-scale=1, shrink-to-fit=no"
       />
     )
-    expect(matchSelector("meta[name=viewport]", element)).toBe(true)
+    expect(matchSelector('meta[name=viewport]', element)).toBe(true)
 
     element = (
       <meta
@@ -82,11 +82,11 @@ describe("CSS", () => {
         content="width=device-width, initial-scale=1, shrink-to-fit=no"
       />
     )
-    expect(matchSelector("meta[name=viewport]", element)).toBe(false)
+    expect(matchSelector('meta[name=viewport]', element)).toBe(false)
   })
 
-  it("should query meta", () => {
-    let document = createHTMLDocument()
+  it('should query meta', () => {
+    const document = createHTMLDocument()
     document.head?.replaceWith(
       <head>
         <meta charSet="utf-8" />
@@ -164,10 +164,10 @@ describe("CSS", () => {
         />
         <meta property="og:video" content="https://youtu.be/k4pOgDWYm2U" />
         <meta property="og:video" content="https://youtu.be/TJTsAQguaVE" />
-      </head>
+      </head>,
     )
 
-    expect(!document.querySelector("meta[charset]")).toBe(false)
+    expect(!document.querySelector('meta[charset]')).toBe(false)
   })
 
   // it('should be single fail', () => {
