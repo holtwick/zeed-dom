@@ -65,7 +65,7 @@ $('body')
       "
     `)
     expect(dom).toMatchInlineSnapshot(`
-      VDocumentFragment {
+      _VDocumentFragment {
         "_childNodes": [
           VElement {
             "_attributes": {},
@@ -76,7 +76,7 @@ $('body')
                 "_text": "
       var x = 1 & 4
       window.addEventListener('load', function () {
-      \$('body')
+      $('body')
         .attr('data-spy', 'scroll')
         .attr('data-offset', '88')
         .attr('data-target', '#outline')
