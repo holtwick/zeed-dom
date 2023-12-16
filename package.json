@@ -1,7 +1,7 @@
 {
   "name": "zeed-dom",
   "type": "module",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "description": "🌱 Lightweight offline DOM",
   "author": {
     "name": "Dirk Holtwick",
@@ -24,11 +24,11 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "browser": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "node": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/index.node.d.ts",
+      "browser": "./dist/index.browser.js",
+      "require": "./dist/index.browser.cjs",
+      "node": "./dist/index.node.js",
+      "default": "./dist/index.browser.js"
     },
     "./jsx-runtime": {
       "types": "./dist/jsx-runtime.d.ts",
@@ -42,9 +42,9 @@
       "require": "./dist/jsx-runtime.cjs"
     }
   },
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "dist/index.node.cjs",
+  "module": "dist/index.browser.js",
+  "typings": "dist/index.node.d.ts",
   "files": [
     "dist",
     "jsx-runtime"
@@ -54,7 +54,8 @@
   },
   "scripts": {
     "build": "npm run clean && npm run build:tsup",
-    "build:tsup": "tsup src/index.ts src/jsx-runtime.ts --dts --sourcemap --format esm,cjs",
+    "build:tsup": "tsup src/index.browser.ts src/index.node.ts src/jsx-runtime.ts --dts --sourcemap --format esm,cjs",
+    "build:docs": "typedoc src/index.ts",
     "check": "tsc --noEmit -p tsconfig.json",
     "clean": "rm -rf dist",
     "lint": "eslint .",
@@ -75,6 +76,7 @@
     "c8": "^8.0.1",
     "eslint": "^8.55.0",
     "tsup": "^8.0.1",
+    "typedoc": "^0.25.4",
     "typescript": "^5.3.3",
     "vite": "^5.0.9",
     "vitest": "^1.0.4"
