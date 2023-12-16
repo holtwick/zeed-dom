@@ -1,5 +1,7 @@
 #!/usr/bin/env tsx
 
+/** @jsx h */
+
 import { resolve } from 'node:path'
 import * as url from 'node:url'
 import { h, handleHTMLFile } from '../../src/index.node'
