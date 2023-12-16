@@ -66,7 +66,7 @@ $('body')
       "
     `)
     expect(dom).toMatchInlineSnapshot(`
-      _VDocumentFragment {
+      VDocumentFragment {
         "_childNodes": [
           VElement {
             "_attributes": {},
