@@ -26,8 +26,7 @@
     "isolatedModules": true
   },
   "include": [
-    "src/**/*",
-    "examples/**/*.tsx"
+    "src/**/*"
   ],
   "exclude": [
     "_archive",

@@ -55,6 +55,7 @@
   "scripts": {
     "build": "npm run clean && npm run build:tsup",
     "build:tsup": "tsup src/index.ts src/jsx-runtime.ts --dts --sourcemap --format esm,cjs",
+    "build:docs": "typedoc src/index.ts",
     "check": "tsc --noEmit -p tsconfig.json",
     "clean": "rm -rf dist",
     "lint": "eslint .",
@@ -75,6 +76,7 @@
     "c8": "^8.0.1",
     "eslint": "^8.55.0",
     "tsup": "^8.0.1",
+    "typedoc": "^0.25.4",
     "typescript": "^5.3.3",
     "vite": "^5.0.9",
     "vitest": "^1.0.4"
