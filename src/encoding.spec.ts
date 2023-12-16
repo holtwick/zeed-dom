@@ -1,4 +1,4 @@
-import { escapeHTML } from '.'
+import { escapeHTML } from './encoding'
 
 describe('encoding', () => {
   it('should encoding', () => {
