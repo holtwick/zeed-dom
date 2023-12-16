@@ -1,5 +1,6 @@
-import type { VHTMLDocument } from '.'
-import { VTextNode, createHTMLDocument, parseHTML } from '.'
+import type { VHTMLDocument } from './vdom'
+import { VTextNode, createHTMLDocument } from './vdom'
+import { parseHTML } from './vdomparser'
 
 describe('htmlparser', () => {
   it('should parse without errors', async () => {
