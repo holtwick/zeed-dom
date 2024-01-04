@@ -127,9 +127,7 @@ export class VNode {
         this._childNodes.push(new VTextNode(text))
       }
       catch (err) {
-        console.error(
-          `The data ${node} to be added to ${this.render()} is problematic: ${err}`,
-        )
+        console.error(`The data ${node} to be added to ${this.render()} is problematic: ${err}`)
       }
     }
     this._fixChildNodesParent()
@@ -255,10 +253,7 @@ export class VNode {
   }
 
   get ownerDocument() {
-    if (
-      this.nodeType === VNode.DOCUMENT_NODE
-        || this.nodeType === VNode.DOCUMENT_FRAGMENT_NODE
-    )
+    if (this.nodeType === VNode.DOCUMENT_NODE || this.nodeType === VNode.DOCUMENT_FRAGMENT_NODE)
       return this
 
     return this?._parentNode?.ownerDocument
@@ -708,3 +703,15 @@ export function createHTMLDocument(): VHTMLDocument {
 
 export const document = createDocument()
 export const h = hFactory({ document })
+
+export function isVElement(n: VNode): n is VElement {
+  return n.nodeType === VNode.ELEMENT_NODE
+}
+
+export function isVTextElement(n: VNode): n is VTextNode {
+  return n.nodeType === VNode.TEXT_NODE
+}
+
+export function isVDocument(n: VNode): n is VDocument {
+  return n.nodeType === VNode.DOCUMENT_NODE
+}
