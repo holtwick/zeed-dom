@@ -3,7 +3,7 @@
 import type { VDocument } from './vdom'
 import { VNode, VTextNode } from './vdom'
 
-export const SELECTOR_BLOCK_ELEMENTS = 'meta,link,script,p,h1,h2,h3,h4,h5,h6,blockquote,div,ul,ol,li,article,section,footer,head,body,title,nav,section,article,hr,form'
+export const SELECTOR_BLOCK_ELEMENTS = 'meta,link,script,p,h1,h2,h3,h4,h5,h6,blockquote,div,ul,ol,li,article,section,footer,head,body,title,nav,hr,form'
 export const TAGS_KEEP_CONTENT = ['PRE', 'CODE', 'SCRIPT', 'STYLE', 'TT']
 
 function level(element: VNode): string {
