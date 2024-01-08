@@ -1,5 +1,6 @@
 import { escapeHTML } from './encoding'
 import { VNode, isVElement } from './vdom'
+import { parseHTML } from './vdomparser'
 
 export const SELECTOR_BLOCK_ELEMENTS = 'p,h1,h2,h3,h4,h5,h6,blockquote,div,ul,ol,li,article,section,footer,nav,hr,form'
 
@@ -46,4 +47,8 @@ function serialize(node: VNode, context: SerializeContext = {
 
 export function serializeSafeHTML(node: VNode): string {
   return serialize(node).trim()
+}
+
+export function safeHTML(html: string) {
+  return serializeSafeHTML(parseHTML(html))
 }
