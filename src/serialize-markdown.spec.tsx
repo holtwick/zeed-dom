@@ -62,7 +62,11 @@ describe('serialize', () => {
       - One
       - Two
 
+      \`\`\`
+
       Do nothing
+
+      \`\`\`
       "
     `)
 

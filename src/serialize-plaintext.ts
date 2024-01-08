@@ -1,6 +1,6 @@
 import { SELECTOR_BLOCK_ELEMENTS } from './tidy'
-import type { VElement, VNode } from './vdom'
-import { isVElement } from './vdom'
+import type { VElement } from './vdom'
+import { VNode, isVElement } from './vdom'
 
 interface SerializeContext {
   level: number
@@ -12,7 +12,11 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
   level: 0,
   count: 0,
 }): string {
-  if (isVElement(node)) {
+  if (node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE) {
+    return node.children.map(c => serialize(c, { ...context })).join('')
+  }
+
+  else if (isVElement(node)) {
     const tag: string = node.tagName.toLowerCase()
 
     const handleChildren = (ctx?: Partial<SerializeContext>): string => node.children.map(c => serialize(c, { ...context, ...ctx })).join('')
