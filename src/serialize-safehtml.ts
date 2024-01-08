@@ -23,7 +23,8 @@ function serialize(node: VNode, context: SerializeContext = {
     const handleChildren = (ctx?: Partial<SerializeContext>): string => node.children.map(c => serialize(c, { ...context, ...ctx })).join('')
 
     const rules: Record<string, () => string> = {
-      a: () => `<a href="${escapeHTML(node.getAttribute('href') ?? '')}">${handleChildren()}</a>`,
+      a: () => `<a href="${escapeHTML(node.getAttribute('href') ?? '')}" rel="noopener noreferrer" target="_blank">${handleChildren()}</a>`,
+      img: () => `<img src="${escapeHTML(node.getAttribute('src') ?? '')}" alt="${escapeHTML(node.getAttribute('alt') ?? '')}">`,
       br: () => `<br>`,
       title: () => '',
       script: () => '',

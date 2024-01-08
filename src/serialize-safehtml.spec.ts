@@ -75,7 +75,7 @@ describe('serialize safe html', () => {
               <p>This is a          
                 sample
                 . &gt; And a link          
-                <a href="https://example.com?x=a%20b&amp;y=1">example</a>
+                <a href="https://example.com?x=a%20b&amp;y=1" rel="noopener noreferrer" target="_blank">example</a>
                 .</p>
               <p>Some &amp; lines          
                 <br>          
