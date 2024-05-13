@@ -1,4 +1,5 @@
-import { decode } from './encoding-he'
+// import { decode } from './encoding-he'
+import { decodeHTML as decode} from 'entities'
 
 export function escapeHTML(text: string) {
   return text

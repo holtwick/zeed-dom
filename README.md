@@ -112,6 +112,8 @@ const React = {
 
 But more common is the use of `h` as the factory function. Here is how you can set up this behavior for various environments:
 
+> In case of error messages on JSX in your Typescript project, try to add `npm install -D @types/react`.
+
 ### Babel.js
 
 Add required plugins:
