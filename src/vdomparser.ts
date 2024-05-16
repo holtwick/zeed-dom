@@ -1,5 +1,4 @@
 /* eslint-disable node/prefer-global/buffer */
-// Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 
 import { unescapeHTML } from './encoding'
 import { SELF_CLOSING_TAGS } from './html'

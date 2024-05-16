@@ -5,7 +5,7 @@
 - Written in Typescript
 - Generates HTML and XML
 - Parses HTML
-- Supports CSS selectors and queries
+- Supports some CSS selectors and queries
 - JSX compatible
 - Easy content manipulation (e.g. through `element.handle` helper)
 - Pretty print HTML (`tidyDOM`)
@@ -25,6 +25,28 @@ npm i zeed-dom
 - [hostic](https://github.com/holtwick/hostic) - Static site generator
 
 Used by [TipTap](https://www.tiptap.dev/) in its [html-package](https://github.com/ueberdosis/tiptap/tree/aac0193050228a8b6237d84f1eb587cfc0d08e24/packages/html).
+
+## Utils
+
+### Manipulation
+
+Drop in HTML and query and change it. Returns HTML again. Nice for post processing.
+
+```ts
+const newHTML = handleHTML(html, (document) => {
+  const img = document.querySelector('.img-wrapper img')
+  if (img)
+    img.setAttribute('title', img.getAttribute('src'))
+})
+```
+
+### Serialization
+
+Take any HTML node or document an serialize it so some other format:
+
+- `serializePlaintext(node)`: Readable and searchable plain text
+- `serializeMarkdown(node)`: Simple Markdown
+- `serializeSafeHTML(node)` or `safeHTML(htmlString)`: Just allow some basic tags and attributes
 
 ## Example
 
@@ -113,30 +135,7 @@ const React = {
 But more common is the use of `h` as the factory function. Here is how you can set up this behavior for various environments:
 
 > In case of error messages on JSX in your Typescript project, try to add `npm install -D @types/react`.
-
-### Babel.js
-
-Add required plugins:
-
-```shell script
-npm i -D @babel/plugin-syntax-jsx @babel/plugin-transform-react-jsx
-```
-
-Then add this to `.babelrc`:
-
-```json
-{
-  "plugins": [
-    "@babel/plugin-syntax-jsx",
-    [
-      "@babel/plugin-transform-react-jsx",
-      {
-        "pragma": "h"
-      }
-    ]
-  ]
-}
-```
+ 
 
 ### TypeScript
 
@@ -147,6 +146,17 @@ In [`tsconfig.json`](https://www.typescriptlang.org/docs/handbook/compiler-optio
   "compilerOptions": {
     "jsx": "react",
     "jsxFactory": "h"
+  }
+}
+```
+
+To avoid type checking issues you should add this to you `shims.d.ts`:
+
+```ts
+// https://www.typescriptlang.org/docs/handbook/jsx.html#intrinsic-elements
+declare namespace JSX {
+  interface IntrinsicElements {
+    [elemName: string]: any
   }
 }
 ```
