@@ -1,5 +1,3 @@
-// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
-
 import { removeBodyContainer } from './utils'
 import { createHTMLDocument } from './vdom'
 

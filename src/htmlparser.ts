@@ -6,13 +6,13 @@
 // 2. and then \s*=\s*
 // 3. and value can be "value" | 'value' | value
 // 4. 2 and 3 are optional
-const attrRe = /([^=\s]+)(\s*=\s*(("([^"]*)")|('([^']*)')|[^>\s]+))?/gm
+const attrRe = /([^=\s]+)(\s*=\s*(("([^"]*)")|('([^']*)')|[^>\s]+))?/g
 const endTagRe = /^<\/([^>\s]+)[^>]*>/m
 // start tag, like <a href="link"> <img/>
 // 1. must start with <tagName
 // 2. optional attrbutes
 // 3. /> or >
-const startTagRe = /^<([^>\s\/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*\/?\s*>/m
+const startTagRe = /^<([^>\s/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*(?:\/\s*)?>/m
 const selfCloseTagRe = /\s*\/\s*>\s*$/m
 
 /**

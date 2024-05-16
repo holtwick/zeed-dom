@@ -6,7 +6,7 @@ describe('encoding', () => {
     expect(escapeHTML('<and> &')).toEqual('&lt;and&gt; &amp;')
   })
 
-  it("should decode",  () => {
+  it('should decode', () => {
     expect(unescapeHTML('&amp; &#x3A; &copy;')).toEqual('& : ©')
   })
 })

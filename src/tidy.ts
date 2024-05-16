@@ -1,5 +1,3 @@
-// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
-
 import type { VDocument } from './vdom'
 import { VNode, VTextNode } from './vdom'
 

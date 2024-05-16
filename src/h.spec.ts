@@ -1,5 +1,3 @@
-// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
-
 import { hArgumentParser } from './h'
 
 describe('h', () => {

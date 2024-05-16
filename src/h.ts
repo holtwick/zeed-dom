@@ -1,5 +1,3 @@
-// Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
-
 import type { VDocument, VDocumentFragment, VElement } from './vdom'
 
 /*

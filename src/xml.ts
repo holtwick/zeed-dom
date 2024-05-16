@@ -1,5 +1,4 @@
-// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
-
+import './jsx-runtime'
 import { hArgumentParser } from './h'
 import { markup } from './html'
 
