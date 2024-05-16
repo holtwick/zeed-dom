@@ -1,5 +1,3 @@
-// Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
-
 // import Sizzle from './sizzle'
 import { VDocument, VDocumentFragment, VElement, createHTMLDocument, h } from './vdom'
 import { parseHTML } from './vdomparser'

@@ -1,5 +1,3 @@
-// Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
-
 import { escapeHTML } from './encoding'
 import { hFactory } from './h'
 import { html, htmlVDOM } from './html'

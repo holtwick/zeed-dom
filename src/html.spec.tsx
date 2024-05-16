@@ -1,4 +1,3 @@
-// Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
 /** @jsx h */
 
 import { CDATA, html as h } from './html'
