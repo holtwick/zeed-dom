@@ -1,5 +1,3 @@
-export * from './jsx-intrinsicelements'
-
 export * from './vdom'
 export * from './h'
 export * from './utils'

@@ -1,7 +1,7 @@
 {
   "name": "zeed-dom",
   "type": "module",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "🌱 Lightweight offline DOM",
   "author": {
     "name": "Dirk Holtwick",
@@ -31,15 +31,16 @@
       "default": "./dist/index.browser.js"
     },
     "./jsx-runtime": {
-      "types": "./dist/jsx-runtime.d.ts",
-      "browser": "./dist/jsx-runtime.js",
-      "import": "./dist/jsx-runtime.js",
-      "require": "./dist/jsx-runtime.cjs"
+      "types": "./jsx-runtime/index.d.ts",
+      "browser": "./jsx-runtime/index.js",
+      "import": "./jsx-runtime/index.js",
+      "require": "./jsx-runtime/index.cjs"
     },
     "./jsx-dev-runtime": {
-      "browser": "./dist/jsx-runtime.js",
-      "import": "./dist/jsx-runtime.js",
-      "require": "./dist/jsx-runtime.cjs"
+      "types": "./jsx-runtime/index.d.ts",
+      "browser": "./jsx-runtime/index.js",
+      "import": "./jsx-runtime/index.js",
+      "require": "./jsx-runtime/index.cjs"
     }
   },
   "main": "dist/index.node.cjs",
@@ -48,8 +49,7 @@
   "types": "dist/index.node.d.ts",
   "files": [
     "dist",
-    "jsx-runtime",
-    "env.d.ts"
+    "jsx-runtime"
   ],
   "engines": {
     "node": ">=14.13.1"
