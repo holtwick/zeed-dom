@@ -43,5 +43,5 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
 }
 
 export function serializePlaintext(node: VNode): string {
-  return `${serialize(node).replace(/\n\n+/gim, '\n\n').trim()}\n`
+  return `${serialize(node).replace(/\n{2,}/g, '\n\n').trim()}\n`
 }

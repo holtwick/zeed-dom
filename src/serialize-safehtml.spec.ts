@@ -1,5 +1,3 @@
-// (C)opyright 2021-07-20 Dirk Holtwick, holtwick.it. All rights reserved.
-
 import { serializeSafeHTML } from './serialize-safehtml'
 import { parseHTML } from './vdomparser'
 

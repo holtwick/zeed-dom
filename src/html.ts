@@ -1,5 +1,3 @@
-// Copyright (c) 2020 Dirk Holtwick. All rights reserved. https://holtwick.de/copyright
-
 // Special cases:
 // 1. <noop> is an element that is not printed out, can be used to create a list of elements
 // 2. Attribute name '__' gets transformed to ':' for namespace emulation

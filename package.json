@@ -1,7 +1,7 @@
 {
   "name": "zeed-dom",
   "type": "module",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "🌱 Lightweight offline DOM",
   "author": {
     "name": "Dirk Holtwick",
@@ -45,9 +45,11 @@
   "main": "dist/index.node.cjs",
   "module": "dist/index.browser.js",
   "typings": "dist/index.node.d.ts",
+  "types": "dist/index.node.d.ts",
   "files": [
     "dist",
-    "jsx-runtime"
+    "jsx-runtime",
+    "env.d.ts"
   ],
   "engines": {
     "node": ">=14.13.1"
@@ -70,9 +72,9 @@
     "entities": "^4.5.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^2.17.0",
+    "@antfu/eslint-config": "^2.18.0",
     "@antfu/ni": "^0.21.12",
-    "@types/node": "^20.12.11",
+    "@types/node": "^20.12.12",
     "@vitest/coverage-v8": "^1.6.0",
     "c8": "^9.1.0",
     "eslint": "^9.2.0",

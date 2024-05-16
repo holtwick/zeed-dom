@@ -32,7 +32,7 @@ const DEFAULTS = {
 } as any
 
 function toCamelCase(s: string): string {
-  return s.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (_m, chr) => chr.toUpperCase())
+  return s.toLowerCase().replace(/[^a-z0-9]+(.)/gi, (_m, chr) => chr.toUpperCase())
 }
 
 export class VNode {
