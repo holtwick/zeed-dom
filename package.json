@@ -21,7 +21,6 @@
   "bugs": {
     "url": "https://github.com/holtwick/zeed-dom/issues"
   },
-  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.node.d.ts",
