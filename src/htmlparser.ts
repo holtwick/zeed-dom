@@ -54,7 +54,7 @@ export class HtmlParser {
           treatAsChars = true
         }
       }
-   
+
       // end tag
       else if (html.substring(0, 2) === '</') {
         match = this.endTagRe.exec(html)
@@ -74,7 +74,7 @@ export class HtmlParser {
         if (match) {
           html = RegExp.rightContext
           treatAsChars = false
-          let tagName = this.parseStartTag(RegExp.lastMatch, match[1], match)
+          const tagName = this.parseStartTag(RegExp.lastMatch, match[1], match)
           if (tagName === 'script' || tagName === 'style') {
             index = html.search(new RegExp(`<\/${tagName}`, 'i'))
             if (index !== -1) {
