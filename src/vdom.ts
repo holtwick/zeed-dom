@@ -433,7 +433,10 @@ export class VElement extends VNodeQuery {
       const styleString = this.getAttribute('style')
       if (styleString) {
         let m: string[] | null
-        const re = /\s*([\w-]+)\s*:\s*([^;]+)/g
+
+        // Thanks to https://github.com/holtwick/zeed-dom/issues/12#issuecomment-2148998665
+        const re = /\s*([\w-]+)\s*:\s*((url\(.*?\)[^;]*|[^;]+))/gi
+
         // eslint-disable-next-line no-cond-assign
         while ((m = re.exec(styleString))) {
           const name = m[1]
