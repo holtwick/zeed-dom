@@ -1,7 +1,7 @@
 {
   "name": "zeed-dom",
   "type": "module",
-  "version": "0.13.3",
+  "version": "0.14.0",
   "description": "🌱 Lightweight offline DOM",
   "author": {
     "name": "Dirk Holtwick",
