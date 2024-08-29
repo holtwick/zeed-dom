@@ -69,19 +69,20 @@
   },
   "dependencies": {
     "css-what": "^6.1.0",
-    "entities": "^4.5.0"
+    "entities": "^5.0.0",
+    "zeed": "^0.24.13"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^2.18.0",
-    "@antfu/ni": "^0.21.12",
-    "@types/node": "^20.12.12",
-    "@vitest/coverage-v8": "^1.6.0",
-    "c8": "^9.1.0",
-    "eslint": "^9.2.0",
-    "tsup": "^8.0.2",
-    "typedoc": "^0.25.13",
-    "typescript": "^5.4.5",
-    "vite": "^5.2.11",
-    "vitest": "^1.6.0"
+    "@antfu/eslint-config": "^3.0.0",
+    "@antfu/ni": "^0.23.0",
+    "@types/node": "^22.5.1",
+    "@vitest/coverage-v8": "^2.0.5",
+    "c8": "^10.1.2",
+    "eslint": "^9.9.1",
+    "tsup": "^8.2.4",
+    "typedoc": "^0.26.6",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "vitest": "^2.0.5"
   }
 }

@@ -28,8 +28,9 @@ export function tidyDOM(document: VDocument) {
       !prev
       || prev.nodeType !== VNode.TEXT_NODE
       || !prev.nodeValue?.endsWith('\n')
-    )
+    ) {
       e.parentNode?.insertBefore(new VTextNode('\n'), e)
+    }
 
     e.parentNode?.insertBefore(new VTextNode(level(e)), e)
 

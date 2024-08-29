@@ -6,8 +6,12 @@ export function removeBodyContainer(body: VNodeQuery): VNodeQuery {
   const ebody = body.querySelector('body')
   if (ebody || ehead) {
     const body = new VDocumentFragment()
-    ehead && body.appendChild(ehead.childNodes)
-    ebody && body.appendChild(ebody.children)
+    if (ehead) {
+      body.appendChild(ehead.childNodes)
+    }
+    if (ebody) {
+      body.appendChild(ebody.children)
+    }
     return body
   }
   return body

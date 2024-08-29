@@ -141,7 +141,6 @@ describe('vDOM', () => {
   })
 
   it('should JSX components', () => {
-    // eslint-disable-next-line unused-imports/no-unused-vars
     function Welcome({ props, h }: any) {
       return (
         <h1>
