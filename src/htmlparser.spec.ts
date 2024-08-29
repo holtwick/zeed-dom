@@ -47,10 +47,11 @@ describe('htmlparser', () => {
     const html = `<script>
 var x = 1 & 4
 window.addEventListener('load', function () {
-$('body')
-  .attr('data-spy', 'scroll')
-  .attr('data-offset', '88')
-  .attr('data-target', '#outline')
+if (x<1)
+  $('body')
+    .attr('data-spy', 'scroll')
+    .attr('data-offset', '88')
+    .attr('data-target', '#outline')
 })
 </script>`
     const dom = parseHTML(html) as VHTMLDocument
@@ -58,10 +59,11 @@ $('body')
       "
       var x = 1 & 4
       window.addEventListener('load', function () {
-      \$('body')
-        .attr('data-spy', 'scroll')
-        .attr('data-offset', '88')
-        .attr('data-target', '#outline')
+      if (x<1)
+        $('body')
+          .attr('data-spy', 'scroll')
+          .attr('data-offset', '88')
+          .attr('data-target', '#outline')
       })
       "
     `)
@@ -77,10 +79,11 @@ $('body')
                 "_text": "
       var x = 1 & 4
       window.addEventListener('load', function () {
-      $('body')
-        .attr('data-spy', 'scroll')
-        .attr('data-offset', '88')
-        .attr('data-target', '#outline')
+      if (x<1)
+        $('body')
+          .attr('data-spy', 'scroll')
+          .attr('data-offset', '88')
+          .attr('data-target', '#outline')
       })
       ",
                 "append": [Function],
@@ -101,10 +104,11 @@ $('body')
       "<script>
       var x = 1 & 4
       window.addEventListener('load', function () {
-      \$('body')
-        .attr('data-spy', 'scroll')
-        .attr('data-offset', '88')
-        .attr('data-target', '#outline')
+      if (x<1)
+        $('body')
+          .attr('data-spy', 'scroll')
+          .attr('data-offset', '88')
+          .attr('data-target', '#outline')
       })
       </script>"
     `)

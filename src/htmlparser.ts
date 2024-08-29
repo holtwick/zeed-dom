@@ -54,6 +54,7 @@ export class HtmlParser {
           treatAsChars = true
         }
       }
+   
       // end tag
       else if (html.substring(0, 2) === '</') {
         match = this.endTagRe.exec(html)
@@ -66,13 +67,25 @@ export class HtmlParser {
           treatAsChars = true
         }
       }
+
       // start tag
       else if (html.charAt(0) === '<') {
         match = this.startTagRe.exec(html)
         if (match) {
           html = RegExp.rightContext
           treatAsChars = false
-          this.parseStartTag(RegExp.lastMatch, match[1], match)
+          let tagName = this.parseStartTag(RegExp.lastMatch, match[1], match)
+          if (tagName === 'script' || tagName === 'style') {
+            index = html.search(new RegExp(`<\/${tagName}`, 'i'))
+            if (index !== -1) {
+              this.scanner.characters(html.substring(0, index))
+              html = html.substring(index)
+              treatAsChars = false
+            }
+            else {
+              treatAsChars = true
+            }
+          }
         }
         else {
           treatAsChars = true
@@ -113,9 +126,9 @@ export class HtmlParser {
     let attrInput = match[2]
     if (isSelfColse)
       attrInput = attrInput.replace(/\s*\/\s*$/, '')
-
     const attrs = this.parseAttributes(tagName, attrInput)
     this.scanner.startElement(tagName, attrs, isSelfColse, match[0])
+    return tagName.toLocaleLowerCase()
   }
 
   parseEndTag(input: string, tagName: string) {
