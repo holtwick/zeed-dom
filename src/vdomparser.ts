@@ -4,15 +4,7 @@ import { unescapeHTML } from './encoding'
 import { SELF_CLOSING_TAGS } from './html'
 import { HtmlParser } from './htmlparser'
 import { hasOwn } from './utils'
-import {
-  VDocType,
-  VDocumentFragment,
-  VElement,
-  VHTMLDocument,
-  VNode,
-  VTextNode,
-  document,
-} from './vdom'
+import { VDocType, VDocumentFragment, VElement, VHTMLDocument, VNode, VTextNode, document } from './vdom'
 
 // Makes sure we operate on VNodes
 export function vdom(obj: VNode | Buffer | string | null = null): VNode {
@@ -71,8 +63,9 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
             !(
               SELF_CLOSING_TAGS.includes(tagName.toLowerCase()) || isSelfClosing
             )
-          )
+          ) {
             stack.push(element)
+          }
         }
       },
       endElement(_tagName: string) {

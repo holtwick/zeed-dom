@@ -43,14 +43,36 @@ describe('htmlparser', () => {
     expect(dom.render()).toMatchInlineSnapshot(`"<p>Let&apos;s go</p>"`)
   })
 
+  it('should handle inline base64', () => {
+    // https://github.com/holtwick/zeed-dom/issues/12
+
+    const dom = parseHTML(`<div
+id="elem"
+style="
+width: 200px;
+background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyNy41LjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAzMTQ3IDIwMDAiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMxNDcgMjAwMDsiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGc);
+height: 100px;">Test</div>`) as VHTMLDocument
+    const node = dom.querySelector('#elem')
+    expect(node).not.toBeNull()
+    expect(node?.style).toMatchInlineSnapshot(`
+      {
+        "background-image": "url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyNy41LjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAzMTQ3IDIwMDAiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMxNDcgMjAwMDsiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGc)",
+        "backgroundImage": "url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyNy41LjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAzMTQ3IDIwMDAiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMxNDcgMjAwMDsiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGc)",
+        "height": "100px",
+        "width": "200px",
+      }
+    `)
+  })
+
   it('should ignore escape for script etc.', () => {
     const html = `<script>
 var x = 1 & 4
 window.addEventListener('load', function () {
-$('body')
-  .attr('data-spy', 'scroll')
-  .attr('data-offset', '88')
-  .attr('data-target', '#outline')
+if (x<1)
+  $('body')
+    .attr('data-spy', 'scroll')
+    .attr('data-offset', '88')
+    .attr('data-target', '#outline')
 })
 </script>`
     const dom = parseHTML(html) as VHTMLDocument
@@ -58,10 +80,11 @@ $('body')
       "
       var x = 1 & 4
       window.addEventListener('load', function () {
-      \$('body')
-        .attr('data-spy', 'scroll')
-        .attr('data-offset', '88')
-        .attr('data-target', '#outline')
+      if (x<1)
+        $('body')
+          .attr('data-spy', 'scroll')
+          .attr('data-offset', '88')
+          .attr('data-target', '#outline')
       })
       "
     `)
@@ -77,10 +100,11 @@ $('body')
                 "_text": "
       var x = 1 & 4
       window.addEventListener('load', function () {
-      $('body')
-        .attr('data-spy', 'scroll')
-        .attr('data-offset', '88')
-        .attr('data-target', '#outline')
+      if (x<1)
+        $('body')
+          .attr('data-spy', 'scroll')
+          .attr('data-offset', '88')
+          .attr('data-target', '#outline')
       })
       ",
                 "append": [Function],
@@ -101,10 +125,11 @@ $('body')
       "<script>
       var x = 1 & 4
       window.addEventListener('load', function () {
-      \$('body')
-        .attr('data-spy', 'scroll')
-        .attr('data-offset', '88')
-        .attr('data-target', '#outline')
+      if (x<1)
+        $('body')
+          .attr('data-spy', 'scroll')
+          .attr('data-offset', '88')
+          .attr('data-target', '#outline')
       })
       </script>"
     `)

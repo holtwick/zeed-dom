@@ -124,10 +124,12 @@ export function markup(
               (c.startsWith('<') && c.endsWith('>'))
               || tag === 'script'
               || tag === 'style'
-            )
+            ) {
               parts.push(c)
-            else
+            }
+            else {
               parts.push(escapeHTML(c.toString()))
+            }
           }
         }
       }
