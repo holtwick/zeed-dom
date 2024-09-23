@@ -351,11 +351,16 @@ interface Attr {
   value: string
 }
 
+export type VElementStyle = Record<string, string> & {
+  get length(): number
+  getPropertyValue: (name: string) => any
+}
+
 export class VElement extends VNodeQuery {
   _originalTagName: string
   _nodeName: string
   _attributes: Record<string, string>
-  _styles: Record<string, string> | undefined
+  _styles: VElementStyle | undefined
   _dataset: Record<string, string> | undefined
 
   get nodeType() {
@@ -429,9 +434,13 @@ export class VElement extends VNodeQuery {
   }
 
   /// See https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
-  get style() {
+  get style(): VElementStyle {
     if (this._styles == null) {
-      const styles = Object.assign({}, DEFAULTS[this.tagName.toLowerCase()] || {})
+      // const styles = Object.assign({}, DEFAULTS[this.tagName.toLowerCase()] || {})
+
+      const styles: Record<string, string> = {}
+      let count = 0
+
       const styleString = this.getAttribute('style')
       if (styleString) {
         let m: string[] | null
@@ -441,15 +450,26 @@ export class VElement extends VNodeQuery {
 
         // eslint-disable-next-line no-cond-assign
         while ((m = re.exec(styleString))) {
+          ++count
           const name = m[1]
           const value = m[2].trim()
           styles[name] = value
           styles[toCamelCase(name)] = value
         }
       }
-      this._styles = styles
+      this._styles = {
+        get length(): number {
+          return count
+        },
+        getPropertyValue(name: string) {
+          return styles[name]
+        },
+
+        ...DEFAULTS[this.tagName.toLowerCase()],
+        ...styles,
+      }
     }
-    return this._styles
+    return this._styles!
   }
 
   /// See https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
