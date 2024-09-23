@@ -31,7 +31,7 @@ export function matchSelector(
     }
 
     const handleRules = (element: VElement, rules: any[]) => {
-      // let pos = 0
+      let pos = 0
       let success = false
       for (const part of rules) {
         const { type, name, action, value, _ignoreCase = true, data } = part
@@ -101,10 +101,10 @@ export function matchSelector(
           // } else if (type === 'descendant') {
           //   element = element.
         }
-        // else if (type === 'descendant') {
-        //   for (const child of element.childNodes)
-        //     handleRules(child, rules.slice(pos))
-        // }
+        else if (type === 'descendant') {
+          for (const child of element.childNodes)
+            handleRules(child, rules.slice(pos))
+        }
         else {
           console.warn('Unknown CSS selector type', type, selector, rules)
         }
@@ -112,7 +112,7 @@ export function matchSelector(
         if (!success)
           break
 
-        // pos += 1
+        pos += 1
       }
       return success
     }
