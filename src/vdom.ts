@@ -353,9 +353,10 @@ interface Attr {
 
 export class VElement extends VNodeQuery {
   _originalTagName: string
-  _nodeName: any
+  _nodeName: string
   _attributes: Record<string, string>
-  _styles: any
+  _styles: Record<string, string> | undefined
+  _dataset: Record<string, string> | undefined
 
   get nodeType() {
     return VNode.ELEMENT_NODE
@@ -370,7 +371,6 @@ export class VElement extends VNodeQuery {
     this._originalTagName = name
     this._nodeName = (name || '').toUpperCase()
     this._attributes = attrs || {}
-    this._styles = null
   }
 
   cloneNode(deep = false) {
@@ -402,7 +402,8 @@ export class VElement extends VNodeQuery {
   setAttribute(name: string, value: string) {
     this.removeAttribute(name)
     this._attributes[name] = value
-    this._styles = null
+    this._styles = undefined
+    this._dataset = undefined
   }
 
   getAttribute(name: string): string | null {
@@ -427,6 +428,7 @@ export class VElement extends VNodeQuery {
     return originalName ? this._attributes[originalName] != null : false
   }
 
+  /// See https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
   get style() {
     if (this._styles == null) {
       const styles = Object.assign({}, DEFAULTS[this.tagName.toLowerCase()] || {})
@@ -448,6 +450,21 @@ export class VElement extends VNodeQuery {
       this._styles = styles
     }
     return this._styles
+  }
+
+  /// See https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
+  get dataset() {
+    if (this._dataset == null) {
+      const dataset: Record<string, string> = {}
+      for (const [key, value] of Object.entries(this._attributes)) {
+        if (key.startsWith('data-')) {
+          dataset[key.slice(5)] = value
+          dataset[toCamelCase(key.slice(5))] = value
+        }
+      }
+      this._dataset = dataset
+    }
+    return this._dataset
   }
 
   get tagName() {

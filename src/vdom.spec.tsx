@@ -1,5 +1,5 @@
 // import Sizzle from './sizzle'
-import { VDocument, VDocumentFragment, VElement, createHTMLDocument, h } from './vdom'
+import { createHTMLDocument, h, VDocument, VDocumentFragment, VElement } from './vdom'
 import { parseHTML } from './vdomparser'
 import { xml } from './xml'
 

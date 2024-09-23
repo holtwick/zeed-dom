@@ -1,6 +1,6 @@
-import { SELECTOR_BLOCK_ELEMENTS } from './tidy'
 import type { VElement } from './vdom'
-import { VNode, isVElement } from './vdom'
+import { SELECTOR_BLOCK_ELEMENTS } from './tidy'
+import { isVElement, VNode } from './vdom'
 
 interface SerializeContext {
   level: number

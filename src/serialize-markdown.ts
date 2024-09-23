@@ -1,5 +1,5 @@
 import type { VElement } from './vdom'
-import { VNode, isVElement } from './vdom'
+import { isVElement, VNode } from './vdom'
 
 interface SerializeContext {
   level: number

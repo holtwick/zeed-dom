@@ -4,7 +4,7 @@ import { unescapeHTML } from './encoding'
 import { SELF_CLOSING_TAGS } from './html'
 import { HtmlParser } from './htmlparser'
 import { hasOwn } from './utils'
-import { VDocType, VDocumentFragment, VElement, VHTMLDocument, VNode, VTextNode, document } from './vdom'
+import { document, VDocType, VDocumentFragment, VElement, VHTMLDocument, VNode, VTextNode } from './vdom'
 
 // Makes sure we operate on VNodes
 export function vdom(obj: VNode | Buffer | string | null = null): VNode {
