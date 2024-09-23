@@ -64,6 +64,19 @@ height: 100px;">Test</div>`) as VHTMLDocument
     `)
   })
 
+  it('should handle dataset', () => {
+    const dom = parseHTML(`<div id="elem" data-id="123" data-feel-good="yeah">Test</div>`) as VHTMLDocument
+    const node = dom.querySelector('#elem')
+    expect(node).not.toBeNull()
+    expect(node?.dataset).toMatchInlineSnapshot(`
+      {
+        "feel-good": "yeah",
+        "feelGood": "yeah",
+        "id": "123",
+      }
+    `)
+  })
+
   it('should ignore escape for script etc.', () => {
     const html = `<script>
 var x = 1 & 4
@@ -113,7 +126,6 @@ if (x<1)
             "_nodeName": "SCRIPT",
             "_originalTagName": "script",
             "_parentNode": [Circular],
-            "_styles": null,
             "append": [Function],
           },
         ],
