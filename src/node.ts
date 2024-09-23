@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync } from 'node:fs'
 import type { VHTMLDocument } from './vdom'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { parseHTML } from './vdomparser'
 
 /** Manipulate HTMl file directly on disk. Only writes back if there were significant changes. */

@@ -1,5 +1,5 @@
-import { parse } from 'css-what'
 import type { VElement } from './vdom'
+import { parse } from 'css-what'
 
 function log(..._args: any) {}
 

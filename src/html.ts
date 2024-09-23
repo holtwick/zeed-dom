@@ -3,8 +3,8 @@
 // 2. Attribute name '__' gets transformed to ':' for namespace emulation
 // 3. Emulate CDATA by <cdata> element
 
-import { hArgumentParser } from './h'
 import { escapeHTML } from './encoding'
+import { hArgumentParser } from './h'
 import { hasOwn } from './utils'
 
 export const SELF_CLOSING_TAGS = [
@@ -43,9 +43,9 @@ export function markup(
   const hasChildren = !(
     (typeof children === 'string' && children === '')
     || (Array.isArray(children)
-    && (children.length === 0
-    || (children.length === 1 && children[0] === '')))
-    || children == null
+      && (children.length === 0
+        || (children.length === 1 && children[0] === '')))
+        || children == null
   )
 
   const parts: string[] = []

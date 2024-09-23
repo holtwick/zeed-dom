@@ -1,6 +1,6 @@
-import './jsx-runtime'
 import { hArgumentParser } from './h'
 import { markup } from './html'
+import './jsx-runtime'
 
 export function xml(itag: string, iattrs?: object, ...ichildren: any[]) {
   const { tag, attrs, children } = hArgumentParser(itag, iattrs, ichildren)
