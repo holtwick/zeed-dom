@@ -31,7 +31,6 @@ export function matchSelector(
     }
 
     const handleRules = (element: VElement, rules: any[]) => {
-      // let pos = 0
       let success = false
       for (const part of rules) {
         const { type, name, action, value, _ignoreCase = true, data } = part
@@ -73,6 +72,21 @@ export function matchSelector(
             if (debug)
               log('Attribute any', success)
           }
+          else if (action === 'contains') {
+            success = !!element.getAttribute(name)?.includes(value)
+            if (debug)
+              log('Attribute contains', success)
+          }
+          else if (action === 'not') {
+            success = element.getAttribute(name) !== value
+            if (debug)
+              log('Attribute not', success)
+          }
+          else if (action === 'has') {
+            success = element.hasAttribute(name)
+            if (debug)
+              log('Attribute has', success)
+          }
           else {
             console.warn('Unknown CSS selector action', action)
           }
@@ -96,23 +110,68 @@ export function matchSelector(
             })
             success = !ok
           }
+          else if (name === 'first-child') {
+            success = element.parentNode?.firstChild === element
+            if (debug)
+              log('Is :first-child', success)
+          }
+          else if (name === 'last-child') {
+            success = element.parentNode?.lastChild === element
+            if (debug)
+              log('Is :last-child', success)
+          }
+          else if (name === 'nth-child') {
+            const index = parseInt(data, 10)
+            success = Array.from(element.parentNode?.childNodes || []).indexOf(element) === index - 1
+            if (debug)
+              log('Is :nth-child', success)
+          }
           if (debug)
             log('Is :not', success)
-          // } else if (type === 'descendant') {
-          //   element = element.
         }
-        // else if (type === 'descendant') {
-        //   for (const child of element.childNodes)
-        //     handleRules(child, rules.slice(pos))
-        // }
+        else if (type === 'child') {
+          const parent = element.parentNode
+          if (parent) {
+            success = handleRules(parent, [part])
+            if (debug)
+              log('Is child', success)
+          }
+        }
+        else if (type === 'combinator') {
+          if (name === '>') {
+            const parent = element.parentNode
+            if (parent) {
+              success = handleRules(parent, [part])
+              if (debug)
+                log('Is child combinator', success)
+            }
+          }
+          else if (name === ' ') {
+            let ancestor = element.parentNode
+            while (ancestor) {
+              if (handleRules(ancestor, [part])) {
+                success = true
+                break
+              }
+              ancestor = ancestor.parentNode
+            }
+            if (debug)
+              log('Is descendant combinator', success)
+          }
+          else if (name === '+') {
+            const previousSibling = element.previousSibling
+            if (previousSibling) {
+              success = handleRules(previousSibling, [part])
+              if (debug)
+                log('Is sibling combinator', success)
+            }
+          }
+        }
         else {
           console.warn('Unknown CSS selector type', type, selector, rules)
         }
-        // log(success, selector, part, element)
         if (!success)
           break
-
-        // pos += 1
       }
       return success
     }

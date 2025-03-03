@@ -170,4 +170,20 @@ if (x<1)
       expect(text).toEqual(t)
     }
   })
+
+  it('should check for specific content', () => {
+    const sample = `<!DOCTYPE html>
+    <html lang="de">
+    <head>
+    <title>Test</title>
+    </head>
+    <body>
+    <div id="content">Hello, World!</div>
+    </body>
+    </html>`
+    const dom = parseHTML(sample) as VHTMLDocument
+    const contentDiv = dom.querySelector('#content')
+    expect(contentDiv?.innerHTML).toEqual('Hello, World!')
+    expect(contentDiv?.outerHTML).toEqual('<div id="content">Hello, World!</div>')
+  })
 })

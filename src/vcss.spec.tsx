@@ -172,4 +172,82 @@ describe('cSS', () => {
   //   let element = <h1>...</h1>
   //   expect(matchSelector('[id]', element, { debug: true })).toBe(false)
   // })
+
+  it('should handle child combinator', () => {
+    const element = (
+      <div>
+        <p>Paragraph 1</p>
+        <span>Span 1</span>
+        <div>
+          <p>Paragraph 2</p>
+          <span>Span 2</span>
+        </div>
+      </div>
+    )
+    expect(matchSelector('div > p', element)).toBe(true)
+    expect(matchSelector('div > span', element)).toBe(true)
+    expect(matchSelector('div > div > p', element)).toBe(true)
+    expect(matchSelector('div > div > span', element)).toBe(true)
+    expect(matchSelector('div > p', element.querySelector('div > p'))).toBe(true)
+    expect(matchSelector('div > span', element.querySelector('div > span'))).toBe(true)
+    expect(matchSelector('div > div > p', element.querySelector('div > div > p'))).toBe(true)
+    expect(matchSelector('div > div > span', element.querySelector('div > div > span'))).toBe(true)
+    expect(matchSelector('div > p', element.querySelector('div > div > p'))).toBe(false)
+    expect(matchSelector('div > span', element.querySelector('div > div > span'))).toBe(false)
+  })
+
+  it('should handle additional attribute selectors', () => {
+    const element = (
+      <div>
+        <p title="example">Paragraph 1</p>
+        <span title="sample">Span 1</span>
+        <div>
+          <p title="example">Paragraph 2</p>
+          <span title="sample">Span 2</span>
+        </div>
+      </div>
+    )
+    expect(matchSelector('[title*="exam"]', element.querySelector('p'))).toBe(true)
+    expect(matchSelector('[title*="sam"]', element.querySelector('span'))).toBe(true)
+    expect(matchSelector('[title!="example"]', element.querySelector('span'))).toBe(true)
+    expect(matchSelector('[title!="sample"]', element.querySelector('p'))).toBe(true)
+    expect(matchSelector('[title~="exam"]', element.querySelector('p'))).toBe(true)
+    expect(matchSelector('[title~="sam"]', element.querySelector('span'))).toBe(true)
+  })
+
+  it('should handle pseudo-classes', () => {
+    const element = (
+      <div>
+        <p>Paragraph 1</p>
+        <span>Span 1</span>
+        <div>
+          <p>Paragraph 2</p>
+          <span>Span 2</span>
+        </div>
+      </div>
+    )
+    expect(matchSelector('div > p:first-child', element.querySelector('div > p'))).toBe(true)
+    expect(matchSelector('div > span:last-child', element.querySelector('div > span'))).toBe(true)
+    expect(matchSelector('div > div > p:nth-child(1)', element.querySelector('div > div > p'))).toBe(true)
+    expect(matchSelector('div > div > span:nth-child(2)', element.querySelector('div > div > span'))).toBe(true)
+  })
+
+  it('should handle combinators', () => {
+    const element = (
+      <div>
+        <p>Paragraph 1</p>
+        <span>Span 1</span>
+        <div>
+          <p>Paragraph 2</p>
+          <span>Span 2</span>
+        </div>
+      </div>
+    )
+    expect(matchSelector('div p', element.querySelector('div > p'))).toBe(true)
+    expect(matchSelector('div span', element.querySelector('div > span'))).toBe(true)
+    expect(matchSelector('div div p', element.querySelector('div > div > p'))).toBe(true)
+    expect(matchSelector('div div span', element.querySelector('div > div > span'))).toBe(true)
+    expect(matchSelector('div + p', element.querySelector('div > p'))).toBe(false)
+    expect(matchSelector('div + span', element.querySelector('div > span'))).toBe(false)
+  })
 })
