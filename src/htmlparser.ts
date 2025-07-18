@@ -121,7 +121,7 @@ export class HtmlParser {
     }
   }
 
-  parseStartTag(input: string, tagName: string, match: any) {
+  private parseStartTag(input: string, tagName: string, match: any) {
     const isSelfColse = selfCloseTagRe.test(input)
     let attrInput = match[2]
     if (isSelfColse)
@@ -131,11 +131,11 @@ export class HtmlParser {
     return tagName.toLocaleLowerCase()
   }
 
-  parseEndTag(input: string, tagName: string) {
+  private parseEndTag(input: string, tagName: string) {
     this.scanner.endElement(tagName)
   }
 
-  parseAttributes(tagName: string, input: string) {
+  private parseAttributes(tagName: string, input: string) {
     const attrs: Record<string, any> = {}
     input.replace(this.attrRe, (...m: any[]) => {
       const [_attr, name, _c2, value, _c4, valueInQuote, _c6, valueInSingleQuote] = m
