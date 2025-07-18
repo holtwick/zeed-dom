@@ -10,7 +10,7 @@ function level(element: VNode): string {
     indent += '  '
     element = element.parentNode
   }
-  return indent.substr(2)
+  return indent.slice(2)
 }
 
 export function tidyDOM(document: VDocument) {
@@ -18,39 +18,33 @@ export function tidyDOM(document: VDocument) {
     // Ignore if inside PRE etc.
     let ee = e
     while (ee) {
-      if (TAGS_KEEP_CONTENT.includes(ee.tagName))
-        return
+      if (TAGS_KEEP_CONTENT.includes(ee.tagName)) return
       ee = ee.parentNode
     }
 
-    const prev = e.previousSibling
-    if (
-      !prev
-      || prev.nodeType !== VNode.TEXT_NODE
-      || !prev.nodeValue?.endsWith('\n')
-    ) {
-      e.parentNode?.insertBefore(new VTextNode('\n'), e)
-    }
+    const parent = e.parentNode
+    if (!parent) return
 
-    e.parentNode?.insertBefore(new VTextNode(level(e)), e)
+    const prev = e.previousSibling
+    if (!prev || prev.nodeType !== VNode.TEXT_NODE || !prev.nodeValue?.endsWith('\n')) {
+      parent.insertBefore(new VTextNode('\n'), e)
+    }
+    parent.insertBefore(new VTextNode(level(e)), e)
 
     const next = e.nextSibling
-    if (
-      !next
-      || next.nodeType !== VNode.TEXT_NODE
-      || !next.nodeValue?.startsWith('\n')
-    ) {
-      if (next)
-        e.parentNode?.insertBefore(new VTextNode('\n'), next)
-      else
-        e.parentNode?.appendChild(new VTextNode('\n'))
+    if (!next || next.nodeType !== VNode.TEXT_NODE || !next.nodeValue?.startsWith('\n')) {
+      if (next) {
+        parent.insertBefore(new VTextNode('\n'), next)
+      } else {
+        parent.appendChild(new VTextNode('\n'))
+      }
     }
 
     if (e.childNodes.length) {
       const first = e.firstChild
-      if (first.nodeType === VNode.TEXT_NODE)
-        e.insertBefore(new VTextNode(`\n${level(e)}  `))
-
+      if (first.nodeType === VNode.TEXT_NODE) {
+        e.insertBefore(new VTextNode(`\n${level(e)}  `), first)
+      }
       e.appendChild(new VTextNode(`\n${level(e)}`))
     }
   })
