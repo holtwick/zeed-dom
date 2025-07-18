@@ -1,5 +1,5 @@
 import antfu from '@antfu/eslint-config'
-import { eslintIgnoreDefaults, eslintRulesDefaults } from 'zeed'
+import { eslintIgnoreDefaults, eslintRulesDefaults } from 'zeed/eslint'
 
 export default antfu(
   {

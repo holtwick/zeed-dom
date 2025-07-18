@@ -114,7 +114,7 @@ describe('vDOM', () => {
         {...spread}
       >
         <hr />
-        {null && 'This is invisible'}
+        {false && 'This is invisible'}
         <b>Welcome</b>
       </a>
     )
@@ -256,5 +256,36 @@ describe('vDOM', () => {
 
     const html = element.render()
     expect(html).toBe('<img class="avatar" src alt>')
+  })
+
+  it('should allow changing tag name with setTagName', () => {
+    const el = new VElement('span')
+    el.textContent = 'Hello'
+    expect(el.render()).toBe('<span>Hello</span>')
+    el.setTagName('strong')
+    expect(el.render()).toBe('<strong>Hello</strong>')
+    // Changing to an invalid tag should still work as a string
+    el.setTagName('custom-tag')
+    expect(el.render()).toBe('<custom-tag>Hello</custom-tag>')
+  })
+
+  it('should preserve attributes and children when changing tag name', () => {
+    const el = new VElement('div', { class: 'foo', id: 'bar' })
+    el.appendChild(new VElement('span', {}))
+    el.setTagName('section')
+    expect(el.render()).toBe('<section class="foo" id="bar"><span></span></section>')
+  })
+
+  it('should not change tagName if setTagName is called with the same value', () => {
+    const el = new VElement('p')
+    el.textContent = 'Test'
+    el.setTagName('p')
+    expect(el.render()).toBe('<p>Test</p>')
+  })
+
+  it('should handle setTagName on elements created via JSX', () => {
+    const el = <div>Hello</div>
+    el.setTagName('main')
+    expect(el.render()).toBe('<main>Hello</main>')
   })
 })
