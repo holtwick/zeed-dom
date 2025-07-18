@@ -18,12 +18,14 @@ export function tidyDOM(document: VDocument) {
     // Ignore if inside PRE etc.
     let ee = e
     while (ee) {
-      if (TAGS_KEEP_CONTENT.includes(ee.tagName)) return
+      if (TAGS_KEEP_CONTENT.includes(ee.tagName))
+        return
       ee = ee.parentNode
     }
 
     const parent = e.parentNode
-    if (!parent) return
+    if (!parent)
+      return
 
     const prev = e.previousSibling
     if (!prev || prev.nodeType !== VNode.TEXT_NODE || !prev.nodeValue?.endsWith('\n')) {
@@ -35,7 +37,8 @@ export function tidyDOM(document: VDocument) {
     if (!next || next.nodeType !== VNode.TEXT_NODE || !next.nodeValue?.startsWith('\n')) {
       if (next) {
         parent.insertBefore(new VTextNode('\n'), next)
-      } else {
+      }
+      else {
         parent.appendChild(new VTextNode('\n'))
       }
     }

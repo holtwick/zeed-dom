@@ -45,7 +45,7 @@ export function markup(
     || (Array.isArray(children)
       && (children.length === 0
         || (children.length === 1 && children[0] === '')))
-        || children == null
+      || children == null
   )
 
   const parts: string[] = []

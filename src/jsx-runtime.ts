@@ -5,8 +5,8 @@ import { h } from './html'
 // https://www.typescriptlang.org/tsconfig/#jsxImportSource
 
 export {
-  h as jsx,
-  h as jsxs,
-  h as jsxDEV,
   h,
+  h as jsx,
+  h as jsxDEV,
+  h as jsxs,
 }

@@ -3,7 +3,7 @@ import { createHTMLDocument, h } from './vdom'
 
 const _keepH = h
 
-describe('cSS', () => {
+describe('css', () => {
   it('should parse', () => {
     const element = (
       <div id="foo" className="foo bar" foo="bar" data-lang="en">
@@ -166,6 +166,64 @@ describe('cSS', () => {
     )
 
     expect(!document.querySelector('meta[charset]')).toBe(false)
+  })
+
+  it('should handle descendant combinator', () => {
+    const element = (
+      <div id="root">
+        <section>
+          <span id="target">Hello</span>
+        </section>
+      </div>
+    )
+    expect(matchSelector('div section', element)).toBe(true)
+    expect(matchSelector('div span', element)).toBe(true)
+    expect(matchSelector('section span', element.querySelector('section'))).toBe(true)
+    expect(matchSelector('div > section', element)).toBe(false) // Not implemented, should be false
+    expect(matchSelector('div + section', element)).toBe(false) // Not implemented, should be false
+  })
+
+  it('should handle edge cases and invalid selectors', () => {
+    const element = <div id="foo"></div>
+    expect(matchSelector('', element)).toBe(false)
+    expect(() => matchSelector('!!!', element)).toThrow()
+  })
+
+  it('should handle universal selector in combination', () => {
+    const element = <div id="foo"></div>
+    expect(matchSelector('*#foo', element)).toBe(true)
+    expect(matchSelector('*.bar', element)).toBe(false)
+  })
+
+  it('should handle case sensitivity', () => {
+    const element = <div id="foo"></div>
+    expect(matchSelector('div', element)).toBe(true)
+    expect(matchSelector('DIV', element)).toBe(true)
+  })
+
+  it('should handle :not pseudo-class', () => {
+    const element = <div id="foo" className="bar"></div>
+    expect(matchSelector(':not(span)', element)).toBe(true)
+    expect(matchSelector(':not(div)', element)).toBe(false)
+    expect(matchSelector('div:not(.bar)', element)).toBe(false)
+    expect(matchSelector('div:not(.baz)', element)).toBe(true)
+    expect(matchSelector('div:not([id])', element)).toBe(false)
+    expect(matchSelector('div:not([data-unknown])', element)).toBe(true)
+  })
+
+  it('should handle multiple simple selectors', () => {
+    const element = <div id="foo" className="bar"></div>
+    expect(matchSelector('div#foo.bar', element)).toBe(true)
+    expect(matchSelector('div.bar#foo', element)).toBe(true)
+    expect(matchSelector('div#bar.bar', element)).toBe(false)
+    expect(matchSelector('span#foo.bar', element)).toBe(false)
+  })
+
+  it('should handle whitespace and empty selectors', () => {
+    const element = <div id="foo"></div>
+    expect(matchSelector('   ', element)).toBe(false)
+    expect(matchSelector('   div   ', element)).toBe(true)
+    expect(matchSelector('   #foo   ', element)).toBe(true)
   })
 
   // it('should be single fail', () => {

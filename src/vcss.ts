@@ -30,64 +30,70 @@ export function matchSelector(
       log('Element:', element)
     }
 
-    const handleRules = (element: VElement, rules: any[]) => {
-      // let pos = 0
+    const handleRules = (element: VElement, rules: any[], ruleIndex = 0): boolean => {
+      if (!element || ruleIndex >= rules.length)
+        return false
+      const part = rules[ruleIndex]
+      const { type, name, action, value, _ignoreCase = true, data } = part
       let success = false
-      for (const part of rules) {
-        const { type, name, action, value, _ignoreCase = true, data } = part
-        if (type === 'attribute') {
-          if (action === 'equals') {
-            success = element.getAttribute(name) === value
-            if (debug)
-              log('Attribute equals', success)
-          }
-          else if (action === 'start') {
-            success = !!element.getAttribute(name)?.startsWith(value)
-            if (debug)
-              log('Attribute start', success)
-          }
-          else if (action === 'end') {
-            success = !!element.getAttribute(name)?.endsWith(value)
-            if (debug)
-              log('Attribute start', success)
-          }
-          else if (action === 'element') {
-            if (name === 'class') {
-              success = element.classList.contains(value)
+      switch (type) {
+        case 'attribute': {
+          const attrValue = element.getAttribute(name)
+          switch (action) {
+            case 'equals':
+              success = attrValue === value
               if (debug)
-                log('Attribute class', success)
-            }
-            else {
-              success = !!element.getAttribute(name)?.includes(value)
+                log('Attribute equals', success)
+              break
+            case 'start':
+              success = !!attrValue?.startsWith(value)
               if (debug)
-                log('Attribute element', success)
-            }
+                log('Attribute start', success)
+              break
+            case 'end':
+              success = !!attrValue?.endsWith(value)
+              if (debug)
+                log('Attribute end', success)
+              break
+            case 'element':
+              if (name === 'class') {
+                success = element.classList.contains(value)
+                if (debug)
+                  log('Attribute class', success)
+              }
+              else {
+                success = !!attrValue?.includes(value)
+                if (debug)
+                  log('Attribute element', success)
+              }
+              break
+            case 'exists':
+              success = element.hasAttribute(name)
+              if (debug)
+                log('Attribute exists', success)
+              break
+            case 'any':
+              success = !!attrValue?.includes(value)
+              if (debug)
+                log('Attribute any', success)
+              break
+            default:
+              if (debug)
+                console.warn('Unknown CSS selector action', action)
           }
-          else if (action === 'exists') {
-            success = element.hasAttribute(name)
-            if (debug)
-              log('Attribute exists', success)
-          }
-          else if (action === 'any') {
-            success = !!element.getAttribute(name)?.includes(value)
-            if (debug)
-              log('Attribute any', success)
-          }
-          else {
-            console.warn('Unknown CSS selector action', action)
-          }
+          break
         }
-        else if (type === 'tag') {
+        case 'tag':
           success = element.tagName === name.toUpperCase()
           if (debug)
             log('Is tag', success)
-        }
-        else if (type === 'universal') {
+          break
+        case 'universal':
           success = true
           if (debug)
             log('Is universal', success)
-        }
-        else if (type === 'pseudo') {
+          break
+        case 'pseudo':
           if (name === 'not') {
             let ok = true
             data.forEach((rules: any) => {
@@ -98,21 +104,30 @@ export function matchSelector(
           }
           if (debug)
             log('Is :not', success)
-          // } else if (type === 'descendant') {
-          //   element = element.
-        }
-        // else if (type === 'descendant') {
-        //   for (const child of element.childNodes)
-        //     handleRules(child, rules.slice(pos))
-        // }
-        else {
-          console.warn('Unknown CSS selector type', type, selector, rules)
-        }
-        // log(success, selector, part, element)
-        if (!success)
           break
-
-        // pos += 1
+        case 'descendant':
+          // Try to match the next rule part in any descendant
+          for (const child of element.childNodes || []) {
+            if (handleRules(child, rules, ruleIndex + 1)) {
+              success = true
+              break
+            }
+          }
+          if (debug)
+            log('Is descendant', success)
+          break
+        default:
+          if (debug)
+            console.warn('Unknown CSS selector type', type, selector, rules)
+      }
+      if (!success)
+        return false
+      // If this was a combinator, we already advanced ruleIndex
+      if (type === 'descendant')
+        return success
+      // Move to next rule part
+      if (ruleIndex + 1 < rules.length) {
+        return handleRules(element, rules, ruleIndex + 1)
       }
       return success
     }
