@@ -1,7 +1,7 @@
 import type { VElement } from './vdom'
 import { parse } from 'css-what'
 
-function log(..._args: any) { }
+function log(..._args: any) { console.log(..._args) }
 
 // Alternative could be https://github.com/leaverou/parsel
 
@@ -23,6 +23,7 @@ export function matchSelector(
   element: VElement,
   { debug = false } = {},
 ) {
+  // css-what returns an array of arrays (for selector groups)
   for (const rules of parseSelector(selector)) {
     if (debug) {
       log('Selector:', selector)
@@ -30,96 +31,111 @@ export function matchSelector(
       log('Element:', element)
     }
 
-    const handleRules = (element: VElement, rules: any[], ruleIndex = 0): boolean => {
-      if (!element || ruleIndex >= rules.length)
-        return false
-      const part = rules[ruleIndex]
-      const { type, name, action, value, _ignoreCase = true, data } = part
-      let success = false
-
-      function findInDescendants(node: VElement, rules: any[], ruleIndex: number): boolean {
-        if (!node || !node.childNodes)
-          return false
-        for (const child of node.childNodes) {
-          if (handleRules(child, rules, ruleIndex + 1)) {
-            return true
-          }
-          if (findInDescendants(child, rules, ruleIndex)) {
-            return true
-          }
+    // Right-to-left matching for combinators
+    function matchRule(el: VElement | null, ruleParts: any[], idx: number): boolean {
+      if (debug) {
+        log('matchRule', {
+          el,
+          tagName: el?.tagName,
+          nodeType: el?.nodeType,
+          idx,
+          part: ruleParts[idx],
+        })
+      }
+      while (el && el.nodeType !== 1) {
+        el = el.parentNode
+      }
+      if (!el || idx < 0) return false
+      const part = ruleParts[idx]
+      if (part.type === 'descendant') {
+        // Walk up ancestors, skip non-element nodes
+        let parent = el.parentNode
+        while (parent) {
+          if (parent.nodeType === 1 && matchRule(parent, ruleParts, idx - 1)) return true
+          parent = parent.parentNode
         }
         return false
+      } else if (part.type === 'child') {
+        // Direct parent, must be the immediate element parent
+        let parent = el.parentNode
+        while (parent && parent.nodeType !== 1) parent = parent.parentNode
+        return parent ? matchRule(parent, ruleParts, idx - 1) : false
+      } else if (part.type === 'sibling') {
+        // Any previous element sibling
+        let prev = el.previousSibling
+        while (prev) {
+          if (prev.nodeType === 1 && matchRule(prev, ruleParts, idx - 1)) return true
+          prev = prev.previousSibling
+        }
+        return false
+      } else if (part.type === 'adjacent') {
+        // Immediately previous element sibling
+        let prev = el.previousSibling
+        while (prev && prev.nodeType !== 1) prev = prev.previousSibling
+        return prev ? matchRule(prev, ruleParts, idx - 1) : false
+      } else {
+        // Simple selector (tag, attribute, pseudo, etc.)
+        if (!matchSimple(el, part)) return false
+        if (idx === 0) return true
+        // If next part is a combinator, handle in next call
+        if (["descendant", "child", "sibling", "adjacent"].includes(ruleParts[idx - 1]?.type)) {
+          return matchRule(el, ruleParts, idx - 1)
+        }
+        // Otherwise, keep matching left
+        return matchRule(el, ruleParts, idx - 1)
       }
+    }
 
+    function matchSimple(element: VElement, part: any): boolean {
+      const { type, name, action, value, _ignoreCase = true, data } = part
+      let success = false
       switch (type) {
         case 'attribute': {
           const attrValue = element.getAttribute(name)
           switch (action) {
             case 'equals':
               success = attrValue === value
-              if (debug)
-                log('Attribute equals', success)
               break
             case 'start':
               success = !!attrValue?.startsWith(value)
-              if (debug)
-                log('Attribute start', success)
               break
             case 'end':
               success = !!attrValue?.endsWith(value)
-              if (debug)
-                log('Attribute end', success)
               break
             case 'element':
               if (name === 'class') {
                 success = element.classList.contains(value)
-                if (debug)
-                  log('Attribute class', success)
-              }
-              else {
+              } else {
                 success = !!attrValue?.includes(value)
-                if (debug)
-                  log('Attribute element', success)
               }
               break
             case 'exists':
               success = element.hasAttribute(name)
-              if (debug)
-                log('Attribute exists', success)
               break
             case 'any':
               success = !!attrValue?.includes(value)
-              if (debug)
-                log('Attribute any', success)
               break
             default:
-              if (debug)
-                console.warn('Unknown CSS selector action', action)
+              success = false
           }
           break
         }
         case 'tag':
           success = element.tagName === name.toUpperCase()
-          if (debug)
-            log('Is tag', success)
           break
         case 'universal':
           success = true
-          if (debug)
-            log('Is universal', success)
           break
         case 'pseudo':
           if (name === 'not') {
             let ok = true
             data.forEach((rules: any) => {
-              if (!handleRules(element, rules))
-                ok = false
+              if (!rules.every((p: any) => matchSimple(element, p))) ok = false
             })
             success = !ok
           } else if (name === 'first-child') {
             const parent = element.parentNode
             if (parent && parent.childNodes) {
-              // Only consider element nodes for :first-child
               const elementChildren = parent.childNodes.filter((n: any) => n.nodeType === 1)
               success = elementChildren[0] === element
             } else {
@@ -140,41 +156,21 @@ export function matchSelector(
               const idx = elementChildren.indexOf(element)
               let nth = 0
               if (data && data.length > 0) {
-                nth = parseInt(data[0], 10) - 1
+                nth = Number.parseInt(data[0], 10) - 1
               }
               success = idx === nth
             } else {
               success = false
             }
           }
-          if (debug)
-            log('Is pseudo', name, success)
-          break
-        case 'descendant':
-          // Recursively check all descendants for a match
-
-          success = findInDescendants(element, rules, ruleIndex)
-          if (debug)
-            log('Is descendant', success)
           break
         default:
-          if (debug)
-            console.warn('Unknown CSS selector type', type, selector, rules)
-      }
-      if (!success)
-        return false
-      // If this was a combinator, we already advanced ruleIndex
-      if (type === 'descendant')
-        return success
-      // Move to next rule part
-      if (ruleIndex + 1 < rules.length) {
-        return handleRules(element, rules, ruleIndex + 1)
+          success = false
       }
       return success
     }
 
-    if (handleRules(element, rules))
-      return true
+    if (matchRule(element, rules, rules.length - 1)) return true
   }
   return false
 }

@@ -176,11 +176,44 @@ describe('css', () => {
         </section>
       </div>
     )
-    expect(matchSelector('div section', element)).toBe(true)
-    expect(matchSelector('div span', element)).toBe(true)
-    expect(matchSelector('section span', element.querySelector('section'))).toBe(true)
+    // Only match descendant combinator on the descendant node
+    const section = element.querySelector('section')
+    expect(matchSelector('div section', section, { debug: true })).toBe(true)
+    expect(matchSelector('div span', element.querySelector('span'), { debug: true })).toBe(true)
+    expect(matchSelector('section span', element.querySelector('span'), { debug: true })).toBe(true)
     expect(matchSelector('div > section', element)).toBe(false) // Not implemented, should be false
     expect(matchSelector('div + section', element)).toBe(false) // Not implemented, should be false
+  })
+
+  it('should handle combinators: descendant, child, and sibling', () => {
+    const element = (
+      <div id="root">
+        <section>
+          <span id="a">A</span>
+          <span id="b">B</span>
+          <div>
+            <span id="c">C</span>
+          </div>
+        </section>
+        <span id="d">D</span>
+      </div>
+    )
+    // Descendant
+    const section = element.querySelector('section')
+    expect(matchSelector('div section', section, { debug: true })).toBe(true) // section is a descendant of div
+    // Child
+    const elementChildren = section.childNodes.filter((n: any) => n.nodeType === 1)
+    expect(matchSelector('div > section', section)).toBe(true)
+    expect(matchSelector('section > span', elementChildren[0])).toBe(true)
+    const spanD = element.querySelector('span#d')
+    expect(matchSelector('div > span', spanD)).toBe(true) // #d
+    expect(matchSelector('section > div', elementChildren[2])).toBe(true)
+    // Sibling
+    const spanA = elementChildren[0]
+    const spanB = elementChildren[1]
+    expect(matchSelector('span + span', spanB)).toBe(true) // B follows A
+    expect(matchSelector('span + div', elementChildren[2])).toBe(true) // div follows B
+    expect(matchSelector('span + span', spanA)).toBe(false) // A has no previous sibling span
   })
 
   it('should handle edge cases and invalid selectors', () => {
@@ -239,7 +272,7 @@ describe('css', () => {
       </div>
     )
     // Only test element nodes for :first-child, :last-child, :nth-child
-    const elementChildren = element.childNodes.filter(n => n.nodeType === 1)
+    const elementChildren = element.childNodes.filter((n: any) => n.nodeType === 1)
     // Test :first-child
     expect(matchSelector('span:first-child', elementChildren[0])).toBe(true)
     expect(matchSelector('span:first-child', elementChildren[1])).toBe(false)
