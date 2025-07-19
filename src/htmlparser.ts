@@ -35,8 +35,8 @@ export class HtmlParser {
   } = {}) {
     this.scanner = options.scanner
     // Faster object merge for simple case
-    this.options = options.ignoreWhitespaceText !== undefined 
-      ? options 
+    this.options = options.ignoreWhitespaceText !== undefined
+      ? options
       : { ...this.defaults, ...options }
   }
 
@@ -46,10 +46,10 @@ export class HtmlParser {
     // Precompile regex for script/style end tags to avoid repeated creation
     let scriptEndRe: RegExp | null = null
     let styleEndRe: RegExp | null = null
-    
+
     while (html.length) {
       treatAsChars = true // Set default early
-      
+
       // comment - use startsWith for faster string comparison
       if (html.startsWith('<!--')) {
         index = html.indexOf('-->')
@@ -77,15 +77,18 @@ export class HtmlParser {
           const tagName = this.parseStartTag(match[0], match[1], match)
           // Optimize script/style handling with precompiled regex
           if (tagName === 'script') {
-            if (!scriptEndRe) scriptEndRe = /<\/script/i
+            if (!scriptEndRe)
+              scriptEndRe = /<\/script/i
             index = html.search(scriptEndRe)
             if (index !== -1) {
               this.scanner.characters(html.slice(0, index))
               html = html.slice(index)
               treatAsChars = false
             }
-          } else if (tagName === 'style') {
-            if (!styleEndRe) styleEndRe = /<\/style/i
+          }
+          else if (tagName === 'style') {
+            if (!styleEndRe)
+              styleEndRe = /<\/style/i
             index = html.search(styleEndRe)
             if (index !== -1) {
               this.scanner.characters(html.slice(0, index))
@@ -98,16 +101,18 @@ export class HtmlParser {
 
       if (treatAsChars) {
         index = html.indexOf('<')
-        
+
         if (index === 0) {
           // Skip the first '<' and find the next one
           index = html.indexOf('<', 1)
           characters = html[0] // Just the '<' character
           html = html.slice(1)
-        } else if (index === -1) {
+        }
+        else if (index === -1) {
           characters = html
           html = ''
-        } else {
+        }
+        else {
           characters = html.slice(0, index)
           html = html.slice(index)
         }
@@ -137,8 +142,9 @@ export class HtmlParser {
 
   private parseAttributes(tagName: string, input: string) {
     const attrs: Record<string, any> = {}
-    if (!input || !input.trim()) return attrs
-    
+    if (!input || !input.trim())
+      return attrs
+
     // Fast path for simple attributes without quotes
     if (!/["']/.test(input)) {
       const parts = input.trim().split(/\s+/)
@@ -146,16 +152,18 @@ export class HtmlParser {
         const eqIndex = part.indexOf('=')
         if (eqIndex === -1) {
           attrs[part] = true
-        } else {
+        }
+        else {
           attrs[part.slice(0, eqIndex)] = part.slice(eqIndex + 1)
         }
       }
       return attrs
     }
-    
+
     // Fallback to regex for complex attributes
     this.attrRe.lastIndex = 0
     let match
+    // eslint-disable-next-line no-cond-assign
     while ((match = this.attrRe.exec(input)) !== null) {
       const [, name, , value, , valueInQuote, , valueInSingleQuote] = match
       attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
