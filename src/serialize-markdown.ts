@@ -12,13 +12,13 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
   count: 0,
 }): string {
   if (node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE) {
-    return node.children.map(c => serialize(c, { ...context })).join('')
+    return node.childNodes.map(c => serialize(c, { ...context })).join('')
   }
 
   else if (isVElement(node)) {
     const tag: string = node.tagName.toLowerCase()
 
-    const handleChildren = (ctx?: Partial<SerializeContext>): string => node.children.map(c => serialize(c, { ...context, ...ctx })).join('')
+    const handleChildren = (ctx?: Partial<SerializeContext>): string => node.childNodes.map(c => serialize(c, { ...context, ...ctx })).join('')
 
     const rules: Record<string, () => string> = {
       b: () => `**${handleChildren()}**`,
