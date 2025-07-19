@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { HtmlParser } from '../src/htmlparser.ts'
 
 // Minimal scanner that does nothing
@@ -9,7 +10,7 @@ const scanner = {
 }
 
 function makeHTML(repeats = 10000) {
-  return '<div>' + '<span>Hello</span>'.repeat(repeats) + '</div>'
+  return `<div>${'<span>Hello</span>'.repeat(repeats)}</div>`
 }
 
 const html = makeHTML(20000)
