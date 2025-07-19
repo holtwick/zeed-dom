@@ -41,63 +41,45 @@ export class HtmlParser {
   parse(html: string) {
     let treatAsChars = false
     let index, match, characters
-    // Precompile regex for script/style end tags
-    let scriptEndRe: RegExp | null = null
-    let styleEndRe: RegExp | null = null
     while (html.length) {
       // comment
-      if (html.startsWith('<!--')) {
+      if (html.substring(0, 4) === '<!--') {
         index = html.indexOf('-->')
         if (index !== -1) {
           this.scanner.comment(html.substring(4, index))
-          html = html.slice(index + 3)
+          html = html.substring(index + 3)
           treatAsChars = false
         }
         else {
           treatAsChars = true
         }
       }
+
       // end tag
-      else if (html.startsWith('</')) {
-        match = html.match(this.endTagRe)
+      else if (html.substring(0, 2) === '</') {
+        match = this.endTagRe.exec(html)
         if (match) {
-          const matchLen = match[0].length
-          html = html.slice(matchLen)
+          html = RegExp.rightContext
           treatAsChars = false
-          this.parseEndTag(match[0], match[1])
+          this.parseEndTag(RegExp.lastMatch, match[1])
         }
         else {
           treatAsChars = true
         }
       }
+
       // start tag
-      else if (html[0] === '<') {
-        match = html.match(this.startTagRe)
+      else if (html.charAt(0) === '<') {
+        match = this.startTagRe.exec(html)
         if (match) {
-          const matchLen = match[0].length
-          html = html.slice(matchLen)
+          html = RegExp.rightContext
           treatAsChars = false
-          const tagName = this.parseStartTag(match[0], match[1], match)
-          if (tagName === 'script') {
-            if (!scriptEndRe)
-              scriptEndRe = /<\/script/i
-            index = html.search(scriptEndRe)
+          const tagName = this.parseStartTag(RegExp.lastMatch, match[1], match)
+          if (tagName === 'script' || tagName === 'style') {
+            index = html.search(new RegExp(`<\/${tagName}`, 'i'))
             if (index !== -1) {
               this.scanner.characters(html.substring(0, index))
-              html = html.slice(index)
-              treatAsChars = false
-            }
-            else {
-              treatAsChars = true
-            }
-          }
-          else if (tagName === 'style') {
-            if (!styleEndRe)
-              styleEndRe = /<\/style/i
-            index = html.search(styleEndRe)
-            if (index !== -1) {
-              this.scanner.characters(html.substring(0, index))
-              html = html.slice(index)
+              html = html.substring(index)
               treatAsChars = false
             }
             else {
@@ -109,25 +91,31 @@ export class HtmlParser {
           treatAsChars = true
         }
       }
+
       if (treatAsChars) {
         index = html.indexOf('<')
         let offset = index
+
         if (index === 0) {
-          index = html.indexOf('<', 1)
-          offset = 1 + (index === -1 ? html.length : index - 1)
+          // First char is a < so find the next one
+          index = html.substring(1).indexOf('<')
+          // We're at substring(1) so add 1 to the index
+          offset = offset + 1
         }
+
         if (index === -1) {
           characters = html
           html = ''
         }
         else {
           characters = html.substring(0, offset)
-          html = html.slice(offset)
+          html = html.substring(offset)
         }
-        // Fast whitespace check
-        if (!this.options.ignoreWhitespaceText || (characters.length && /[^\s]/.test(characters)))
+
+        if (!this.options.ignoreWhitespaceText || !/^\s*$/.test(characters))
           this.scanner.characters(characters)
       }
+
       treatAsChars = true
       match = null
     }
