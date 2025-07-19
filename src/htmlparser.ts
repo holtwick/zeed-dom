@@ -33,91 +33,91 @@ export class HtmlParser {
     scanner?: any
     ignoreWhitespaceText?: boolean
   } = {}) {
-    if (options.scanner)
-      this.scanner = options.scanner
-    this.options = Object.assign({}, this.defaults, options)
+    this.scanner = options.scanner
+    // Faster object merge for simple case
+    this.options = options.ignoreWhitespaceText !== undefined 
+      ? options 
+      : { ...this.defaults, ...options }
   }
 
   parse(html: string) {
     let treatAsChars = false
     let index, match, characters
+    // Precompile regex for script/style end tags to avoid repeated creation
+    let scriptEndRe: RegExp | null = null
+    let styleEndRe: RegExp | null = null
+    
     while (html.length) {
-      // comment
-      if (html.substring(0, 4) === '<!--') {
+      treatAsChars = true // Set default early
+      
+      // comment - use startsWith for faster string comparison
+      if (html.startsWith('<!--')) {
         index = html.indexOf('-->')
         if (index !== -1) {
           this.scanner.comment(html.substring(4, index))
-          html = html.substring(index + 3)
+          html = html.slice(index + 3)
           treatAsChars = false
-        }
-        else {
-          treatAsChars = true
         }
       }
-
-      // end tag
-      else if (html.substring(0, 2) === '</') {
-        match = this.endTagRe.exec(html)
+      // end tag - use startsWith and avoid deprecated RegExp globals
+      else if (html.startsWith('</')) {
+        match = html.match(this.endTagRe)
         if (match) {
-          html = RegExp.rightContext
+          html = html.slice(match[0].length)
           treatAsChars = false
-          this.parseEndTag(RegExp.lastMatch, match[1])
-        }
-        else {
-          treatAsChars = true
+          this.parseEndTag(match[0], match[1])
         }
       }
-
-      // start tag
-      else if (html.charAt(0) === '<') {
-        match = this.startTagRe.exec(html)
+      // start tag - avoid charAt for better performance
+      else if (html[0] === '<') {
+        match = html.match(this.startTagRe)
         if (match) {
-          html = RegExp.rightContext
+          html = html.slice(match[0].length)
           treatAsChars = false
-          const tagName = this.parseStartTag(RegExp.lastMatch, match[1], match)
-          if (tagName === 'script' || tagName === 'style') {
-            index = html.search(new RegExp(`<\/${tagName}`, 'i'))
+          const tagName = this.parseStartTag(match[0], match[1], match)
+          // Optimize script/style handling with precompiled regex
+          if (tagName === 'script') {
+            if (!scriptEndRe) scriptEndRe = /<\/script/i
+            index = html.search(scriptEndRe)
             if (index !== -1) {
-              this.scanner.characters(html.substring(0, index))
-              html = html.substring(index)
+              this.scanner.characters(html.slice(0, index))
+              html = html.slice(index)
               treatAsChars = false
             }
-            else {
-              treatAsChars = true
+          } else if (tagName === 'style') {
+            if (!styleEndRe) styleEndRe = /<\/style/i
+            index = html.search(styleEndRe)
+            if (index !== -1) {
+              this.scanner.characters(html.slice(0, index))
+              html = html.slice(index)
+              treatAsChars = false
             }
           }
-        }
-        else {
-          treatAsChars = true
         }
       }
 
       if (treatAsChars) {
         index = html.indexOf('<')
-        let offset = index
-
+        
         if (index === 0) {
-          // First char is a < so find the next one
-          index = html.substring(1).indexOf('<')
-          // We're at substring(1) so add 1 to the index
-          offset = offset + 1
-        }
-
-        if (index === -1) {
+          // Skip the first '<' and find the next one
+          index = html.indexOf('<', 1)
+          characters = html[0] // Just the '<' character
+          html = html.slice(1)
+        } else if (index === -1) {
           characters = html
           html = ''
-        }
-        else {
-          characters = html.substring(0, offset)
-          html = html.substring(offset)
+        } else {
+          characters = html.slice(0, index)
+          html = html.slice(index)
         }
 
-        if (!this.options.ignoreWhitespaceText || !/^\s*$/.test(characters))
+        // Faster whitespace check - avoid regex for empty strings
+        if (characters && (!this.options.ignoreWhitespaceText || /[^\s]/.test(characters)))
           this.scanner.characters(characters)
       }
 
-      treatAsChars = true
-      match = null
+      match = null // Clear match for next iteration
     }
   }
 
@@ -137,11 +137,29 @@ export class HtmlParser {
 
   private parseAttributes(tagName: string, input: string) {
     const attrs: Record<string, any> = {}
-    input.replace(this.attrRe, (...m: any[]) => {
-      const [_attr, name, _c2, value, _c4, valueInQuote, _c6, valueInSingleQuote] = m
+    if (!input || !input.trim()) return attrs
+    
+    // Fast path for simple attributes without quotes
+    if (!/["']/.test(input)) {
+      const parts = input.trim().split(/\s+/)
+      for (const part of parts) {
+        const eqIndex = part.indexOf('=')
+        if (eqIndex === -1) {
+          attrs[part] = true
+        } else {
+          attrs[part.slice(0, eqIndex)] = part.slice(eqIndex + 1)
+        }
+      }
+      return attrs
+    }
+    
+    // Fallback to regex for complex attributes
+    this.attrRe.lastIndex = 0
+    let match
+    while ((match = this.attrRe.exec(input)) !== null) {
+      const [, name, , value, , valueInQuote, , valueInSingleQuote] = match
       attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
-      return undefined as any // hack
-    })
+    }
     return attrs
   }
 }
