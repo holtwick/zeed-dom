@@ -651,7 +651,7 @@ describe('vdom', () => {
     expect(el.childElementCount).toBe(3)
     el.insertAdjacentHTML('afterend', '<footer>afterend</footer>')
     expect(parent.render()).not.toBe(parentHTML)
-    expect(parent.render()).toMatchInlineSnapshot(`"<div><section>beforebegin</section><div><i>afterbegin</i>text<span>beforeend</span><b>beforeend</b></div><footer>afterend</footer></div>"`)  
+    expect(parent.render()).toMatchInlineSnapshot(`"<div><section>beforebegin</section><div><i>afterbegin</i>text<span>beforeend</span><b>beforeend</b></div><footer>afterend</footer></div>"`)
     expect(parent.childElementCount).toBe(3)
   })
 

@@ -84,7 +84,8 @@ VElement.prototype.insertAdjacentHTML = function (
   try {
     const frag = parseHTML(text)
     nodes = frag._childNodes.filter((n: any) => n instanceof VNode)
-  } catch (e) {
+  }
+  catch (e) {
     // Only fallback if text is not valid HTML
     if (/^\s*<\/?[a-zA-Z]/.test(text)) {
       throw new Error('HTML parsing failed in insertAdjacentHTML')
@@ -120,4 +121,3 @@ VElement.prototype.insertAdjacentHTML = function (
       break
   }
 }
-

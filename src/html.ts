@@ -3,10 +3,10 @@
 // 2. Attribute name '__' gets transformed to ':' for namespace emulation
 // 3. Emulate CDATA by <cdata> element
 
+import type { VDocumentFragment, VElement } from './vdom'
 import { escapeHTML } from './encoding'
 import { hArgumentParser } from './h'
 import { hasOwn } from './utils'
-import { VDocumentFragment, VElement } from './vdom'
 
 export const SELF_CLOSING_TAGS = [
   'area',
@@ -46,7 +46,7 @@ export function markup(
     || (Array.isArray(children)
       && (children.length === 0
         || (children.length === 1 && children[0] === '')))
-    || children == null
+      || children == null
   )
 
   const parts: string[] = []
@@ -75,11 +75,10 @@ export function markup(
         parts.push(` ${name}`)
       }
       else if (name === 'style' && typeof v === 'object') {
-        const styleStr = Object.keys(v)
-          .filter(k => v[k] != null)
-          .map((k) => {
-            let vv = v[k]
-            vv = typeof vv === 'number' ? `${vv}px` : vv
+        const styleStr = Object.entries(v)
+          .filter(([, val]) => val != null)
+          .map(([k, val]) => {
+            const vv = typeof val === 'number' ? `${val}px` : val
             return `${k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}:${vv}`
           })
           .join(';')

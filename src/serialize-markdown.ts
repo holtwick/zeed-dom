@@ -7,57 +7,60 @@ interface SerializeContext {
   mode?: 'ol' | 'ul'
 }
 
+// Build rules map only once for performance
+const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<SerializeContext>) => string, ctx?: SerializeContext) => string> = {
+  b: (node, h) => `**${h()}**`,
+  strong: (node, h) => `**${h()}**`,
+  i: (node, h) => `*${h()}*`,
+  em: (node, h) => `*${h()}*`,
+  u: (node, h) => `<u>${h()}</u>`,
+  mark: (node, h) => `==${h()}==`,
+  tt: (node, h) => `==${h()}==`,
+  code: (node, h) => `==${h()}==`,
+  strike: (node, h) => `~~${h()}~~`,
+  sub: (node, h) => `~${h()}~`,
+  super: (node, h) => `^${h()}^`,
+  sup: (node, h) => `^${h()}^`,
+  li: (node, h) => `- ${h()}\n`,
+  br: (node, h) => `\n`,
+  ol: (node, h, ctx) => `\n\n${h({ level: (ctx?.level ?? 0) + 1 })}\n\n`,
+  ul: (node, h, ctx) => `\n\n${h({ level: (ctx?.level ?? 0) + 1 })}\n\n`,
+  blockquote: (node, h) => `\n\n> ${h()}\n\n`,
+  pre: (node, h) => `\n\n\`\`\`\n${h()}\n\`\`\`\n\n`,
+  p: (node, h) => `\n\n${h()}\n\n`,
+  div: (node, h) => `\n\n${h()}\n\n`,
+  h1: (node, h) => `\n\n# ${h()}\n\n`,
+  h2: (node, h) => `\n\n## ${h()}\n\n`,
+  h3: (node, h) => `\n\n### ${h()}\n\n`,
+  h4: (node, h) => `\n\n#### ${h()}\n\n`,
+  h5: (node, h) => `\n\n##### ${h()}\n\n`,
+  h6: (node, h) => `\n\n###### ${h()}\n\n`,
+  hr: () => `\n\n---\n\n`,
+  a: (node, h) => `[${h()}](${node.getAttribute('href') ?? '#'})`,
+  img: node => `![${node.getAttribute('alt') ?? ''}](${node.getAttribute('src') ?? ''})`,
+  del: (node, h) => `~~${h()}~~`,
+  ins: (node, h) => `++${h()}++`,
+  span: (node, h) => h(),
+  table: (node, h) => `\n\n${h()}\n\n`,
+  tr: (node, h) => `|${h()}|\n`,
+  th: (node, h) => ` ${h()} |`,
+  td: (node, h) => ` ${h()} |`,
+  caption: (node, h) => `\n${h()}\n`,
+}
+
 function serialize(node: VNode | VElement, context: SerializeContext = {
   level: 0,
   count: 0,
 }): string {
   if (node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE) {
-    return node.children.map(c => serialize(c, { ...context })).join('')
+    return (node.children || []).map(c => serialize(c, { ...context })).join('')
   }
-
   else if (isVElement(node)) {
     const tag: string = node.tagName.toLowerCase()
-
-    const handleChildren = (ctx?: Partial<SerializeContext>): string => node.children.map(c => serialize(c, { ...context, ...ctx })).join('')
-
-    const rules: Record<string, () => string> = {
-      b: () => `**${handleChildren()}**`,
-      strong: () => `**${handleChildren()}**`,
-      i: () => `*${handleChildren()}*`,
-      em: () => `*${handleChildren()}*`,
-      u: () => `<u>${handleChildren()}</u>`,
-      mark: () => `==${handleChildren()}==`,
-      tt: () => `==${handleChildren()}==`,
-      code: () => `==${handleChildren()}==`,
-      strike: () => `~~${handleChildren()}~~`,
-      sub: () => `~${handleChildren()}~`,
-      super: () => `^${handleChildren()}^`,
-      sup: () => `^${handleChildren()}^`,
-      li: () => `- ${handleChildren()}\n`, // todo numbered
-      br: () => `${handleChildren()}\n`,
-      ol: () => `\n\n${handleChildren({ level: context.level + 1 })}\n\n`, // todo indent
-      ul: () => `\n\n${handleChildren({ level: context.level + 1 })}\n\n`, // todo indent
-      blockquote: () => `\n\n> ${handleChildren()}\n\n`, // todo continue '>'
-      pre: () => `\n\n\`\`\`\n${handleChildren()}\n\`\`\`\n\n`,
-      p: () => `\n\n${handleChildren()}\n\n`,
-      div: () => `\n\n${handleChildren()}\n\n`,
-      h1: () => `\n\n# ${handleChildren()}\n\n`,
-      h2: () => `\n\n## ${handleChildren()}\n\n`,
-      h3: () => `\n\n### ${handleChildren()}\n\n`,
-      h4: () => `\n\n#### ${handleChildren()}\n\n`,
-      h5: () => `\n\n##### ${handleChildren()}\n\n`,
-      h6: () => `\n\n###### ${handleChildren()}\n\n`,
-      hr: () => `\n\n---\n\n`,
-      a: () => `[${handleChildren()}](${node.getAttribute('href') ?? '#'})`,
-      img: () => `![${node.getAttribute('alt') ?? ''}](${node.getAttribute('src') ?? ''})`,
-
-      // todo audio, video and other HTML stuff
-    }
-
+    const handleChildren = (ctx?: Partial<SerializeContext>): string => (node.children || []).map(c => serialize(c, { ...context, ...ctx })).join('')
     const fn = rules[tag]
-
     if (fn)
-      return fn()
+      return fn(node as VElement, handleChildren, context)
     else
       return handleChildren()
   }

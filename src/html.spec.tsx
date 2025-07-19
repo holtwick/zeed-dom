@@ -1,6 +1,7 @@
 /** @jsx h */
 
-import { CDATA, html as h } from './html'
+import { hArgumentParser } from './h'
+import { CDATA, html as h, markup } from './html'
 
 describe('html', () => {
   it('should generate a string', () => {
@@ -82,5 +83,20 @@ describe('html', () => {
   it('should stringify and escape children that are objects or numbers', () => {
     expect(h('div', null, 123)).toBe('<div>123</div>')
     expect(h('div', null, { toString: () => '<foo>' })).toBe('<div>&lt;foo&gt;</div>')
+  })
+
+  it('should handle xmlMode and self-closing tags', () => {
+    // xmlMode true, no children
+    expect(hArgumentParser('img', { src: 'x.png' })).toBeDefined()
+    expect(markup(true, 'img', { src: 'x.png' }, undefined)).toBe('<img src="x.png" />')
+
+    // xmlMode true, with children
+    expect(markup(true, 'div', {}, ['foo'])).toBe('<div>foo</div>')
+
+    // xmlMode false, self-closing tag
+    expect(markup(false, 'img', { src: 'x.png' }, undefined)).toBe('<img src="x.png">')
+
+    // cdata
+    expect(markup(false, 'cdata', {}, 'foo')).toBe('<![CDATA[foo]]>')
   })
 })
