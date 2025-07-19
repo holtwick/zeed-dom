@@ -351,6 +351,18 @@ describe('css', () => {
     expect(matchSelector('div', <div />)).toBe(true)
   })
 
+  it('should not throw on descendant selector with attribute and iframe', () => {
+    const element = (
+      <div data-youtube-video>
+        <iframe src="https://www.youtube.com/watch?v=cqHqLQgVCgY" />
+      </div>
+    )
+    // Should not throw, should return true for Fiframe
+    expect(matchSelector('div[data-youtube-video] iframe', element.querySelector('iframe'))).toBe(true)
+    // Should return true for div
+    expect(matchSelector('div[data-youtube-video]', element)).toBe(true)
+  })
+
   // it('should be single fail', () => {
   //   let element = <h1>...</h1>
   //   expect(matchSelector('[id]', element)).toBe(false)

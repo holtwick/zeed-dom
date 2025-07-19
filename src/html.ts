@@ -153,7 +153,7 @@ export function markup(
 
 export function html(
   tag: string | ((props: any) => VDocumentFragment | VElement),
-  attrs?: Record<string, unknown> | null,
+  attrs?: Record<string, unknown> | unknown[] | null,
   ...children: unknown[]
 ): string {
   const parsed = hArgumentParser(tag, attrs, ...children)

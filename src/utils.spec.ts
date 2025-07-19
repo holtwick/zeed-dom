@@ -12,7 +12,7 @@ describe('utils', () => {
 
     const body = removeBodyContainer(doc)
     expect(body.render()).toMatchInlineSnapshot(
-      `"<title>Hello Title</title>Hello world"`,
+      `"<title>Hello Title</title>"`,
     )
   })
 })
