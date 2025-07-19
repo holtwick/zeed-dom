@@ -1,38 +1,62 @@
 # 🌱 zeed-dom
 
-- Lightweight virtual / offline DOM (Document Object Model)
-- Great to use in node or exporting to plain strings
-- Written in Typescript
-- Generates HTML and XML
-- Parses HTML
-- Supports some CSS selectors and queries
-- JSX compatible
-- Easy content manipulation (e.g. through `element.handle` helper)
-- Pretty print HTML (`tidyDOM`)
+> **A modern, lightweight, TypeScript virtual DOM for Node.js, browser, and static content generation.**
 
-**Does not aim for completeness!**
+---
 
-## Get started
+- ⚡️ **Fast**: Efficient HTML parsing and serialization
+- 🧩 **JSX Compatible**: Works seamlessly with JSX/TSX
+- 🔍 **CSS Selectors**: Query with a subset of CSS selectors
+- 🛠 **Easy Manipulation**: Chainable API, `.handle()` helper, and more
+- 📝 **HTML, XML, Markdown, Plaintext**: Serialize to multiple formats
+- 🧹 **Pretty Print**: Tidy up HTML with `tidyDOM`
+- 🦾 **TypeScript**: Full typings, modern codebase
+- 🔒 **Safe HTML**: Output sanitized HTML for user content
+
+**Note:** This project does not aim for full browser DOM completeness, but covers most practical use cases for static content, SSR, and offline DOM manipulation.
+
+---
+
+## 🚀 Get Started
 
 ```sh
 npm i zeed-dom
 ```
 
-## Related projects
+## 🔗 Related Projects
 
-- [zeed](https://github.com/holtwick/zeed) - Foundation library
-- [zerva](https://github.com/holtwick/zerva) - Event driven server
-- [hostic](https://github.com/holtwick/hostic) - Static site generator
+- [zeed](https://github.com/holtwick/zeed) – Foundation library
+- [zerva](https://github.com/holtwick/zerva) – Event-driven server 
 
-Used by [TipTap](https://www.tiptap.dev/) in its [html-package](https://github.com/ueberdosis/tiptap/tree/aac0193050228a8b6237d84f1eb587cfc0d08e24/packages/html).
+> **Used by [TipTap](https://www.tiptap.dev/) in its [html-package](https://github.com/ueberdosis/tiptap/tree/main/packages/html).**
 
-## Utils
+---
+
+## ✨ Features
+
+- Virtual DOM tree with `VNode`, `VElement`, `VDocument`, etc.
+- HTML parsing and serialization
+- XML output support
+- CSS selector engine (subset)
+- JSX/TSX support (see below)
+- Safe HTML serialization (`serializeSafeHTML`)
+- Markdown and plaintext serialization
+- Manipulation helpers: `.handle()`, `.replaceWith()`, `.remove()`, etc.
+- Works in Node.js, browser, and serverless
+- Pretty print HTML (`tidyDOM`)
+- TypeScript-first API
+
+---
+
+## 🛠 Usage Examples
 
 ### Manipulation
 
-Drop in HTML and query and change it. Returns HTML again. Nice for post processing.
+Drop in HTML, query, and change it. Returns HTML again. Great for post-processing:
 
 ```ts
+import { handleHTML } from 'zeed-dom'
+
 const newHTML = handleHTML(html, (document) => {
   const img = document.querySelector('.img-wrapper img')
   if (img)
@@ -42,24 +66,20 @@ const newHTML = handleHTML(html, (document) => {
 
 ### Serialization
 
-Take any HTML node or document an serialize it so some other format:
+Take any HTML node or document and serialize it to another format:
 
 - `serializePlaintext(node)`: Readable and searchable plain text
 - `serializeMarkdown(node)`: Simple Markdown
-- `serializeSafeHTML(node)` or `safeHTML(htmlString)`: Just allow some basic tags and attributes
+- `serializeSafeHTML(node)` or `safeHTML(htmlString)`: Allow only basic tags and attributes
 
-## Example
-
-A simple example without JSX:
+### Virtual DOM Example (no JSX)
 
 ```js
 import { h, xml } from 'zeed-dom'
 
 const dom = h(
   'ol',
-  {
-    class: 'projects',
-  },
+  { class: 'projects' },
   [
     h('li', null, 'zeed ', h('img', { src: 'logo.png' })),
     h('li', null, 'zeed-dom'),
@@ -67,16 +87,16 @@ const dom = h(
 )
 
 console.log(dom.render())
-// Output: <ol class="projects"><li>zeed <img src="logo.png"></li><li>zeed-dom</li></ol>
+// <ol class="projects"><li>zeed <img src="logo.png"></li><li>zeed-dom</li></ol>
 
 console.log(dom.render(xml))
-// Output: <ol class="projects"><li>zeed <img src="logo.png" /></li><li>zeed-dom</li></ol>
+// <ol class="projects"><li>zeed <img src="logo.png" /></li><li>zeed-dom</li></ol>
 ```
 
-And this one with JSX:
+### JSX Example
 
 ```jsx
-import { h } from "zeed-dom"
+import { h } from 'zeed-dom'
 
 let dom = (
   <ol className="projects">
@@ -85,27 +105,19 @@ let dom = (
   </ol>
 )
 
-let projects = dom
-  .querySelectorAll("li")
-  .map((e) => e.textContent)
-  .join(", ")
-
-console.log(projects)
-// Output: zeed, zeed-dom
-
-dom.handle("li", (e) => {
-  if (!e.textContent.endsWith("-dom")) {
+dom.handle('li', (e) => {
+  if (!e.textContent.endsWith('-dom')) {
     e.remove()
   } else {
-    e.innerHTML = "<b>zeed-dom</b> - great DOM helper for static content"
+    e.innerHTML = '<b>zeed-dom</b> - great DOM helper for static content'
   }
 })
 
 console.log(dom.render())
-// Output: <ol class="projects"><li><b>zeed-dom</b> - great DOM helper for static content</li></ol>
+// <ol class="projects"><li><b>zeed-dom</b> - great DOM helper for static content</li></ol>
 ```
 
-In the second example you can see the special manipulation helper `.handle(selector, fn)` in action. You can also see HTML parsing works seamlessly. You can also parse directly:
+### HTML Parsing & Tidy
 
 ```js
 import { tidyDOM, vdom } from 'zeed-dom'
@@ -113,33 +125,17 @@ import { tidyDOM, vdom } from 'zeed-dom'
 const dom = vdom('<div>Hello World</div>')
 tidyDOM(dom)
 console.log(dom.render())
-// Output is pretty printed like: <div>
+// Output is pretty printed like:
+// <div>
 //   Hello World
 // </div>
 ```
 
-These examples are available at [/example](/example).
+---
 
-## JSX
+## ⚛️ JSX Setup
 
-Usually JSX is optimized for React i.e. it expects `React.creatElement` to exist and be the factory for generating the nodes. You can of course get the same effect here if you set up a helper like this:
-
-```js
-import { html } from 'zeed-dom'
-
-const React = {
-  createElement: html,
-}
-```
-
-But more common is the use of `h` as the factory function. Here is how you can set up this behavior for various environments:
-
-> In case of error messages on JSX in your Typescript project, try to add `npm install -D @types/react`.
- 
-
-### TypeScript
-
-In [`tsconfig.json`](https://www.typescriptlang.org/docs/handbook/compiler-options-in-msbuild.html#mappings):
+JSX is supported out of the box. For TypeScript, add to your `tsconfig.json`:
 
 ```json
 {
@@ -150,7 +146,7 @@ In [`tsconfig.json`](https://www.typescriptlang.org/docs/handbook/compiler-optio
 }
 ```
 
-To avoid type checking issues you should add this to you `shims.d.ts`:
+Add this to your `shims.d.ts`:
 
 ```ts
 // https://www.typescriptlang.org/docs/handbook/jsx.html#intrinsic-elements
@@ -161,9 +157,7 @@ declare namespace JSX {
 }
 ```
 
-### [ESBuild](https://github.com/evanw/esbuild)
-
-In options:
+For ESBuild:
 
 ```js
 {
@@ -171,42 +165,61 @@ In options:
 }
 ```
 
-Or alternatively as [command line option](https://github.com/evanw/esbuild#command-line-usage): `--jsx-factory=h`
+Or as a CLI option: `--jsx-factory=h`
 
-### Browser DOM
-
-The JSX factory can also be used to directly create HTML DOM nodes in the browser. Just create the `h` function and let it use the browser's `document` object:
+For browser DOM:
 
 ```js
 const { hFactory } = require('zeed-dom')
-
 export const h = hFactory({ document })
 ```
 
-## Performance
+---
 
-The parser isn't doing too bad, according to the benchmarks of [htmlparser-benchmark](https://github.com/AndreasMadsen/htmlparser-benchmark/blob/master/stats.txt) ;)
+## 🧪 API Highlights
+
+- `vdom(htmlString)`: Parse HTML to virtual DOM
+- `tidyDOM(node)`: Pretty print/format DOM
+- `serializeSafeHTML(node)`: Output safe HTML
+- `serializeMarkdown(node)`: Output Markdown
+- `serializePlaintext(node)`: Output plain text
+- `handleHTML(html, fn)`: Manipulate HTML with a callback
+- `VElement`, `VNode`, `VDocument`, etc.: Core classes
+- `.handle(selector, fn)`: Manipulate elements by selector
+- `.querySelector`, `.querySelectorAll`: CSS selector queries
+- `.replaceWith()`, `.remove()`, `.setAttribute()`, etc.: DOM-like methods
+
+---
+
+## 🚦 Performance
+
+The parser is fast, as shown in [htmlparser-benchmark](https://github.com/AndreasMadsen/htmlparser-benchmark/blob/master/stats.txt) (2025-07-19):
 
 ```
-tl                 : 1.02699 ms/file ± 0.679139
-htmlparser2        : 1.98505 ms/file ± 2.94434
-node-html-parser   : 2.24176 ms/file ± 1.52112
-neutron-html5parser: 2.36648 ms/file ± 1.38879
-html5parser        : 2.39891 ms/file ± 2.83056
-htmlparser2-dom    : 2.57523 ms/file ± 3.35587
-html-dom-parser    : 2.84910 ms/file ± 3.61615
-libxmljs           : 3.81665 ms/file ± 2.79295
-zeed-dom           : 5.05130 ms/file ± 3.57184
-htmljs-parser      : 5.58557 ms/file ± 6.47597
-parse5             : 9.07862 ms/file ± 6.50856
-htmlparser         : 21.2274 ms/file ± 150.951
-html-parser        : 30.9104 ms/file ± 24.3930
-saxes              : 49.5906 ms/file ± 141.194
-html5              : 114.771 ms/file ± 148.345
+htmljs-parser      : 0.153576 ms/file ± 0.339639
+tl                 : 0.344457 ms/file ± 0.209764
+htmlparser2        : 0.543453 ms/file ± 0.438753
+html5parser        : 0.605998 ms/file ± 0.387632
+neutron-html5parser: 0.606776 ms/file ± 0.324339
+htmlparser2-dom    : 0.713802 ms/file ± 0.551285
+node-html-parser   : 0.811724 ms/file ± 0.532164
+zeed-dom           : 1.09377 ms/file ± 0.595654
+sax                : 1.84714 ms/file ± 1.50359
+parse5             : 1.99615 ms/file ± 1.36227
+arijs-stream       : 4.34379 ms/file ± 2.40653
+arijs-tree         : 4.68313 ms/file ± 2.57017
+html5              : 4.81755 ms/file ± 3.35113
+htmlparser         : 7.98449 ms/file ± 57.5936
+html-parser        : 8.33241 ms/file ± 6.56205
+saxes              : 24.3492 ms/file ± 70.5843
 ```
 
-## Misc
+---
 
-- To set namespace colons in JSX use double underscore i.e. `<xhtml__link />` becomes `<xhtml:link />`
-- To allow `CDATA` use the helper function e.g. `<div>{ CDATA(yourRawData) }</div>`
-- `style` attributes can handle objects e.g. `<span style={{backgroundColor: 'red'}} />` becomes `<span style="background-color: red" />`
+## 📝 Misc
+
+- Use double underscore in JSX for namespaces: `<xhtml__link />` → `<xhtml:link />`
+- Use `CDATA` helper for raw data: `<div>{CDATA(yourRawData)}</div>`
+- `style` attributes can be objects: `<span style={{backgroundColor: 'red'}} />` → `<span style="background-color: red" />`
+- Works in Node.js, browser, and serverless
+- TypeScript-first, but works with plain JS too
