@@ -725,7 +725,6 @@ describe('vdom', () => {
   //   div.replaceWith('x')
   // })
 
-
   it('should include only elements in children', () => {
     const el: VElement = parseHTML('<div> <p>Hello</p> </div>').firstChild
     expect(el.childNodes).toHaveLength(3)
