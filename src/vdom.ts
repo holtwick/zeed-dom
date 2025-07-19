@@ -187,7 +187,7 @@ export class VNode {
   }
 
   get children() {
-    return this._childNodes || []
+    return (this._childNodes || []).filter<any>(isVElement)
   }
 
   get firstChild() {

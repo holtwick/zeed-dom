@@ -10,7 +10,7 @@ export function removeBodyContainer(body: VNodeQuery): VNodeQuery {
       body.appendChild(ehead.childNodes)
     }
     if (ebody) {
-      body.appendChild(ebody.children)
+      body.appendChild(ebody.childNodes)
     }
     return body
   }

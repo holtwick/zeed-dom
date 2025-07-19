@@ -288,4 +288,10 @@ describe('vDOM', () => {
     el.setTagName('main')
     expect(el.render()).toBe('<main>Hello</main>')
   })
+
+  it('should include only elements in children', () => {
+    const el: VElement = parseHTML('<div> <p>Hello</p> </div>').firstChild
+    expect(el.childNodes).toHaveLength(3)
+    expect(el.children).toHaveLength(1)
+  })
 })
