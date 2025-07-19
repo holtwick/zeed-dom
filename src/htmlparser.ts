@@ -21,67 +21,58 @@ const selfCloseTagRe = /\s*\/\s*>\s*$/m
  * Original code by Erik Arvidsson, Mozilla Public License
  * http://erik.eae.net/simplehtmlparser/simplehtmlparser.js
  */
-export class HtmlParser {
-  scanner: any
-  options: any
-  attrRe = attrRe
-  endTagRe = endTagRe
-  startTagRe = startTagRe
-  defaults = { ignoreWhitespaceText: false }
+export interface Scanner {
+  characters: (text: string) => void
+  comment: (text: string) => void
+  startElement: (tagName: string, attrs: Record<string, any>, isSelfColse: boolean, raw: string) => void
+  endElement: (tagName: string) => void
+}
 
-  constructor(options: {
-    scanner?: any
-    ignoreWhitespaceText?: boolean
-  } = {}) {
-    this.scanner = options.scanner
-    // Faster object merge for simple case
-    this.options = options.ignoreWhitespaceText !== undefined
-      ? options
-      : { ...this.defaults, ...options }
-  }
+export function createHtmlParser(scanner: Scanner, options: { ignoreWhitespaceText?: boolean } = {}) {
+  const attrRe = /([^=\s]+)(\s*=\s*(("([^"]*)")|('([^']*)')|[^>\s]+))?/g
+  const endTagRe = /^<\/([^>\s]+)[^>]*>/m
+  const startTagRe = /^<([^>\s/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*(?:\/\s*)?>/m
+  const selfCloseTagRe = /\s*\/\s*>\s*$/m
+  const defaults = { ignoreWhitespaceText: false }
+  const opts = options.ignoreWhitespaceText !== undefined ? options : { ...defaults, ...options }
 
-  parse(html: string) {
+  function parse(html: string) {
     let treatAsChars = false
     let index, match, characters
-    // Precompile regex for script/style end tags to avoid repeated creation
     let scriptEndRe: RegExp | null = null
     let styleEndRe: RegExp | null = null
 
     while (html.length) {
-      treatAsChars = true // Set default early
+      treatAsChars = true
 
-      // comment - use startsWith for faster string comparison
       if (html.startsWith('<!--')) {
         index = html.indexOf('-->')
         if (index !== -1) {
-          this.scanner.comment(html.substring(4, index))
+          scanner.comment(html.substring(4, index))
           html = html.slice(index + 3)
           treatAsChars = false
         }
       }
-      // end tag - use startsWith and avoid deprecated RegExp globals
       else if (html.startsWith('</')) {
-        match = html.match(this.endTagRe)
+        match = html.match(endTagRe)
         if (match) {
           html = html.slice(match[0].length)
           treatAsChars = false
-          this.parseEndTag(match[0], match[1])
+          parseEndTag(match[0], match[1])
         }
       }
-      // start tag - avoid charAt for better performance
       else if (html[0] === '<') {
-        match = html.match(this.startTagRe)
+        match = html.match(startTagRe)
         if (match) {
           html = html.slice(match[0].length)
           treatAsChars = false
-          const tagName = this.parseStartTag(match[0], match[1], match)
-          // Optimize script/style handling with precompiled regex
+          const tagName = parseStartTag(match[0], match[1], match)
           if (tagName === 'script') {
             if (!scriptEndRe)
               scriptEndRe = /<\/script/i
             index = html.search(scriptEndRe)
             if (index !== -1) {
-              this.scanner.characters(html.slice(0, index))
+              scanner.characters(html.slice(0, index))
               html = html.slice(index)
               treatAsChars = false
             }
@@ -91,7 +82,7 @@ export class HtmlParser {
               styleEndRe = /<\/style/i
             index = html.search(styleEndRe)
             if (index !== -1) {
-              this.scanner.characters(html.slice(0, index))
+              scanner.characters(html.slice(0, index))
               html = html.slice(index)
               treatAsChars = false
             }
@@ -103,9 +94,8 @@ export class HtmlParser {
         index = html.indexOf('<')
 
         if (index === 0) {
-          // Skip the first '<' and find the next one
           index = html.indexOf('<', 1)
-          characters = html[0] // Just the '<' character
+          characters = html[0]
           html = html.slice(1)
         }
         else if (index === -1) {
@@ -117,35 +107,33 @@ export class HtmlParser {
           html = html.slice(index)
         }
 
-        // Faster whitespace check - avoid regex for empty strings
-        if (characters && (!this.options.ignoreWhitespaceText || /[^\s]/.test(characters)))
-          this.scanner.characters(characters)
+        if (characters && (!opts.ignoreWhitespaceText || /[^\s]/.test(characters)))
+          scanner.characters(characters)
       }
 
-      match = null // Clear match for next iteration
+      match = null
     }
   }
 
-  private parseStartTag(input: string, tagName: string, match: any) {
+  function parseStartTag(input: string, tagName: string, match: any) {
     const isSelfColse = selfCloseTagRe.test(input)
     let attrInput = match[2]
     if (isSelfColse)
       attrInput = attrInput.replace(/\s*\/\s*$/, '')
-    const attrs = this.parseAttributes(tagName, attrInput)
-    this.scanner.startElement(tagName, attrs, isSelfColse, match[0])
+    const attrs = parseAttributes(tagName, attrInput)
+    scanner.startElement(tagName, attrs, isSelfColse, match[0])
     return tagName.toLocaleLowerCase()
   }
 
-  private parseEndTag(input: string, tagName: string) {
-    this.scanner.endElement(tagName)
+  function parseEndTag(input: string, tagName: string) {
+    scanner.endElement(tagName)
   }
 
-  private parseAttributes(tagName: string, input: string) {
+  function parseAttributes(tagName: string, input: string) {
     const attrs: Record<string, any> = {}
     if (!input || !input.trim())
       return attrs
 
-    // Fast path for simple attributes without quotes
     if (!/["']/.test(input)) {
       const parts = input.trim().split(/\s+/)
       for (const part of parts) {
@@ -160,14 +148,15 @@ export class HtmlParser {
       return attrs
     }
 
-    // Fallback to regex for complex attributes
-    this.attrRe.lastIndex = 0
+    attrRe.lastIndex = 0
     let match
     // eslint-disable-next-line no-cond-assign
-    while ((match = this.attrRe.exec(input)) !== null) {
+    while ((match = attrRe.exec(input)) !== null) {
       const [, name, , value, , valueInQuote, , valueInSingleQuote] = match
       attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
     }
     return attrs
   }
+
+  return parse
 }

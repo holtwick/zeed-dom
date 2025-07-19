@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { HtmlParser } from '../src/htmlparser.ts'
+import { createHtmlParser } from '../src/htmlparser.ts'
 
 // Minimal scanner that does nothing
 const scanner = {
@@ -14,10 +14,10 @@ function makeHTML(repeats = 10000) {
 }
 
 const html = makeHTML(20000)
-const parser = new HtmlParser({ scanner })
+const parser = createHtmlParser(scanner)
 
 console.log('Benchmarking HtmlParser...')
 const start = Date.now()
-parser.parse(html)
+parser(html)
 const end = Date.now()
 console.log(`Parsed ${html.length} chars in ${end - start} ms`)
