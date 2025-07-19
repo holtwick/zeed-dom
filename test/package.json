@@ -1,0 +1,18 @@
+{
+  "name": "test",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "author": "Dirk Holtwick",
+  "license": "ISC",
+  "main": "performance.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@tiptap/extension-document": "^2.0.0-beta.15",
+    "@tiptap/extension-paragraph": "^2.0.0-beta.22",
+    "@tiptap/extension-text": "^2.0.0-beta.15",
+    "@tiptap/html": "^2.0.0-beta.135"
+  }
+}

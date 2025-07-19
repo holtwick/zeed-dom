@@ -4,7 +4,6 @@ pnpm*
 dist
 tmp
 *.log
-.out*
-test
+.out* 
 coverage
 Icon?
