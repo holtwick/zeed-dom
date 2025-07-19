@@ -178,9 +178,9 @@ describe('css', () => {
     )
     // Only match descendant combinator on the descendant node
     const section = element.querySelector('section')
-    expect(matchSelector('div section', section, { debug: true })).toBe(true)
-    expect(matchSelector('div span', element.querySelector('span'), { debug: true })).toBe(true)
-    expect(matchSelector('section span', element.querySelector('span'), { debug: true })).toBe(true)
+    expect(matchSelector('div section', section)).toBe(true)
+    expect(matchSelector('div span', element.querySelector('span'))).toBe(true)
+    expect(matchSelector('section span', element.querySelector('span'))).toBe(true)
     expect(matchSelector('div > section', element)).toBe(false) // Not implemented, should be false
     expect(matchSelector('div + section', element)).toBe(false) // Not implemented, should be false
   })
@@ -200,7 +200,7 @@ describe('css', () => {
     )
     // Descendant
     const section = element.querySelector('section')
-    expect(matchSelector('div section', section, { debug: true })).toBe(true) // section is a descendant of div
+    expect(matchSelector('div section', section)).toBe(true) // section is a descendant of div
     // Child
     const elementChildren = section.childNodes.filter((n: any) => n.nodeType === 1)
     expect(matchSelector('div > section', section)).toBe(true)
@@ -311,9 +311,8 @@ describe('css', () => {
     expect(matchSelector('[data-foo*=zzz]', element)).toBe(false)
   })
 
-
   // it('should be single fail', () => {
   //   let element = <h1>...</h1>
-  //   expect(matchSelector('[id]', element, { debug: true })).toBe(false)
+  //   expect(matchSelector('[id]', element)).toBe(false)
   // })
 })
