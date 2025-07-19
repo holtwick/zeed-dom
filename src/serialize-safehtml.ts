@@ -1,3 +1,4 @@
+import type { VElement } from './vdom'
 import { escapeHTML } from './encoding'
 import { isVElement, VNode } from './vdom'
 import { parseHTML } from './vdomparser'
@@ -10,37 +11,34 @@ interface SerializeContext {
   mode?: 'ol' | 'ul'
 }
 
+// Build rules map only once for performance
+const blockTags = SELECTOR_BLOCK_ELEMENTS.split(',')
+const baseRules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<SerializeContext>) => string) => string> = {
+  a: (node, handleChildren) => `<a href="${escapeHTML(node.getAttribute('href') ?? '')}" rel="noopener noreferrer" target="_blank">${handleChildren()}</a>`,
+  img: node => `<img src="${escapeHTML(node.getAttribute('src') ?? '')}" alt="${escapeHTML(node.getAttribute('alt') ?? '')}">`,
+  br: () => `<br>`,
+  title: () => '',
+  script: () => '',
+  style: () => '',
+  head: () => '',
+}
+blockTags.forEach((tag) => {
+  baseRules[tag] = (node, handleChildren) => `<${tag}>${handleChildren().trim()}</${tag}>`
+})
+
 function serialize(node: VNode, context: SerializeContext = {
   level: 0,
   count: 0,
 }): string {
   if (node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE) {
-    return node.children.map(c => serialize(c, { ...context })).join('')
+    return (node.children || []).map(c => serialize(c, { ...context })).join('')
   }
-
   else if (isVElement(node)) {
     const tag: string = node.tagName?.toLowerCase()
-    const handleChildren = (ctx?: Partial<SerializeContext>): string => node.children.map(c => serialize(c, { ...context, ...ctx })).join('')
-
-    const rules: Record<string, () => string> = {
-      a: () => `<a href="${escapeHTML(node.getAttribute('href') ?? '')}" rel="noopener noreferrer" target="_blank">${handleChildren()}</a>`,
-      img: () => `<img src="${escapeHTML(node.getAttribute('src') ?? '')}" alt="${escapeHTML(node.getAttribute('alt') ?? '')}">`,
-      br: () => `<br>`,
-      title: () => '',
-      script: () => '',
-      style: () => '',
-      head: () => '',
-    }
-
-    SELECTOR_BLOCK_ELEMENTS.split(',').forEach((tag) => {
-      rules[tag] = () => `<${tag}>${handleChildren().trim()}</${tag}>`
-    })
-
-    const fn = rules[tag]
-
+    const handleChildren = (ctx?: Partial<SerializeContext>): string => (node.children || []).map(c => serialize(c, { ...context, ...ctx })).join('')
+    const fn = baseRules[tag]
     if (fn)
-      return fn()
-
+      return fn(node, handleChildren)
     return handleChildren()
   }
   return escapeHTML(node.textContent ?? '')

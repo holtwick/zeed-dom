@@ -41,44 +41,31 @@ function _h(
     }
     if (attrs && isElement) {
       const element = el as VElement
-      for (let [key, value] of Object.entries(attrs)) {
-        key = key.toString()
+      for (const [key, value] of Object.entries(attrs)) {
         const compareKey = key.toLowerCase()
         if (compareKey === 'classname') {
           element.className = value
         }
         else if (compareKey === 'on') {
-          Object.entries(value).forEach(([name, value]) => {
-            element.setAttribute(`on${name}`, String(value))
-          })
-          // else if (key.indexOf('on') === 0) {
-          //   if (el.addEventListener) {
-          //     el.addEventListener(key.substring(2), value)
-          //     continue
-          //   }
+          for (const [name, v] of Object.entries(value)) {
+            element.setAttribute(`on${name}`, String(v))
+          }
         }
         else if (value !== false && value != null) {
-          if (value === true)
-            element.setAttribute(key, key)
-          else
-            element.setAttribute(key, value.toString())
+          element.setAttribute(key, value === true ? key : value.toString())
         }
       }
     }
     if (children) {
       for (const childOuter of children) {
-        const cc = Array.isArray(childOuter) ? [...childOuter] : [childOuter]
+        const cc = Array.isArray(childOuter) ? childOuter : [childOuter]
         for (const child of cc) {
-          if (child) {
-            if (child !== false && child != null) {
-              if (typeof child !== 'object') {
-                el.appendChild(
-                  context.document.createTextNode(child.toString()),
-                )
-              }
-              else {
-                el.appendChild(child)
-              }
+          if (child !== false && child != null) {
+            if (typeof child !== 'object') {
+              el.appendChild(context.document.createTextNode(child.toString()))
+            }
+            else {
+              el.appendChild(child)
             }
           }
         }
@@ -88,30 +75,42 @@ function _h(
   }
 }
 
-export function hArgumentParser(tag: any, attrs: any, ...children: any[]) {
-  if (typeof tag === 'object') {
+export function hArgumentParser(
+  tag: string | ((props: any) => VDocumentFragment | VElement),
+  attrs?: Record<string, unknown> | unknown[] | null,
+  ...childrenInput: unknown[]
+): { tag: string | ((props: any) => VDocumentFragment | VElement), attrs: Record<string, unknown>, children: unknown[] } {
+  let children: unknown[] = childrenInput
+
+  if (typeof tag === 'object' && tag !== null) {
+    // If tag is an object, treat as fragment-like
+    children = (tag as any).children
+    attrs = (tag as any).attrs
     tag = 'fragment'
-    children = tag.children
-    attrs = tag.attrs
   }
+
   if (Array.isArray(attrs)) {
     children = [attrs]
     attrs = {}
   }
   else if (attrs) {
-    if (attrs.attrs) {
-      attrs = { ...attrs.attrs, ...attrs }
-      delete attrs.attrs
+    if ((attrs as Record<string, unknown>).attrs) {
+      const attrsObj = (attrs as Record<string, unknown>).attrs
+      attrs = { ...(typeof attrsObj === 'object' && attrsObj !== null ? attrsObj : {}), ...attrs }
+      delete (attrs as Record<string, unknown>).attrs
     }
   }
   else {
     attrs = {}
   }
+
   return {
     tag,
-    attrs,
+    attrs: attrs ?? {},
     children:
-      typeof children[0] === 'string' ? children : children.flat(Number.POSITIVE_INFINITY),
+      typeof children[0] === 'string'
+        ? children
+        : children.flat(Number.POSITIVE_INFINITY),
   }
 }
 
