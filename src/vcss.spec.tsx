@@ -357,7 +357,7 @@ describe('css', () => {
         <iframe src="https://www.youtube.com/watch?v=cqHqLQgVCgY" />
       </div>
     )
-    // Should not throw, should return true for iframe
+    // Should not throw, should return true for Fiframe
     expect(matchSelector('div[data-youtube-video] iframe', element.querySelector('iframe'))).toBe(true)
     // Should return true for div
     expect(matchSelector('div[data-youtube-video]', element)).toBe(true)
