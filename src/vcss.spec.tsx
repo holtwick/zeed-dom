@@ -285,6 +285,33 @@ describe('css', () => {
     expect(matchSelector('span:nth-child(3)', elementChildren[2])).toBe(true)
   })
 
+  it('should handle general sibling combinator', () => {
+    const element = (
+      <div>
+        <span id="a">A</span>
+        <b>B</b>
+        <span id="c">C</span>
+        <span id="d">D</span>
+      </div>
+    )
+    const c = element.childNodes.filter((n: any) => n.nodeType === 1)[2]
+    const d = element.childNodes.filter((n: any) => n.nodeType === 1)[3]
+    expect(matchSelector('span ~ span', d)).toBe(true) // D follows A and C
+    expect(matchSelector('span ~ b', d)).toBe(false)
+    expect(matchSelector('b ~ span', c)).toBe(true) // C follows B
+    expect(matchSelector('span ~ span', c)).toBe(true) // C follows A
+    expect(matchSelector('span ~ span', element.childNodes.filter((n: any) => n.nodeType === 1)[0])).toBe(false) // A has no previous span
+  })
+
+  it('should handle [attr|=val] and [attr*=val]', () => {
+    const element = <div lang="en-US" data-foo="abcxyz"></div>
+    expect(matchSelector('[lang|=en]', element)).toBe(true)
+    expect(matchSelector('[lang|=fr]', element)).toBe(false)
+    expect(matchSelector('[data-foo*=bcx]', element)).toBe(true)
+    expect(matchSelector('[data-foo*=zzz]', element)).toBe(false)
+  })
+
+
   // it('should be single fail', () => {
   //   let element = <h1>...</h1>
   //   expect(matchSelector('[id]', element, { debug: true })).toBe(false)

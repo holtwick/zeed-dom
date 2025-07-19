@@ -47,6 +47,14 @@ export function matchSelector(
           while (prev && prev.nodeType !== 1) prev = prev.previousSibling
           return !!prev && matchRule(prev, ruleParts, idx - 1)
         }
+        case 'general': { // general sibling combinator (~)
+          let prev = el.previousSibling
+          while (prev) {
+            if (prev.nodeType === 1 && matchRule(prev, ruleParts, idx - 1)) return true
+            prev = prev.previousSibling
+          }
+          return false
+        }
         default: {
           if (!matchSimple(el, part)) return false
           if (idx === 0) return true
@@ -69,6 +77,10 @@ export function matchSelector(
               : !!attrValue?.includes(value)
           case 'exists': return element.hasAttribute(name)
           case 'any': return !!attrValue?.includes(value)
+          case 'hyphen': // [attr|=val]
+            return attrValue === value || !!attrValue?.startsWith(value + '-')
+          case 'contains': // [attr*=val]
+            return !!attrValue?.includes(value)
           default: return false
         }
       }
