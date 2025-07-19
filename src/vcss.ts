@@ -116,9 +116,39 @@ export function matchSelector(
                 ok = false
             })
             success = !ok
+          } else if (name === 'first-child') {
+            const parent = element.parentNode
+            if (parent && parent.childNodes) {
+              // Only consider element nodes for :first-child
+              const elementChildren = parent.childNodes.filter((n: any) => n.nodeType === 1)
+              success = elementChildren[0] === element
+            } else {
+              success = false
+            }
+          } else if (name === 'last-child') {
+            const parent = element.parentNode
+            if (parent && parent.childNodes) {
+              const elementChildren = parent.childNodes.filter((n: any) => n.nodeType === 1)
+              success = elementChildren[elementChildren.length - 1] === element
+            } else {
+              success = false
+            }
+          } else if (name === 'nth-child') {
+            const parent = element.parentNode
+            if (parent && parent.childNodes) {
+              const elementChildren = parent.childNodes.filter((n: any) => n.nodeType === 1)
+              const idx = elementChildren.indexOf(element)
+              let nth = 0
+              if (data && data.length > 0) {
+                nth = parseInt(data[0], 10) - 1
+              }
+              success = idx === nth
+            } else {
+              success = false
+            }
           }
           if (debug)
-            log('Is :not', success)
+            log('Is pseudo', name, success)
           break
         case 'descendant':
           // Recursively check all descendants for a match

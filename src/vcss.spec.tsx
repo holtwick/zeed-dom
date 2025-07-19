@@ -226,6 +226,32 @@ describe('css', () => {
     expect(matchSelector('   #foo   ', element)).toBe(true)
   })
 
+  it('should handle :first-child, :last-child, :nth-child with elements and text nodes', () => {
+    const element = (
+      <div>
+        {'\n'}
+        <span>first</span>
+        {' '}
+        <span>second</span>
+        {'\n'}
+        <span>third</span>
+        {'  '}
+      </div>
+    )
+    // Only test element nodes for :first-child, :last-child, :nth-child
+    const elementChildren = element.childNodes.filter(n => n.nodeType === 1)
+    // Test :first-child
+    expect(matchSelector('span:first-child', elementChildren[0])).toBe(true)
+    expect(matchSelector('span:first-child', elementChildren[1])).toBe(false)
+    // Test :last-child
+    expect(matchSelector('span:last-child', elementChildren[elementChildren.length - 1])).toBe(true)
+    expect(matchSelector('span:last-child', elementChildren[0])).toBe(false)
+    // Test :nth-child
+    expect(matchSelector('span:nth-child(1)', elementChildren[0])).toBe(true)
+    expect(matchSelector('span:nth-child(2)', elementChildren[1])).toBe(true)
+    expect(matchSelector('span:nth-child(3)', elementChildren[2])).toBe(true)
+  })
+
   // it('should be single fail', () => {
   //   let element = <h1>...</h1>
   //   expect(matchSelector('[id]', element, { debug: true })).toBe(false)
