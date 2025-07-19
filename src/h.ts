@@ -88,30 +88,42 @@ function _h(
   }
 }
 
-export function hArgumentParser(tag: any, attrs: any, ...children: any[]) {
-  if (typeof tag === 'object') {
+export function hArgumentParser(
+  tag: string | ((props: any) => VDocumentFragment | VElement),
+  attrs?: Record<string, unknown> | null,
+  ...childrenInput: unknown[]
+): { tag: string | ((props: any) => VDocumentFragment | VElement), attrs: Record<string, unknown>, children: unknown[] } {
+  let children: unknown[] = childrenInput
+
+  if (typeof tag === 'object' && tag !== null) {
+    // If tag is an object, treat as fragment-like
+    children = (tag as any).children
+    attrs = (tag as any).attrs
     tag = 'fragment'
-    children = tag.children
-    attrs = tag.attrs
   }
+
   if (Array.isArray(attrs)) {
     children = [attrs]
     attrs = {}
   }
   else if (attrs) {
-    if (attrs.attrs) {
-      attrs = { ...attrs.attrs, ...attrs }
-      delete attrs.attrs
+    if ((attrs as Record<string, unknown>).attrs) {
+      const attrsObj = (attrs as Record<string, unknown>).attrs
+      attrs = { ...(typeof attrsObj === 'object' && attrsObj !== null ? attrsObj : {}), ...attrs }
+      delete (attrs as Record<string, unknown>).attrs
     }
   }
   else {
     attrs = {}
   }
+
   return {
     tag,
-    attrs,
+    attrs: attrs ?? {},
     children:
-      typeof children[0] === 'string' ? children : children.flat(Number.POSITIVE_INFINITY),
+      typeof children[0] === 'string'
+        ? children
+        : children.flat(Number.POSITIVE_INFINITY),
   }
 }
 

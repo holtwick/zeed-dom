@@ -289,7 +289,7 @@ describe('vDOM', () => {
     expect(el.render()).toBe('<main>Hello</main>')
   })
 
-  it('should support HTML5 sectioning elements', () => {
+  it('should support HTML5 sectioning elements (legacy)', () => {
     const doc = createHTMLDocument()
     const section = doc.createElement('section')
     const article = doc.createElement('article')
@@ -306,24 +306,24 @@ describe('vDOM', () => {
     expect(doc.body?.render()).toBe('<body><section>Section</section><article>Article</article><nav>Nav</nav><aside>Aside</aside></body>')
   })
 
-  it('should support HTML5 global attributes', () => {
+  it('should support HTML5 global attributes (legacy)', () => {
     const el = new VElement('div', { contenteditable: 'true', draggable: 'true', hidden: true })
     expect(el.render()).toBe('<div contenteditable="true" draggable="true" hidden></div>')
   })
 
-  it('should support HTML5 boolean attributes', () => {
+  it('should support HTML5 boolean attributes (legacy)', () => {
     const el = new VElement('input', { type: 'checkbox', checked: true, disabled: true })
     expect(el.render()).toBe('<input type="checkbox" checked disabled>')
   })
 
-  it('should support HTML5 void elements', () => {
+  it('should support HTML5 void elements (legacy)', () => {
     const el = new VElement('br')
     expect(el.render()).toBe('<br>')
     const img = new VElement('img', { src: 'x.png', alt: 'x' })
     expect(img.render()).toBe('<img src="x.png" alt="x">')
   })
 
-  it('should support <mark> and <time> elements', () => {
+  it('should support <mark> and <time> elements (legacy)', () => {
     const mark = new VElement('mark')
     mark.textContent = 'Highlight'
     const time = new VElement('time', { datetime: '2025-07-19' })
@@ -332,7 +332,7 @@ describe('vDOM', () => {
     expect(time.render()).toBe('<time datetime="2025-07-19">Today</time>')
   })
 
-  it('should mimic DOM', () => {
+  it('should mimic DOM (legacy)', () => {
     const document = new VDocument()
     document.appendChild(document.createElement('p'))
     document.appendChild(document.createElement('p'))
@@ -340,7 +340,7 @@ describe('vDOM', () => {
     expect(html).toBe('<p></p><p></p>')
   })
 
-  it('should mimic DOM and class', () => {
+  it('should mimic DOM and class (legacy)', () => {
     const document = new VDocument()
     const frag = new VDocumentFragment()
     const p = document.createElement('p')
@@ -351,7 +351,7 @@ describe('vDOM', () => {
     expect(html).toBe('<p class="foo">Some</p>')
   })
 
-  it('should convert styles key to camel case', () => {
+  it('should convert styles key to camel case (legacy)', () => {
     const document = new VDocument()
     const frag = new VDocumentFragment()
     const p = document.createElement('p')
@@ -365,7 +365,7 @@ describe('vDOM', () => {
     )
   })
 
-  it('should have functional factory', () => {
+  it('should have functional factory (legacy)', () => {
     const doc = createHTMLDocument()
 
     doc.body?.replaceChildren(
@@ -428,7 +428,7 @@ describe('vDOM', () => {
     expect(doc.title).toBe('')
   })
 
-  it('should use JSX', () => {
+  it('should use JSX (legacy)', () => {
     const spread = {
       title: 'Hello',
       id: 'greeting',
@@ -454,7 +454,7 @@ describe('vDOM', () => {
     )
   })
 
-  it('should nested JSX', () => {
+  it('should nested JSX (legacy)', () => {
     const content = <div>Hello</div>
     const title = 'World'
 
@@ -468,7 +468,7 @@ describe('vDOM', () => {
     expect(doc.render()).toBe('<body><h1>World</h1><div>Hello</div></body>')
   })
 
-  it('should JSX components', () => {
+  it('should JSX components (legacy)', () => {
     function Welcome({ props, h }: any) {
       return (
         <h1>
@@ -483,7 +483,7 @@ describe('vDOM', () => {
     expect(x.render()).toEqual('<h1>Hello, Sara</h1>')
   })
 
-  it('should JSX class magic', () => {
+  it('should JSX class magic (legacy)', () => {
     const x = (
       <div
         className={{
@@ -500,7 +500,7 @@ describe('vDOM', () => {
     expect(x.render()).toEqual('<div class="-active foo name">...</div>')
   })
 
-  it('should support fragments', () => {
+  it('should support fragments (legacy)', () => {
     const ff = (
       <fragment>
         <div>One</div>
@@ -512,7 +512,7 @@ describe('vDOM', () => {
     expect(ff.render()).toEqual('<div>One</div>Middle<div>Two</div>')
   })
 
-  it('should remove', () => {
+  it('should remove (legacy)', () => {
     const el = (
       <div>
         <div id="a"></div>
@@ -536,7 +536,7 @@ describe('vDOM', () => {
     )
   })
 
-  it('should handle dataSet stuff', () => {
+  it('should handle dataSet stuff (legacy)', () => {
     const el = <div data-lang="en">Test</div>
 
     expect(el.attributesObject).toEqual({ 'data-lang': 'en' })
@@ -549,7 +549,7 @@ describe('vDOM', () => {
     expect(frag.render()).toEqual('<div data-lang="en">Test</div>')
   })
 
-  it('should insert', () => {
+  it('should insert (legacy)', () => {
     const el = (
       <div>
         <p>Hallo</p>
@@ -577,7 +577,7 @@ describe('vDOM', () => {
     )
   })
 
-  it('should handle empty attrs', () => {
+  it('should handle empty attrs (legacy)', () => {
     const element = new VElement('img', { class: 'avatar', src: true, alt: true })
     const success = !!element.getAttribute('src')?.startsWith('data:')
     expect(success).toBe(false)
@@ -586,7 +586,7 @@ describe('vDOM', () => {
     expect(html).toBe('<img class="avatar" src alt>')
   })
 
-  it('should allow changing tag name with setTagName', () => {
+  it('should allow changing tag name with setTagName (legacy)', () => {
     const el = new VElement('span')
     el.textContent = 'Hello'
     expect(el.render()).toBe('<span>Hello</span>')
@@ -597,21 +597,21 @@ describe('vDOM', () => {
     expect(el.render()).toBe('<custom-tag>Hello</custom-tag>')
   })
 
-  it('should preserve attributes and children when changing tag name', () => {
+  it('should preserve attributes and children when changing tag name (legacy)', () => {
     const el = new VElement('div', { class: 'foo', id: 'bar' })
     el.appendChild(new VElement('span', {}))
     el.setTagName('section')
     expect(el.render()).toBe('<section class="foo" id="bar"><span></span></section>')
   })
 
-  it('should not change tagName if setTagName is called with the same value', () => {
+  it('should not change tagName if setTagName is called with the same value (legacy)', () => {
     const el = new VElement('p')
     el.textContent = 'Test'
     el.setTagName('p')
     expect(el.render()).toBe('<p>Test</p>')
   })
 
-  it('should handle setTagName on elements created via JSX', () => {
+  it('should handle setTagName on elements created via JSX (legacy)', () => {
     const el = <div>Hello</div>
     el.setTagName('main')
     expect(el.render()).toBe('<main>Hello</main>')

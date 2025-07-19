@@ -6,6 +6,7 @@
 import { escapeHTML } from './encoding'
 import { hArgumentParser } from './h'
 import { hasOwn } from './utils'
+import { VDocumentFragment, VElement } from './vdom'
 
 export const SELF_CLOSING_TAGS = [
   'area',
@@ -45,7 +46,7 @@ export function markup(
     || (Array.isArray(children)
       && (children.length === 0
         || (children.length === 1 && children[0] === '')))
-      || children == null
+    || children == null
   )
 
   const parts: string[] = []
@@ -53,46 +54,44 @@ export function markup(
 
   // React fragment <>...</> and ours: <noop>...</noop>
   if (tag !== 'noop' && tag !== '') {
-    if (tag !== 'cdata')
+    if (tag !== 'cdata') {
       parts.push(`<${tag}`)
-    else
+    }
+    else {
       parts.push('<![CDATA[')
+    }
 
     // Add attributes
     for (let name in attrs) {
-      if (name && hasOwn(attrs, name)) {
-        const v = attrs[name]
-        if (name === 'html')
-          continue
-
-        if (name.toLowerCase() === 'classname')
-          name = 'class'
-
-        name = name.replace(/__/g, ':')
-        if (v === true) {
-          // s.push( ` ${name}="${name}"`)
-          parts.push(` ${name}`)
-        }
-        else if (name === 'style' && typeof v === 'object') {
-          parts.push(
-            ` ${name}="${Object.keys(v)
-              .filter(k => v[k] != null)
-              .map((k) => {
-                let vv = v[k]
-                vv = typeof vv === 'number' ? `${vv}px` : vv
-                return `${k
-                  .replace(/([a-z])([A-Z])/g, '$1-$2')
-                  .toLowerCase()}:${vv}`
-              })
-              .join(';')}"`,
-          )
-        }
-        else if (v !== false && v != null) {
-          parts.push(` ${name}="${escapeHTML(v.toString())}"`)
-        }
+      if (!name || !hasOwn(attrs, name))
+        continue
+      const v = attrs[name]
+      if (name === 'html')
+        continue
+      if (name.toLowerCase() === 'classname')
+        name = 'class'
+      name = name.replace(/__/g, ':')
+      if (v === true) {
+        parts.push(` ${name}`)
+      }
+      else if (name === 'style' && typeof v === 'object') {
+        const styleStr = Object.keys(v)
+          .filter(k => v[k] != null)
+          .map((k) => {
+            let vv = v[k]
+            vv = typeof vv === 'number' ? `${vv}px` : vv
+            return `${k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}:${vv}`
+          })
+          .join(';')
+        if (styleStr)
+          parts.push(` ${name}="${styleStr}"`)
+      }
+      else if (v !== false && v != null) {
+        parts.push(` ${name}="${escapeHTML(v.toString())}"`)
       }
     }
 
+    const isSelfClosing = !xmlMode && SELF_CLOSING_TAGS.includes(tag)
     if (tag !== 'cdata') {
       if (xmlMode && !hasChildren) {
         parts.push(' />')
@@ -102,8 +101,7 @@ export function markup(
         parts.push('>')
       }
     }
-
-    if (!xmlMode && SELF_CLOSING_TAGS.includes(tag))
+    if (isSelfClosing)
       return parts.join('')
   }
 
@@ -113,23 +111,27 @@ export function markup(
       parts.push(children)
     }
     else if (children && children.length > 0) {
-      for (let child of children) {
-        if (child != null && child !== false) {
-          if (!Array.isArray(child))
-            child = [child]
-
+      for (const child of children) {
+        if (child == null || child === false)
+          continue
+        if (Array.isArray(child)) {
           for (const c of child) {
-            // todo: this fails if textContent starts with `<` and ends with `>`
-            if (
-              (c.startsWith('<') && c.endsWith('>'))
-              || tag === 'script'
-              || tag === 'style'
-            ) {
+            if (c == null || c === false)
+              continue
+            if ((typeof c === 'string' && c.startsWith('<') && c.endsWith('>')) || tag === 'script' || tag === 'style') {
               parts.push(c)
             }
             else {
               parts.push(escapeHTML(c.toString()))
             }
+          }
+        }
+        else {
+          if ((typeof child === 'string' && child.startsWith('<') && child.endsWith('>')) || tag === 'script' || tag === 'style') {
+            parts.push(child)
+          }
+          else {
+            parts.push(escapeHTML(child.toString()))
           }
         }
       }
@@ -140,17 +142,23 @@ export function markup(
     parts.push(attrs.html)
 
   if (tag !== 'noop' && tag !== '') {
-    if (tag !== 'cdata')
+    if (tag !== 'cdata') {
       parts.push(`</${tag}>`)
-    else
+    }
+    else {
       parts.push(']]>')
+    }
   }
   return parts.join('')
 }
 
-export function html(itag: string, iattrs?: object, ...ichildren: any[]) {
-  const { tag, attrs, children } = hArgumentParser(itag, iattrs, ichildren)
-  return markup(false, tag, attrs, children)
+export function html(
+  tag: string | ((props: any) => VDocumentFragment | VElement),
+  attrs?: Record<string, unknown> | null,
+  ...children: unknown[]
+): string {
+  const parsed = hArgumentParser(tag, attrs, ...children)
+  return markup(false, parsed.tag as string, parsed.attrs, parsed.children)
 }
 
 export const htmlVDOM = markup.bind(null, false)
