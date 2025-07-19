@@ -212,6 +212,23 @@ export class VNode {
     return null
   }
 
+  get childElementCount() {
+    return this._childNodes.filter(child => child.nodeType === VNode.ELEMENT_NODE).length
+  }
+
+  get firstElementChild() {
+    return this._childNodes.find(child => child.nodeType === VNode.ELEMENT_NODE) || null
+  }
+
+  get lastElementChild() {
+    for (let i = this._childNodes.length - 1; i >= 0; i--) {
+      if (this._childNodes[i].nodeType === VNode.ELEMENT_NODE) {
+        return this._childNodes[i]
+      }
+    }
+    return null
+  }
+
   flatten(): VElement[] {
     const elements: VElement[] = []
     if (this instanceof VElement)
@@ -265,6 +282,54 @@ export class VNode {
   [inspect]() {
     return `${this.constructor.name} "${this.render()}"`
   }
+
+  get parentElement() {
+    // DOM spec: parentNode if it is an element, else null
+    const p = this.parentNode
+    return p && p.nodeType === VNode.ELEMENT_NODE ? p : null
+  }
+
+  // insertAdjacentHTML(position: 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend', text: string) {
+  //   let nodes: VNode[] = []
+  //   try {
+  //     const fragment = parseHTML(text)
+  //     nodes = fragment.childNodes.filter((n: any) => n instanceof VNode)
+  //   } catch (e) {
+  //     // Only fallback if text is not valid HTML
+  //     if (/^\s*<\/?[a-zA-Z]/.test(text)) {
+  //       throw new Error('HTML parsing failed in insertAdjacentHTML')
+  //     }
+  //     nodes = [new VTextNode(text)]
+  //   }
+  //   switch (position) {
+  //     case 'beforebegin':
+  //       if (this.parentNode) {
+  //         const idx = this._indexInParent()
+  //         if (idx >= 0) {
+  //           this.parentNode._childNodes.splice(idx, 0, ...nodes)
+  //           this.parentNode._fixChildNodesParent()
+  //         }
+  //       }
+  //       break
+  //     case 'afterbegin':
+  //       this._childNodes.unshift(...nodes)
+  //       this._fixChildNodesParent()
+  //       break
+  //     case 'beforeend':
+  //       this._childNodes.push(...nodes)
+  //       this._fixChildNodesParent()
+  //       break
+  //     case 'afterend':
+  //       if (this.parentNode) {
+  //         const idx = this._indexInParent()
+  //         if (idx >= 0) {
+  //           this.parentNode._childNodes.splice(idx + 1, 0, ...nodes)
+  //           this.parentNode._fixChildNodesParent()
+  //         }
+  //       }
+  //       break
+  //   }
+  // }
 }
 
 export class VTextNode extends VNode {
@@ -325,6 +390,11 @@ export class VNodeQuery extends VNode {
 
   querySelector(selector: string) {
     return this.flatten().find(e => e.matches(selector))
+  }
+
+  getElementsByName(name: string) {
+    // DOM spec: only elements with a matching name attribute
+    return this.flatten().filter(e => e.getAttribute && e.getAttribute('name') === name)
   }
 
   //
@@ -404,9 +474,11 @@ export class VElement extends VNodeQuery {
     )
   }
 
-  setAttribute(name: string, value: string) {
+  setAttribute(name: string, value: any) {
     this.removeAttribute(name)
-    this._attributes[name] = value
+    if (value != null && value !== false) {
+      this._attributes[name] = value
+    }
     this._styles = undefined
     this._dataset = undefined
   }
@@ -531,6 +603,13 @@ export class VElement extends VNodeQuery {
   // html
 
   setInnerHTML(_html: string) {
+    // throw new Error('setInnerHTML is not implemented; see vdomparser for an example')
+  }
+
+  insertAdjacentHTML(
+    position: 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend',
+    text: string,
+  ) {
     // throw new Error('setInnerHTML is not implemented; see vdomparser for an example')
   }
 

@@ -69,8 +69,55 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
   return frag
 }
 
+// Attach parser-dependent methods to VElement prototype
 VElement.prototype.setInnerHTML = function (html) {
   const frag = parseHTML(html)
   this._childNodes = frag._childNodes
   this._fixChildNodesParent()
 }
+
+VElement.prototype.insertAdjacentHTML = function (
+  position: 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend',
+  text: string,
+) {
+  let nodes: VNode[] = []
+  try {
+    const frag = parseHTML(text)
+    nodes = frag._childNodes.filter((n: any) => n instanceof VNode)
+  } catch (e) {
+    // Only fallback if text is not valid HTML
+    if (/^\s*<\/?[a-zA-Z]/.test(text)) {
+      throw new Error('HTML parsing failed in insertAdjacentHTML')
+    }
+    nodes = [new VTextNode(text)]
+  }
+  switch (position) {
+    case 'beforebegin':
+      if (this.parentNode) {
+        const idx = this._indexInParent()
+        if (idx >= 0) {
+          this.parentNode._childNodes.splice(idx, 0, ...nodes)
+          this.parentNode._fixChildNodesParent()
+        }
+      }
+      break
+    case 'afterbegin':
+      this._childNodes.unshift(...nodes)
+      this._fixChildNodesParent()
+      break
+    case 'beforeend':
+      this._childNodes.push(...nodes)
+      this._fixChildNodesParent()
+      break
+    case 'afterend':
+      if (this.parentNode) {
+        const idx = this._indexInParent()
+        if (idx >= 0) {
+          this.parentNode._childNodes.splice(idx + 1, 0, ...nodes)
+          this.parentNode._fixChildNodesParent()
+        }
+      }
+      break
+  }
+}
+
