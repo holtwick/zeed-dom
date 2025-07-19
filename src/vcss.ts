@@ -1,7 +1,7 @@
 import type { VElement } from './vdom'
 import { parse } from 'css-what'
 
-function log(..._args: any) {}
+function log(..._args: any) { }
 
 // Alternative could be https://github.com/leaverou/parsel
 
@@ -36,6 +36,21 @@ export function matchSelector(
       const part = rules[ruleIndex]
       const { type, name, action, value, _ignoreCase = true, data } = part
       let success = false
+
+      function findInDescendants(node: VElement, rules: any[], ruleIndex: number): boolean {
+        if (!node || !node.childNodes)
+          return false
+        for (const child of node.childNodes) {
+          if (handleRules(child, rules, ruleIndex + 1)) {
+            return true
+          }
+          if (findInDescendants(child, rules, ruleIndex)) {
+            return true
+          }
+        }
+        return false
+      }
+
       switch (type) {
         case 'attribute': {
           const attrValue = element.getAttribute(name)
@@ -106,13 +121,9 @@ export function matchSelector(
             log('Is :not', success)
           break
         case 'descendant':
-          // Try to match the next rule part in any descendant
-          for (const child of element.childNodes || []) {
-            if (handleRules(child, rules, ruleIndex + 1)) {
-              success = true
-              break
-            }
-          }
+          // Recursively check all descendants for a match
+
+          success = findInDescendants(element, rules, ruleIndex)
           if (debug)
             log('Is descendant', success)
           break
