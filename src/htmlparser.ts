@@ -1,19 +1,9 @@
-// Taken from https://github.com/creeperyang/html-parser-lite
-// and slightly modified. Original also under MIT license. Thanks.
-
-// attribute, like href="javascript:void(0)"
-// 1. start with name (not empty and not =)
-// 2. and then \s*=\s*
-// 3. and value can be "value" | 'value' | value
-// 4. 2 and 3 are optional
-const attrRe = /([^=\s]+)(\s*=\s*(("([^"]*)")|('([^']*)')|[^>\s]+))?/g
-const endTagRe = /^<\/([^>\s]+)[^>]*>/m
-// start tag, like <a href="link"> <img/>
-// 1. must start with <tagName
-// 2. optional attrbutes
-// 3. /> or >
-const startTagRe = /^<([^>\s/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*(?:\/\s*)?>/m
-const selfCloseTagRe = /\s*\/\s*>\s*$/m
+export interface HtmlParserScanner {
+  characters: (text: string) => void
+  comment: (text: string) => void
+  startElement: (tagName: string, attrs: Record<string, any>, isSelfColse: boolean, raw: string) => void
+  endElement: (tagName: string) => void
+}
 
 /**
  * This is a simple html parser. Will read and parse html string.
@@ -21,20 +11,11 @@ const selfCloseTagRe = /\s*\/\s*>\s*$/m
  * Original code by Erik Arvidsson, Mozilla Public License
  * http://erik.eae.net/simplehtmlparser/simplehtmlparser.js
  */
-export interface Scanner {
-  characters: (text: string) => void
-  comment: (text: string) => void
-  startElement: (tagName: string, attrs: Record<string, any>, isSelfColse: boolean, raw: string) => void
-  endElement: (tagName: string) => void
-}
-
-export function createHtmlParser(scanner: Scanner, options: { ignoreWhitespaceText?: boolean } = {}) {
+export function createHtmlParser(scanner: HtmlParserScanner) {
   const attrRe = /([^=\s]+)(\s*=\s*(("([^"]*)")|('([^']*)')|[^>\s]+))?/g
   const endTagRe = /^<\/([^>\s]+)[^>]*>/m
   const startTagRe = /^<([^>\s/]+)((\s+[^=>\s]+(\s*=\s*(("[^"]*")|('[^']*')|[^>\s]+))?)*)\s*(?:\/\s*)?>/m
   const selfCloseTagRe = /\s*\/\s*>\s*$/m
-  const defaults = { ignoreWhitespaceText: false }
-  const opts = options.ignoreWhitespaceText !== undefined ? options : { ...defaults, ...options }
 
   function parse(html: string) {
     let treatAsChars = false
@@ -107,7 +88,7 @@ export function createHtmlParser(scanner: Scanner, options: { ignoreWhitespaceTe
           html = html.slice(index)
         }
 
-        if (characters && (!opts.ignoreWhitespaceText || /[^\s]/.test(characters)))
+        if (characters)
           scanner.characters(characters)
       }
 
