@@ -193,26 +193,7 @@ export const h = hFactory({ document })
 
 ## 🚦 Performance
 
-The parser is fast, as shown in [htmlparser-benchmark](https://github.com/AndreasMadsen/htmlparser-benchmark/blob/master/stats.txt) (2025-07-19):
-
-```
-htmljs-parser      : 0.153576 ms/file ± 0.339639
-tl                 : 0.344457 ms/file ± 0.209764
-htmlparser2        : 0.543453 ms/file ± 0.438753
-html5parser        : 0.605998 ms/file ± 0.387632
-neutron-html5parser: 0.606776 ms/file ± 0.324339
-htmlparser2-dom    : 0.713802 ms/file ± 0.551285
-node-html-parser   : 0.811724 ms/file ± 0.532164
-zeed-dom           : 1.09377 ms/file ± 0.595654
-sax                : 1.84714 ms/file ± 1.50359
-parse5             : 1.99615 ms/file ± 1.36227
-arijs-stream       : 4.34379 ms/file ± 2.40653
-arijs-tree         : 4.68313 ms/file ± 2.57017
-html5              : 4.81755 ms/file ± 3.35113
-htmlparser         : 7.98449 ms/file ± 57.5936
-html-parser        : 8.33241 ms/file ± 6.56205
-saxes              : 24.3492 ms/file ± 70.5843
-```
+The parser is fast, as shown in [htmlparser-benchmark](https://github.com/AndreasMadsen/htmlparser-benchmark/blob/master/stats.txt)
 
 ---
 
