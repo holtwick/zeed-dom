@@ -65,6 +65,8 @@
     "perf:files": "tsx test/files-bench.ts",
     "perf:parser": "tsx test/htmlparser-bench.ts",
     "prepublishOnly": "npm test && npm run build",
+    "profile:parser": "tsx --cpu-prof test/htmlparser-bench.ts",
+    "inspect:parser": "tsx --inspect-brk test/htmlparser-bench.ts",
     "start": "npm run watch",
     "test": "vitest src --coverage --globals --run",
     "watch": "npm run build:tsup -- --watch"

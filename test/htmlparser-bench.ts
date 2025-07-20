@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { createHtmlParser } from '../src/htmlparser.ts'
 
-const ITERATIONS = 1000
+const ITERATIONS = 200
 
 // Minimal scanner that does nothing
 const scanner = {
