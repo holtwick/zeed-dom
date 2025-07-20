@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
-import { HtmlParser } from '../src/htmlparser.ts'
+import { createHtmlParser } from '../src/htmlparser.ts'
+
+const ITERATIONS = 200
 
 // Minimal scanner that does nothing
 const scanner = {
@@ -9,15 +11,15 @@ const scanner = {
   characters() {},
 }
 
-function makeHTML(repeats = 10000) {
-  return `<div>${'<span>Hello</span>'.repeat(repeats)}</div>`
+const html = `<div>${'<span simple some="123" a=1 y=\'3\'>Hello</span><hr     soso=2354>'.repeat(20000)}</div>`
+const parser = createHtmlParser(scanner)
+
+console.log('🚀 Benchmarking HtmlParser...')
+const start = performance.now()
+for (let i = 0; i < ITERATIONS; i++) {
+  parser(html)
 }
+const avgTime = (performance.now() - start) / ITERATIONS
 
-const html = makeHTML(20000)
-const parser = new HtmlParser({ scanner })
-
-console.log('Benchmarking HtmlParser...')
-const start = Date.now()
-parser.parse(html)
-const end = Date.now()
-console.log(`Parsed ${html.length} chars in ${end - start} ms`)
+console.log(`📄 Parsed ${html.length} chars, ${ITERATIONS} times.`)
+console.log(`⚡ Average time per run: ${avgTime.toFixed(2)} ms`)

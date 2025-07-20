@@ -7,39 +7,45 @@ import { parseHTML } from '../src/vdomparser.ts'
 interface BenchResult {
   fileName: string
   fileSize: number
-  parseTime: number
+  parseTime: number // average parse time
   success: boolean
   error?: string
   charsParsed: number
 }
 
+const NUM_RUNS = 10 // Number of times to parse each file for averaging
+
 function benchmarkFile(filePath: string, fileName: string): BenchResult {
+  let totalTime = 0
+  let success = true
+  let errorMsg = ''
+  let charsParsed = 0
+  let fileSize = 0
+  let content = ''
   try {
-    const content = readFileSync(filePath, 'utf-8')
-    const start = performance.now()
-
-    const dom = parseHTML(content)
-
-    const end = performance.now()
-    const parseTime = end - start
-
-    return {
-      fileName,
-      fileSize: content.length,
-      parseTime,
-      success: true,
-      charsParsed: content.length,
+    content = readFileSync(filePath, 'utf-8')
+    fileSize = content.length
+    for (let i = 0; i < NUM_RUNS; i++) {
+      const start = performance.now()
+      const dom = parseHTML(content)
+      const end = performance.now()
+      totalTime += (end - start)
+      charsParsed = content.length
     }
   }
   catch (error) {
-    return {
-      fileName,
-      fileSize: 0,
-      parseTime: 0,
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-      charsParsed: 0,
-    }
+    success = false
+    errorMsg = error instanceof Error ? error.message : String(error)
+    fileSize = 0
+    charsParsed = 0
+  }
+  return {
+    fileName,
+    fileSize,
+    parseTime: success ? totalTime / NUM_RUNS : 0,
+    success,
+    error: success ? undefined : errorMsg,
+    charsParsed,
   }
 }
 
@@ -83,7 +89,7 @@ async function main() {
 
       // Show progress for successful parses
       const throughput = result.fileSize / (result.parseTime / 1000) / (1024 * 1024) // MB/s
-      console.log(`✅ ${fileName.slice(0, 20)}... ${formatSize(result.fileSize)} in ${formatTime(result.parseTime)} (${throughput.toFixed(1)} MB/s)`)
+      // console.log(`✅ ${fileName.slice(0, 20)}... ${formatSize(result.fileSize)} in ${formatTime(result.parseTime)} (${throughput.toFixed(1)} MB/s)`)
     }
     else {
       errorCount++
@@ -118,26 +124,26 @@ async function main() {
   }
 
   // Top performers and slowest files
-  const successfulResults = results.filter(r => r.success).sort((a, b) => b.parseTime - a.parseTime)
+  // const successfulResults = results.filter(r => r.success).sort((a, b) => b.parseTime - a.parseTime)
 
-  if (successfulResults.length > 0) {
-    console.log(`\n⚡ PERFORMANCE BREAKDOWN`)
-    console.log(`=======================`)
+  // if (successfulResults.length > 0) {
+  //   console.log(`\n⚡ PERFORMANCE BREAKDOWN`)
+  //   console.log(`=======================`)
 
-    // Slowest files
-    console.log(`\nSlowest files:`)
-    successfulResults.slice(0, 5).forEach((result, i) => {
-      const throughput = result.fileSize / (result.parseTime / 1000) / (1024 * 1024)
-      console.log(`${i + 1}. ${result.fileName.slice(0, 30)}... ${formatTime(result.parseTime)} (${formatSize(result.fileSize)}, ${throughput.toFixed(1)} MB/s)`)
-    })
+  //   // Slowest files
+  //   console.log(`\nSlowest files:`)
+  //   successfulResults.slice(0, 5).forEach((result, i) => {
+  //     const throughput = result.fileSize / (result.parseTime / 1000) / (1024 * 1024)
+  //     console.log(`${i + 1}. ${result.fileName.slice(0, 30)}... ${formatTime(result.parseTime)} (${formatSize(result.fileSize)}, ${throughput.toFixed(1)} MB/s)`)
+  //   })
 
-    // Fastest files
-    console.log(`\nFastest files:`)
-    successfulResults.slice(-5).reverse().forEach((result, i) => {
-      const throughput = result.fileSize / (result.parseTime / 1000) / (1024 * 1024)
-      console.log(`${i + 1}. ${result.fileName.slice(0, 30)}... ${formatTime(result.parseTime)} (${formatSize(result.fileSize)}, ${throughput.toFixed(1)} MB/s)`)
-    })
-  }
+  //   // Fastest files
+  //   console.log(`\nFastest files:`)
+  //   successfulResults.slice(-5).reverse().forEach((result, i) => {
+  //     const throughput = result.fileSize / (result.parseTime / 1000) / (1024 * 1024)
+  //     console.log(`${i + 1}. ${result.fileName.slice(0, 30)}... ${formatTime(result.parseTime)} (${formatSize(result.fileSize)}, ${throughput.toFixed(1)} MB/s)`)
+  //   })
+  // }
 }
 
 main().catch(console.error)

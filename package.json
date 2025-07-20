@@ -1,7 +1,7 @@
 {
   "name": "zeed-dom",
   "type": "module",
-  "version": "0.17.5",
+  "version": "0.17.6",
   "description": "🌱 Lightweight offline DOM",
   "author": {
     "name": "Dirk Holtwick",
@@ -61,7 +61,12 @@
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "perf": "tsx test/files-bench.ts",
+    "perf:files": "tsx test/files-bench.ts",
+    "perf:parser": "tsx test/htmlparser-bench.ts",
     "prepublishOnly": "npm test && npm run build",
+    "profile:parser": "tsx --cpu-prof test/htmlparser-bench.ts",
+    "inspect:parser": "tsx --inspect-brk test/htmlparser-bench.ts",
     "start": "npm run watch",
     "test": "vitest src --coverage --globals --run",
     "watch": "npm run build:tsup -- --watch"
@@ -78,6 +83,7 @@
     "c8": "^10.1.3",
     "eslint": "^9.31.0",
     "tsup": "^8.5.0",
+    "tsx": "^4.20.3",
     "typedoc": "^0.28.7",
     "typescript": "^5.8.3",
     "vite": "^7.0.5",
