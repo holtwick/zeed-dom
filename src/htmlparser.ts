@@ -39,7 +39,7 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
         if (match) {
           html = html.slice(match[0].length)
           treatAsChars = false
-          parseEndTag(match[0], match[1])
+          scanner.endElement(match[1])
         }
       }
       else if (html[0] === '<') {
@@ -101,39 +101,42 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
     let attrInput = match[2]
     if (isSelfColse)
       attrInput = attrInput.replace(/\s*\/\s*$/, '')
-    const attrs = parseAttributes(tagName, attrInput)
+    const attrs = parseAttributes(attrInput)
     scanner.startElement(tagName, attrs, isSelfColse, match[0])
     return tagName.toLocaleLowerCase()
   }
 
-  function parseEndTag(input: string, tagName: string) {
-    scanner.endElement(tagName)
-  }
-
-  function parseAttributes(tagName: string, input: string) {
+  function parseAttributes(input: string) {
     const attrs: Record<string, any> = {}
+
     if (!input || !input.trim())
       return attrs
 
+    // If there are no quotes in the input, split by whitespace and parse attributes simply
     if (!/["']/.test(input)) {
       const parts = input.trim().split(/\s+/)
       for (const part of parts) {
         const eqIndex = part.indexOf('=')
         if (eqIndex === -1) {
+        // Attribute without value (boolean attribute)
           attrs[part] = true
         }
         else {
+        // Attribute with value (unquoted)
           attrs[part.slice(0, eqIndex)] = part.slice(eqIndex + 1)
         }
       }
       return attrs
     }
 
+    // Otherwise, use regex to extract attributes with quoted values
     attrRe.lastIndex = 0
     let match
     // eslint-disable-next-line no-cond-assign
     while ((match = attrRe.exec(input)) !== null) {
+      // Destructure the match to get attribute name and value (quoted or unquoted)
       const [, name, , value, , valueInQuote, , valueInSingleQuote] = match
+      // Prefer single-quoted, then double-quoted, then unquoted, then true (boolean attribute)
       attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
     }
     return attrs
