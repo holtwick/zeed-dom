@@ -28,8 +28,6 @@ npm i zeed-dom
 - [zeed](https://github.com/holtwick/zeed) – Foundation library
 - [zerva](https://github.com/holtwick/zerva) – Event-driven server 
 
-> **Used by [TipTap](https://www.tiptap.dev/) in its [html-package](https://github.com/ueberdosis/tiptap/tree/main/packages/html).**
-
 ---
 
 ## ✨ Features
