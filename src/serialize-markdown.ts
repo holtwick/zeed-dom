@@ -21,10 +21,22 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
   sub: (node, h) => `~${h()}~`,
   super: (node, h) => `^${h()}^`,
   sup: (node, h) => `^${h()}^`,
-  li: (node, h) => `- ${h()}\n`,
+  li: (node, h, ctx) => {
+    const indent = '  '.repeat(Math.max(0, (ctx?.level ?? 1) - 1))
+    const content = h().replace(/\n+$/, '')
+    return `${indent}- ${content}\n`
+  },
   br: (node, h) => `\n`,
-  ol: (node, h, ctx) => `\n\n${h({ level: (ctx?.level ?? 0) + 1 })}\n\n`,
-  ul: (node, h, ctx) => `\n\n${h({ level: (ctx?.level ?? 0) + 1 })}\n\n`,
+  ol: (node, h, ctx) => {
+    const level = (ctx?.level ?? 0) + 1
+    const inner = h({ level })
+    return level > 1 ? `\n${inner}` : `\n\n${inner}\n\n`
+  },
+  ul: (node, h, ctx) => {
+    const level = (ctx?.level ?? 0) + 1
+    const inner = h({ level })
+    return level > 1 ? `\n${inner}` : `\n\n${inner}\n\n`
+  },
   blockquote: (node, h) => `\n\n> ${h()}\n\n`,
   pre: (node, h) => `\n\n\`\`\`\n${h()}\n\`\`\`\n\n`,
   p: (node, h) => `\n\n${h()}\n\n`,
