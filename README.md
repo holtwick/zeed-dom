@@ -67,7 +67,10 @@ const newHTML = handleHTML(html, (document) => {
 Take any HTML node or document and serialize it to another format:
 
 - `serializePlaintext(node)`: Readable and searchable plain text
-- `serializeMarkdown(node)`: Simple Markdown
+- `serializeMarkdown(node, options?)`: Simple Markdown. Options:
+  - `wrap`: column to soft-wrap long lines at (e.g. `80`); `0` or omitted disables wrapping. Code fences and table rows are not wrapped, and list-item continuations keep the proper indent.
+  - `linkStyle`: how `<a href="…">…</a>` and `<img src="…" alt="…">` are rendered. `'inline'` (default) → `[text](url)` / `![alt](src)`, `'autolink'` → `text <url>` / `alt <src>` (or just `<url>` / `<src>` when the label is empty or equals the URL).
+  - `inlineStyles`: when `false`, strips inline text-styling tags (`b`, `strong`, `i`, `em`, `u`, `mark`, `tt`, `code`, `strike`, `del`, `ins`, `sub`, `sup`) and emits their content as plain text. Default `true`.
 - `serializeSafeHTML(node)` or `safeHTML(htmlString)`: Allow only basic tags and attributes
 
 ### Virtual DOM Example (no JSX)
