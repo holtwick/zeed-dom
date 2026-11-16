@@ -4,19 +4,11 @@
     "jsx": "react",
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment",
-    "lib": [
-      "ESNext",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "baseUrl": ".",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ES2020",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
-    "types": [
-      "node",
-      "vitest/globals"
-    ],
+    "types": ["node", "vitest/globals"],
     "allowJs": true,
     "strict": true,
     "strictNullChecks": true,
@@ -25,13 +17,6 @@
     "esModuleInterop": true,
     "isolatedModules": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "_archive",
-    "node_modules",
-    "dist",
-    "node_modules"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["_archive", "node_modules", "dist"]
 }

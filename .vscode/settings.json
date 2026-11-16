@@ -40,7 +40,7 @@
     "yaml",
     "toml"
   ],
-  
+
   "github.copilot.enable": {
     "*": true,
     "plaintext": false,
