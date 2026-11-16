@@ -1,32 +1,26 @@
-name: Release
+name: CI
 
 permissions:
-  contents: write
+  contents: read
 
 on:
   push:
-    tags:
-      - 'v*'
+  pull_request:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      packages: write
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       # Build tools (vite, vitest, tsdown) need Node 22.18+
       - uses: actions/setup-node@v4
         with:
           node-version: 24.x
       - run: npm install
-      - run: npm test && npm run build
+      - run: npm test
+      - run: npm run build
 
       # The published package still supports Node 18, see `engines`
       - uses: actions/setup-node@v4
@@ -37,15 +31,3 @@ jobs:
           node -e "const d = require('./dist/index.node.cjs'); if (!d.parseHTML) process.exit(1)"
           node -e "const j = require('./jsx-runtime/index.cjs'); if (!j.jsx) process.exit(1)"
           node --input-type=module -e "const d = await import('./dist/index.node.js'); const j = await import('./jsx-runtime/index.js'); if (!d.parseHTML || !j.jsx) process.exit(1)"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24.x
-          registry-url: 'https://registry.npmjs.org'
-      - run: npm version
-      - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: npx changelogithub
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
