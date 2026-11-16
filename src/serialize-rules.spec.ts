@@ -87,4 +87,37 @@ describe('parser edge cases', () => {
     el.insertAdjacentHTML('beforeend', ' & more')
     expect(el.textContent).toBe('x & more')
   })
+
+  it('should close uppercase single letter elements', () => {
+    // The original case of the tag name is kept on render, what matters is that
+    // ` after` is no longer swallowed by an unclosed `B`
+    const frag = parseHTML('<B>bold</B> after <I>x</I><P>p</P>')
+    expect(frag.render()).toBe('<B>bold</B> after <I>x</I><P>p</P>')
+    expect(frag.querySelector('b')?.textContent).toBe('bold')
+    expect(frag.childNodes.length).toBe(4)
+  })
+})
+
+describe('review fixes', () => {
+  it('should forget the style cache when the attribute is removed', () => {
+    const el = parseHTML('<p style="color: red" data-a="1">x</p>').querySelector('p')!
+    expect(el.style.color).toBe('red')
+    expect(el.dataset.a).toBe('1')
+    el.removeAttribute('style')
+    el.removeAttribute('data-a')
+    expect(el.style.color).toBeUndefined()
+    expect(el.dataset.a).toBeUndefined()
+  })
+
+  it('should keep block boundaries inside inline styles', () => {
+    expect(md('<b><p>x</p></b>y')).toBe('**x**\n\ny\n')
+    expect(md('foo<code> bar</code>')).toBe('foo ==bar==\n')
+  })
+
+  it('should add the table delimiter only below the first row', () => {
+    expect(md('<table><tr><th>h</th></tr><tr><th>b</th></tr><tr><td>1</td></tr></table>'))
+      .toBe('| h |\n| --- |\n| b |\n| 1 |\n')
+    expect(md('<table><tr><td>1</td></tr><tr><th>b</th></tr></table>'))
+      .toBe('| 1 |\n| b |\n')
+  })
 })

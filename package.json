@@ -72,8 +72,8 @@
     "watch": "npm run build:tsdown -- --watch"
   },
   "dependencies": {
-    "css-what": "^8.0.0",
-    "entities": "^8.0.0"
+    "css-what": "^7.0.0",
+    "entities": "^6.0.1"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^10.0.0",

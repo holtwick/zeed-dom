@@ -5,6 +5,8 @@ interface SerializeContext {
   level: number
   count: 0
   mode?: 'ol' | 'ul'
+  /** Row counter of the enclosing table */
+  row?: { n: number }
   options?: SerializeMarkdownOptions
 }
 
@@ -34,19 +36,25 @@ const DROP_TAGS = new Set([
   'template',
 ])
 
+/** Whitespace moved out of inline markers, line breaks (block boundaries) are kept */
+function outside(ws: string): string {
+  if (!ws)
+    return ''
+  return ws.includes('\n')
+    ? ws
+    : ' '
+}
+
 /**
  * Wrap inline content in markers. Leading and trailing whitespace goes
  * outside: `foo<b> bar</b>` must become `foo **bar**`, because `** bar**` is
  * not emphasis in Markdown. Content without such whitespace is unchanged.
  */
 function wrapInline(content: string, open: string, close = open): string {
-  const [, lead, inner, trail] = content.match(/^(\s*)([\s\S]*?)(\s*)$/)!
-  if (!inner) {
-    return lead || trail
-      ? ' '
-      : ''
-  }
-  return `${lead ? ' ' : ''}${open}${inner}${close}${trail ? ' ' : ''}`
+  const [, lead = '', inner, trail = ''] = content.match(/^(\s*)([\s\S]*?)(\s*)$/)!
+  if (!inner)
+    return outside(lead + trail)
+  return `${outside(lead)}${open}${inner}${close}${outside(trail)}`
 }
 
 // Build rules map only once for performance
@@ -57,8 +65,8 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
   em: (node, h) => wrapInline(h(), '*'),
   u: (node, h) => wrapInline(h(), '<u>', '</u>'),
   mark: (node, h) => wrapInline(h(), '=='),
-  tt: (node, h) => `==${h()}==`,
-  code: (node, h) => `==${h()}==`,
+  tt: (node, h) => wrapInline(h(), '=='),
+  code: (node, h) => wrapInline(h(), '=='),
   strike: (node, h) => wrapInline(h(), '~~'),
   sub: (node, h) => wrapInline(h(), '~'),
   super: (node, h) => wrapInline(h(), '^'),
@@ -118,13 +126,17 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
   del: (node, h) => wrapInline(h(), '~~'),
   ins: (node, h) => wrapInline(h(), '++'),
   span: (node, h) => h(),
-  table: (node, h) => `\n\n${h()}\n\n`,
-  tr: (node, h) => {
+  table: (node, h) => `\n\n${h({
+    row: { n: 0 },
+  })}\n\n`,
+  tr: (node, h, ctx) => {
     // Every cell ends with ` |` itself, so the row only adds the leading pipe
     const row = `|${h()}\n`
-    // GFM renders a table only with a delimiter row below the header
+    // GFM renders a table only with a delimiter row below the header, which
+    // is the first row and only that one
+    const isFirst = !ctx?.row || ctx.row.n++ === 0
     const cells = node.childNodes.filter(c => isVElement(c) && ['td', 'th'].includes(c.tagName.toLowerCase())) as VElement[]
-    if (cells.length > 0 && cells.every(c => c.tagName.toLowerCase() === 'th'))
+    if (isFirst && cells.length > 0 && cells.every(c => c.tagName.toLowerCase() === 'th'))
       return `${row}|${' --- |'.repeat(cells.length)}\n`
     return row
   },

@@ -13,6 +13,9 @@ export const Fragment = ''
  * separate argument which has no meaning for static markup.
  */
 export function jsx(tag: any, props?: Record<string, unknown> | null, _key?: unknown): string {
+  // Function components get the props like in React, children included
+  if (typeof tag === 'function')
+    return tag(props ?? {})
   const { children, ...attrs } = props ?? {}
   if (children === undefined)
     return h(tag, attrs)

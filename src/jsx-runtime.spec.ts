@@ -39,4 +39,15 @@ describe('jsx-runtime', () => {
       ],
     })).toBe('<i>1</i>2')
   })
+
+  it('should call function components with their props', () => {
+    const Card = (props: any) => jsx('div', {
+      class: 'card',
+      children: [props.title, props.children],
+    })
+    expect(jsx(Card, {
+      title: 'T',
+      children: jsx('p', { children: 'x' }),
+    })).toBe('<div class="card">T<p>x</p></div>')
+  })
 })

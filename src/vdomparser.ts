@@ -62,9 +62,9 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
       }
     },
     endElement(tagName: string) {
-      const lowerTagName = tagName.length === 1
-        ? tagName
-        : tagName.toLowerCase()
+      // Always lowercase, no shortcut for single letters: `</B>` has to match
+      // the open `b` element below
+      const lowerTagName = tagName.toLowerCase()
       // Void elements are never pushed onto the stack (see startElement). A stray
       // end tag for one - some real-world (mail) HTML emits `</meta>`, `</img>`,
       // `</br>` - must therefore pop nothing.
