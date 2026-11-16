@@ -4,7 +4,8 @@ pnpm*
 dist
 tmp
 *.log
-.out* 
+.out*
 coverage
 Icon?
 *.cpuprofile
+.Trash/

@@ -52,13 +52,17 @@ function _h(
           }
         }
         else if (value !== false && value != null) {
-          element.setAttribute(key, value === true ? key : value.toString())
+          element.setAttribute(key, value === true
+            ? key
+            : value.toString())
         }
       }
     }
     if (children) {
       for (const childOuter of children) {
-        const cc = Array.isArray(childOuter) ? childOuter : [childOuter]
+        const cc = Array.isArray(childOuter)
+          ? childOuter
+          : [childOuter]
         for (const child of cc) {
           if (child !== false && child != null) {
             if (typeof child !== 'object') {
@@ -96,7 +100,12 @@ export function hArgumentParser(
   else if (attrs) {
     if ((attrs as Record<string, unknown>).attrs) {
       const attrsObj = (attrs as Record<string, unknown>).attrs
-      attrs = { ...(typeof attrsObj === 'object' && attrsObj !== null ? attrsObj : {}), ...attrs }
+      attrs = {
+        ...(typeof attrsObj === 'object' && attrsObj !== null
+          ? attrsObj
+          : {}),
+        ...attrs,
+      }
       delete (attrs as Record<string, unknown>).attrs
     }
   }

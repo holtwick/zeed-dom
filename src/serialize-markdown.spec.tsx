@@ -1,8 +1,7 @@
+import { describe, expect, it } from 'vitest'
 import { serializeMarkdown } from './serialize-markdown'
 import { serializePlaintext } from './serialize-plaintext'
 import { createHTMLDocument, h } from './vdom'
-
-const _keepH = h
 
 describe('serialize', () => {
   it('should create plaintext', () => {
@@ -13,6 +12,7 @@ describe('serialize', () => {
         <meta name="twitter:site" content="@holtwick" />
       </fragment>,
     )
+
     document.body?.appendChild(
       <fragment>
         <h1>Hello</h1>

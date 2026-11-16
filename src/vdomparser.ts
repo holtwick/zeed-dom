@@ -1,16 +1,25 @@
-/* eslint-disable node/prefer-global/buffer */
-
 import { unescapeHTML } from './encoding'
 import { SELF_CLOSING_TAGS } from './html'
 import { createHtmlParser } from './htmlparser'
 import { hasOwn } from './utils'
 import { document, VDocType, VDocumentFragment, VElement, VHTMLDocument, VNode, VTextNode } from './vdom'
 
+interface NodeBufferLike {
+  toString: (encoding?: any) => string
+}
+
+// Detect a Node-style Buffer without forcing `@types/node` on consumers.
+function isNodeBuffer(value: unknown): value is NodeBufferLike {
+  // eslint-disable-next-line node/prefer-global/buffer
+  const B = (globalThis as { Buffer?: { isBuffer?: (v: unknown) => boolean } }).Buffer
+  return !!B?.isBuffer?.(value)
+}
+
 // Makes sure we operate on VNodes
-export function vdom(obj: VNode | Buffer | string | null = null): VNode {
+export function vdom(obj: VNode | NodeBufferLike | string | null = null): VNode {
   if (obj instanceof VNode)
     return obj
-  if (obj instanceof Buffer)
+  if (isNodeBuffer(obj))
     obj = obj.toString('utf-8')
   if (typeof obj === 'string')
     return parseHTML(obj)
@@ -24,12 +33,16 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
   }
 
   const isDoc = html.startsWith('<!')
-  const frag = isDoc ? new VHTMLDocument(true) : new VDocumentFragment()
+  const frag = isDoc
+    ? new VHTMLDocument(true)
+    : new VDocumentFragment()
   const stack: VNode[] = [frag]
 
   const parse = createHtmlParser({
     startElement(tagName: string, attrs: Record<string, string>, isSelfClosing: boolean) {
-      const lowerTagName = tagName.length === 1 ? tagName : tagName.toLowerCase()
+      const lowerTagName = tagName.length === 1
+        ? tagName
+        : tagName.toLowerCase()
       if (lowerTagName === '!doctype') {
         frag.docType = new VDocType()
         return
@@ -48,8 +61,26 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
         }
       }
     },
-    endElement() {
-      stack.pop()
+    endElement(tagName: string) {
+      // Always lowercase, no shortcut for single letters: `</B>` has to match
+      // the open `b` element below
+      const lowerTagName = tagName.toLowerCase()
+      // Void elements are never pushed onto the stack (see startElement). A stray
+      // end tag for one - some real-world (mail) HTML emits `</meta>`, `</img>`,
+      // `</br>` - must therefore pop nothing.
+      if (SELF_CLOSING_TAGS.includes(lowerTagName))
+        return
+      // Pop down to the nearest matching open element. Index 0 is the root
+      // document/fragment and is never popped, so an unmatched end tag (e.g.
+      // `</div>` with no open `div`) is ignored instead of underflowing the
+      // stack - which would otherwise orphan every following sibling, including
+      // the entire `<body>` after a malformed `<head>`.
+      for (let i = stack.length - 1; i > 0; i--) {
+        if ((stack[i] as VElement).tagName?.toLowerCase() === lowerTagName) {
+          stack.length = i
+          return
+        }
+      }
     },
     characters(text: string) {
       text = unescapeHTML(text)
@@ -88,7 +119,9 @@ VElement.prototype.insertAdjacentHTML = function (
     if (/^\s*<\/?[a-zA-Z]/.test(text)) {
       throw new Error('HTML parsing failed in insertAdjacentHTML')
     }
-    nodes = [new VTextNode(text)]
+    nodes = [
+      new VTextNode(text),
+    ]
   }
   switch (position) {
     case 'beforebegin':

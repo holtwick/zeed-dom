@@ -1,6 +1,6 @@
 import { escapeHTML } from './encoding'
 import { hFactory } from './h'
-import { html, htmlVDOM } from './html'
+import { htmlVDOM } from './html'
 import { matchSelector } from './vcss'
 
 // For node debugging
@@ -66,8 +66,8 @@ export class VNode {
   }
 
   cloneNode(deep = false) {
-    // @ts-expect-error xxx
-    const node = new this.constructor()
+    const Ctor = this.constructor as unknown as new () => this
+    const node = new Ctor()
     if (deep) {
       node._childNodes = this._childNodes.map(c => c.cloneNode(true))
       node._fixChildNodesParent()
@@ -81,7 +81,9 @@ export class VNode {
 
   insertBefore(newNode: VNode, node?: VNode) {
     if (newNode !== node) {
-      let index = node ? this._childNodes.indexOf(node) : 0
+      let index = node
+        ? this._childNodes.indexOf(node)
+        : 0
       if (index < 0)
         index = 0
       this._childNodes.splice(index, 0, newNode)
@@ -121,7 +123,9 @@ export class VNode {
       // Fallback for unknown data
       try {
         const text
-          = typeof node === 'string' ? node : JSON.stringify(node, null, 2)
+          = typeof node === 'string'
+            ? node
+            : JSON.stringify(node, null, 2)
         this._childNodes.push(new VTextNode(text))
       }
       catch (err) {
@@ -151,7 +155,9 @@ export class VNode {
   /** Replace content of node with text or nodes */
   replaceChildren(...nodes: any[]) {
     this._childNodes = nodes.map(n =>
-      typeof n === 'string' ? new VTextNode(n) : n.remove(),
+      typeof n === 'string'
+        ? new VTextNode(n)
+        : n.remove(),
     )
     this._fixChildNodesParent()
   }
@@ -163,7 +169,9 @@ export class VNode {
       const index = this._indexInParent()
       if (index >= 0) {
         nodes = nodes.map(n =>
-          typeof n === 'string' ? new VTextNode(n) : n.remove(),
+          typeof n === 'string'
+            ? new VTextNode(n)
+            : n.remove(),
         )
         p._childNodes.splice(index, 1, ...nodes)
         this._parentNode = null
@@ -200,7 +208,7 @@ export class VNode {
 
   get nextSibling() {
     const i = this._indexInParent()
-    if (i != null)
+    if (i >= 0)
       return this.parentNode.childNodes[i + 1] || null
     return null
   }
@@ -286,7 +294,9 @@ export class VNode {
   get parentElement() {
     // DOM spec: parentNode if it is an element, else null
     const p = this.parentNode
-    return p && p.nodeType === VNode.ELEMENT_NODE ? p : null
+    return p && p.nodeType === VNode.ELEMENT_NODE
+      ? p
+      : null
   }
 
   // insertAdjacentHTML(position: 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend', text: string) {
@@ -496,13 +506,18 @@ export class VElement extends VNodeQuery {
 
   removeAttribute(name: string | number) {
     const originalName = this._findAttributeName(String(name))
-    if (originalName)
-      delete this._attributes[name]
+    if (originalName) {
+      delete this._attributes[originalName]
+      this._styles = undefined
+      this._dataset = undefined
+    }
   }
 
   hasAttribute(name: any) {
     const originalName = this._findAttributeName(name)
-    return originalName ? this._attributes[originalName] != null : false
+    return originalName
+      ? this._attributes[originalName] != null
+      : false
   }
 
   /// See https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
@@ -522,9 +537,11 @@ export class VElement extends VNodeQuery {
 
         // eslint-disable-next-line no-cond-assign
         while ((m = re.exec(styleString))) {
-          ++count
           const name = m[1]
-          const value = m[2].trim()
+          const value = m[2]?.trim()
+          if (!name || value == null)
+            continue
+          ++count
           styles[name] = value
           styles[toCamelCase(name)] = value
         }
@@ -614,7 +631,11 @@ export class VElement extends VNodeQuery {
   }
 
   get innerHTML() {
-    return this._childNodes.map(c => c.render(html)).join('')
+    // htmlVDOM, NOT html: element renders pass their already-rendered children
+    // as one string; `html()` routes that through hArgumentParser's array
+    // branch, which escapes text AGAIN (double-escaping `&lt;` to `&amp;lt;`
+    // inside nested elements). outerHTML below uses the same correct path.
+    return this._childNodes.map(c => c.render(htmlVDOM)).join('')
   }
 
   set innerHTML(html) {
@@ -718,8 +739,8 @@ export class VDocumentFragment extends VNodeQuery {
   }
 
   get innerHTML() {
-    // for debug
-    return this._childNodes.map(c => c.render(html)).join('')
+    // htmlVDOM, NOT html — see VElement.innerHTML for the double-escape trap.
+    return this._childNodes.map(c => c.render(htmlVDOM)).join('')
   }
 
   createElement(name: string, attrs = {}) {
@@ -781,7 +802,7 @@ export class VHTMLDocument extends VDocument {
         this.appendChild(html)
       }
       body = new VElement('body')
-      html.appendChild(html)
+      html.appendChild(body)
     }
     return body
   }
@@ -805,7 +826,7 @@ export class VHTMLDocument extends VDocument {
         this.appendChild(html)
       }
       head = new VElement('head')
-      html.insertBefore(html)
+      html.insertBefore(head, html.firstChild)
     }
     return head
   }

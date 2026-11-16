@@ -8,7 +8,9 @@ const doc = {
   type: 'doc',
   content: Array.from({ length: 1000 }).fill({
     type: 'paragraph',
-    content: [{ type: 'text', text: 'Hello world' }],
+    content: [
+      { type: 'text', text: 'Hello world' },
+    ],
   }),
 }
 

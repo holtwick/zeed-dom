@@ -29,6 +29,26 @@ describe('vDOM Parser', () => {
     expect(rhtml).toEqual(html)
   })
 
+  it('should ignore stray end tags for void elements', () => {
+    // Real-world (mail) HTML emits closing tags for void elements, e.g.
+    // `<meta charset="utf-8"></meta>`. The `</meta>` must pop nothing - meta is
+    // never on the open-element stack. A regression here popped real ancestors
+    // (head, then html, then the root), orphaning the entire <body>.
+    const html = `<!DOCTYPE html><html><head><title>X</title><meta charset="utf-8"></meta><meta http-equiv="Content-Type" content="text/html"></meta></head><body><div>Hello</div></body></html>`
+    const frag = parseHTML(html)
+    expect(frag.querySelector('body')).not.toBeNull()
+    expect(frag.querySelector('div')?.textContent).toBe('Hello')
+  })
+
+  it('should ignore an unmatched end tag instead of underflowing the stack', () => {
+    // `</span>` has no matching open element; it must not pop the surrounding
+    // `<div>` (or the root), which would drop every following sibling.
+    const frag = parseHTML(`<div>a</span><p>b</p></div>`)
+    const div = frag.querySelector('div')
+    expect(div).not.toBeNull()
+    expect(div?.querySelector('p')?.textContent).toBe('b')
+  })
+
   it('vdom should handle VNode, Buffer, string, and fallback', () => {
     const node = new VNode()
     expect(vdom(node)).toBe(node)
@@ -53,5 +73,17 @@ describe('vDOM Parser', () => {
   it('parseHTML should handle comments', () => {
     const frag = parseHTML('<div><!-- comment --></div>')
     expect(frag._childNodes[0]._childNodes.length).toBe(0) // comment is ignored
+  })
+  it('innerHTML round-trip never double-escapes entities (issue: &amp;lt; creep)', () => {
+    // text with entities nested inside an inline element — the case where the
+    // old `render(html)` path escaped the already-escaped children again
+    let htmlStr = '<p>a <strong>x &lt;em&gt; y &amp; z</strong> b</p>'
+    for (let i = 0; i < 3; i++) {
+      const frag = parseHTML(htmlStr)
+      expect(frag.innerHTML).toBe(htmlStr)
+      const el = frag.children[0]
+      expect(`<p>${el.innerHTML}</p>`).toBe(htmlStr)
+      htmlStr = frag.innerHTML
+    }
   })
 })

@@ -47,14 +47,20 @@ describe('html', () => {
   it('should handle style attribute with various cases', () => {
     // Style with null/undefined values
     expect(
-      h('div', { style: { color: 'red', margin: null, padding: undefined } }),
+      h('div', {
+        style: { color: 'red', margin: null, padding: undefined },
+      }),
     ).toBe('<div style="color:red"></div>')
     // Style with number (should add px)
-    expect(h('div', { style: { width: 10, height: 0 } })).toBe(
+    expect(h('div', {
+      style: { width: 10, height: 0 },
+    })).toBe(
       '<div style="width:10px;height:0px"></div>',
     )
     // Style with camelCase (should convert to kebab-case)
-    expect(h('div', { style: { backgroundColor: 'blue' } })).toBe(
+    expect(h('div', {
+      style: { backgroundColor: 'blue' },
+    })).toBe(
       '<div style="background-color:blue"></div>',
     )
     // Style with empty object (should not add style)
@@ -62,7 +68,12 @@ describe('html', () => {
   })
 
   it('should handle children as arrays, nested arrays, and skip null/false', () => {
-    expect(h('div', null, ['a', null, false, h('b', null, 1)])).toBe(
+    expect(h('div', null, [
+      'a',
+      null,
+      false,
+      h('b', null, 1),
+    ])).toBe(
       '<div>a<b>1</b></div>',
     )
   })
@@ -82,7 +93,9 @@ describe('html', () => {
 
   it('should stringify and escape children that are objects or numbers', () => {
     expect(h('div', null, 123)).toBe('<div>123</div>')
-    expect(h('div', null, { toString: () => '<foo>' })).toBe('<div>&lt;foo&gt;</div>')
+    expect(h('div', null, {
+      toString: () => '<foo>',
+    })).toBe('<div>&lt;foo&gt;</div>')
   })
 
   it('should handle xmlMode and self-closing tags', () => {
