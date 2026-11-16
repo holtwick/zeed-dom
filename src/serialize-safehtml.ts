@@ -11,11 +11,31 @@ interface SerializeContext {
   mode?: 'ol' | 'ul'
 }
 
+/**
+ * URLs that would run script when clicked or loaded. A blocklist on purpose:
+ * everything else (relative paths, `cid:` images in mails, custom app schemes)
+ * passes as before. Control characters and whitespace are ignored by browsers
+ * inside the scheme (`java\tscript:`), so they are ignored here as well.
+ */
+function isUnsafeUrl(url: string, allowDataImage = false): boolean {
+  // eslint-disable-next-line no-control-regex
+  const scheme = url.replace(/[\x00-\x20\x7F]/g, '').match(/^([a-z][a-z0-9+.-]*):/i)?.[1]?.toLowerCase()
+  if (scheme === 'javascript' || scheme === 'vbscript')
+    return true
+  if (scheme === 'data')
+    return !(allowDataImage && /^\s*data:image\//i.test(url))
+  return false
+}
+
 // Build rules map only once for performance
 const blockTags = SELECTOR_BLOCK_ELEMENTS.split(',')
 const baseRules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<SerializeContext>) => string) => string> = {
-  a: (node, handleChildren) => `<a href="${escapeHTML(node.getAttribute('href') ?? '')}" rel="noopener noreferrer" target="_blank">${handleChildren()}</a>`,
-  img: node => `<img src="${escapeHTML(node.getAttribute('src') ?? '')}" alt="${escapeHTML(node.getAttribute('alt') ?? '')}">`,
+  a: (node, handleChildren) => isUnsafeUrl(node.getAttribute('href') ?? '')
+    ? handleChildren()
+    : `<a href="${escapeHTML(node.getAttribute('href') ?? '')}" rel="noopener noreferrer" target="_blank">${handleChildren()}</a>`,
+  img: node => isUnsafeUrl(node.getAttribute('src') ?? '', true)
+    ? ''
+    : `<img src="${escapeHTML(node.getAttribute('src') ?? '')}" alt="${escapeHTML(node.getAttribute('alt') ?? '')}">`,
   br: () => `<br>`,
   title: () => '',
   script: () => '',
@@ -30,7 +50,9 @@ function serialize(node: VNode, context: SerializeContext = {
   level: 0,
   count: 0,
 }): string {
-  if (node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE) {
+  // A document (`parseHTML` of a complete page) is walked like a fragment,
+  // otherwise it fell through to `textContent` below and lost all markup
+  if (node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE || node.nodeType === VNode.DOCUMENT_NODE) {
     return (node.childNodes || []).map(c => serialize(c, { ...context })).join('')
   }
   else if (isVElement(node)) {

@@ -1,6 +1,6 @@
 import { escapeHTML } from './encoding'
 import { hFactory } from './h'
-import { html, htmlVDOM } from './html'
+import { htmlVDOM } from './html'
 import { matchSelector } from './vcss'
 
 // For node debugging
@@ -66,8 +66,8 @@ export class VNode {
   }
 
   cloneNode(deep = false) {
-    // @ts-expect-error xxx
-    const node = new this.constructor()
+    const Ctor = this.constructor as unknown as new () => this
+    const node = new Ctor()
     if (deep) {
       node._childNodes = this._childNodes.map(c => c.cloneNode(true))
       node._fixChildNodesParent()
@@ -522,9 +522,11 @@ export class VElement extends VNodeQuery {
 
         // eslint-disable-next-line no-cond-assign
         while ((m = re.exec(styleString))) {
-          ++count
           const name = m[1]
-          const value = m[2].trim()
+          const value = m[2]?.trim()
+          if (!name || value == null)
+            continue
+          ++count
           styles[name] = value
           styles[toCamelCase(name)] = value
         }
@@ -614,7 +616,11 @@ export class VElement extends VNodeQuery {
   }
 
   get innerHTML() {
-    return this._childNodes.map(c => c.render(html)).join('')
+    // htmlVDOM, NOT html: element renders pass their already-rendered children
+    // as one string; `html()` routes that through hArgumentParser's array
+    // branch, which escapes text AGAIN (double-escaping `&lt;` to `&amp;lt;`
+    // inside nested elements). outerHTML below uses the same correct path.
+    return this._childNodes.map(c => c.render(htmlVDOM)).join('')
   }
 
   set innerHTML(html) {
@@ -718,8 +724,8 @@ export class VDocumentFragment extends VNodeQuery {
   }
 
   get innerHTML() {
-    // for debug
-    return this._childNodes.map(c => c.render(html)).join('')
+    // htmlVDOM, NOT html — see VElement.innerHTML for the double-escape trap.
+    return this._childNodes.map(c => c.render(htmlVDOM)).join('')
   }
 
   createElement(name: string, attrs = {}) {

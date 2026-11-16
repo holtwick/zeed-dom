@@ -13,20 +13,35 @@ const INLINE_STYLE_TAGS = new Set([
   'strike', 'del', 'ins', 'sub', 'sup', 'super',
 ])
 
+// Content that is never shown in a browser
+const DROP_TAGS = new Set(['script', 'style', 'head', 'title', 'template'])
+
+/**
+ * Wrap inline content in markers. Leading and trailing whitespace goes
+ * outside: `foo<b> bar</b>` must become `foo **bar**`, because `** bar**` is
+ * not emphasis in Markdown. Content without such whitespace is unchanged.
+ */
+function wrapInline(content: string, open: string, close = open): string {
+  const [, lead, inner, trail] = content.match(/^(\s*)([\s\S]*?)(\s*)$/)!
+  if (!inner)
+    return lead || trail ? ' ' : ''
+  return `${lead ? ' ' : ''}${open}${inner}${close}${trail ? ' ' : ''}`
+}
+
 // Build rules map only once for performance
 const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<SerializeContext>) => string, ctx?: SerializeContext) => string> = {
-  b: (node, h) => `**${h()}**`,
-  strong: (node, h) => `**${h()}**`,
-  i: (node, h) => `*${h()}*`,
-  em: (node, h) => `*${h()}*`,
-  u: (node, h) => `<u>${h()}</u>`,
-  mark: (node, h) => `==${h()}==`,
+  b: (node, h) => wrapInline(h(), '**'),
+  strong: (node, h) => wrapInline(h(), '**'),
+  i: (node, h) => wrapInline(h(), '*'),
+  em: (node, h) => wrapInline(h(), '*'),
+  u: (node, h) => wrapInline(h(), '<u>', '</u>'),
+  mark: (node, h) => wrapInline(h(), '=='),
   tt: (node, h) => `==${h()}==`,
   code: (node, h) => `==${h()}==`,
-  strike: (node, h) => `~~${h()}~~`,
-  sub: (node, h) => `~${h()}~`,
-  super: (node, h) => `^${h()}^`,
-  sup: (node, h) => `^${h()}^`,
+  strike: (node, h) => wrapInline(h(), '~~'),
+  sub: (node, h) => wrapInline(h(), '~'),
+  super: (node, h) => wrapInline(h(), '^'),
+  sup: (node, h) => wrapInline(h(), '^'),
   li: (node, h, ctx) => {
     const indent = '  '.repeat(Math.max(0, (ctx?.level ?? 1) - 1))
     const content = h().replace(/\n+$/, '')
@@ -75,13 +90,21 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
     }
     return `![${alt}](${src})`
   },
-  del: (node, h) => `~~${h()}~~`,
-  ins: (node, h) => `++${h()}++`,
+  del: (node, h) => wrapInline(h(), '~~'),
+  ins: (node, h) => wrapInline(h(), '++'),
   span: (node, h) => h(),
   table: (node, h) => `\n\n${h()}\n\n`,
-  tr: (node, h) => `|${h()}|\n`,
-  th: (node, h) => ` ${h()} |`,
-  td: (node, h) => ` ${h()} |`,
+  tr: (node, h) => {
+    // Every cell ends with ` |` itself, so the row only adds the leading pipe
+    const row = `|${h()}\n`
+    // GFM renders a table only with a delimiter row below the header
+    const cells = node.childNodes.filter(c => isVElement(c) && ['td', 'th'].includes(c.tagName.toLowerCase())) as VElement[]
+    if (cells.length > 0 && cells.every(c => c.tagName.toLowerCase() === 'th'))
+      return `${row}|${' --- |'.repeat(cells.length)}\n`
+    return row
+  },
+  th: (node, h) => ` ${h().replace(/\|/g, '\\|')} |`,
+  td: (node, h) => ` ${h().replace(/\|/g, '\\|')} |`,
   caption: (node, h) => `\n${h()}\n`,
 }
 
@@ -89,11 +112,15 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
   level: 0,
   count: 0,
 }): string {
-  if (node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE) {
+  // A document (`parseHTML` of a complete page) is walked like a fragment,
+  // otherwise it fell through to plain `textContent` below
+  if (node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE || node.nodeType === VNode.DOCUMENT_NODE) {
     return (node.childNodes || []).map(c => serialize(c, { ...context })).join('')
   }
   else if (isVElement(node)) {
     const tag: string = node.tagName.toLowerCase()
+    if (DROP_TAGS.has(tag))
+      return ''
     const handleChildren = (ctx?: Partial<SerializeContext>): string => (node.childNodes || []).map(c => serialize(c, { ...context, ...ctx })).join('')
     if (context.options?.inlineStyles === false && INLINE_STYLE_TAGS.has(tag))
       return handleChildren()

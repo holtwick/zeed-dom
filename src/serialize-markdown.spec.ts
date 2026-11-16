@@ -106,3 +106,24 @@ describe('serialize markdown', () => {
     expect(out).toContain(code)
   })
 })
+
+describe('serialize markdown fixes', () => {
+  const md = (html: string) => serializeMarkdown(parseHTML(html))
+
+  it('should serialize a complete document', () => {
+    expect(md('<!DOCTYPE html><html><head><title>T</title><style>p{color:red}</style></head><body><h1>Hi</h1><p>a <b>b</b></p><script>x()</script></body></html>'))
+      .toBe('# Hi\n\na **b**\n')
+  })
+
+  it('should move whitespace outside of inline markers', () => {
+    expect(md('foo<b> bar</b>baz')).toBe('foo **bar**baz\n')
+    expect(md('see<em> this </em>now')).toBe('see *this* now\n')
+    expect(md('a<b>b</b>c')).toBe('a**b**c\n')
+    expect(md('a<b></b>b')).toBe('ab\n')
+  })
+
+  it('should render tables without doubled pipes and with a header delimiter row', () => {
+    expect(md('<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2|3</td></tr></table>'))
+      .toBe('| A | B |\n| --- | --- |\n| 1 | 2\\|3 |\n')
+  })
+})

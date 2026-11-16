@@ -39,7 +39,7 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
         if (match) {
           html = html.slice(match[0].length)
           treatAsChars = false
-          scanner.endElement(match[1])
+          scanner.endElement(match[1]!)
         }
       }
       else if (html[0] === '<') {
@@ -47,7 +47,7 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
         if (match) {
           html = html.slice(match[0].length)
           treatAsChars = false
-          const tagName = parseStartTag(match[0], match[1], match)
+          const tagName = parseStartTag(match[0]!, match[1]!, match)
           if (tagName === 'script') {
             if (!scriptEndRe)
               scriptEndRe = /<\/script/i
@@ -136,6 +136,8 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
     while ((match = attrRe.exec(input)) !== null) {
       // Destructure the match to get attribute name and value (quoted or unquoted)
       const [, name, , value, , valueInQuote, , valueInSingleQuote] = match
+      if (!name)
+        continue
       // Prefer single-quoted, then double-quoted, then unquoted, then true (boolean attribute)
       attrs[name] = valueInSingleQuote ?? valueInQuote ?? value ?? true
     }
