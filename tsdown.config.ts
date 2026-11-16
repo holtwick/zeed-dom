@@ -11,7 +11,11 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outExtensions: ({ format }) => ({
-    js: format === 'es' ? '.js' : '.cjs',
-    dts: format === 'es' ? '.d.ts' : '.d.cts',
+    js: format === 'es'
+      ? '.js'
+      : '.cjs',
+    dts: format === 'es'
+      ? '.d.ts'
+      : '.d.cts',
   }),
 })

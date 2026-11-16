@@ -78,7 +78,9 @@ export function markup(
         const styleStr = Object.entries(v)
           .filter(([, val]) => val != null)
           .map(([k, val]) => {
-            const vv = typeof val === 'number' ? `${val}px` : val
+            const vv = typeof val === 'number'
+              ? `${val}px`
+              : val
             return `${k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}:${vv}`
           })
           .join(';')

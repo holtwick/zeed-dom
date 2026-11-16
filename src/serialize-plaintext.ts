@@ -23,7 +23,10 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
   else if (isVElement(node)) {
     const tag: string = node.tagName.toLowerCase()
 
-    const handleChildren = (ctx?: Partial<SerializeContext>): string => node.childNodes.map(c => serialize(c, { ...context, ...ctx })).join('')
+    const handleChildren = (ctx?: Partial<SerializeContext>): string => node.childNodes.map(c => serialize(c, {
+      ...context,
+      ...ctx,
+    })).join('')
 
     const rules: Record<string, () => string> = {}
 

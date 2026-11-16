@@ -107,7 +107,10 @@ export function matchSelector(
           return elementChildren[elementChildren.length - 1] === element
         if (name === 'nth-child') {
           const idx = elementChildren.indexOf(element)
-          const nth = data && data.length > 0 ? Number.parseInt(data[0], 10) - 1 : 0
+          // `data` is the argument as string, e.g. `'12'`, not a list
+          const nth = data && data.length > 0
+            ? Number.parseInt(data, 10) - 1
+            : 0
           return idx === nth
         }
         return false

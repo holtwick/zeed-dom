@@ -9,12 +9,30 @@ interface SerializeContext {
 }
 
 const INLINE_STYLE_TAGS = new Set([
-  'b', 'strong', 'i', 'em', 'u', 'mark', 'tt', 'code',
-  'strike', 'del', 'ins', 'sub', 'sup', 'super',
+  'b',
+  'strong',
+  'i',
+  'em',
+  'u',
+  'mark',
+  'tt',
+  'code',
+  'strike',
+  'del',
+  'ins',
+  'sub',
+  'sup',
+  'super',
 ])
 
 // Content that is never shown in a browser
-const DROP_TAGS = new Set(['script', 'style', 'head', 'title', 'template'])
+const DROP_TAGS = new Set([
+  'script',
+  'style',
+  'head',
+  'title',
+  'template',
+])
 
 /**
  * Wrap inline content in markers. Leading and trailing whitespace goes
@@ -23,8 +41,11 @@ const DROP_TAGS = new Set(['script', 'style', 'head', 'title', 'template'])
  */
 function wrapInline(content: string, open: string, close = open): string {
   const [, lead, inner, trail] = content.match(/^(\s*)([\s\S]*?)(\s*)$/)!
-  if (!inner)
-    return lead || trail ? ' ' : ''
+  if (!inner) {
+    return lead || trail
+      ? ' '
+      : ''
+  }
   return `${lead ? ' ' : ''}${open}${inner}${close}${trail ? ' ' : ''}`
 }
 
@@ -51,12 +72,16 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
   ol: (node, h, ctx) => {
     const level = (ctx?.level ?? 0) + 1
     const inner = h({ level })
-    return level > 1 ? `\n${inner}` : `\n\n${inner}\n\n`
+    return level > 1
+      ? `\n${inner}`
+      : `\n\n${inner}\n\n`
   },
   ul: (node, h, ctx) => {
     const level = (ctx?.level ?? 0) + 1
     const inner = h({ level })
-    return level > 1 ? `\n${inner}` : `\n\n${inner}\n\n`
+    return level > 1
+      ? `\n${inner}`
+      : `\n\n${inner}\n\n`
   },
   blockquote: (node, h) => `\n\n> ${h()}\n\n`,
   pre: (node, h) => `\n\n\`\`\`\n${h()}\n\`\`\`\n\n`,
@@ -121,7 +146,10 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
     const tag: string = node.tagName.toLowerCase()
     if (DROP_TAGS.has(tag))
       return ''
-    const handleChildren = (ctx?: Partial<SerializeContext>): string => (node.childNodes || []).map(c => serialize(c, { ...context, ...ctx })).join('')
+    const handleChildren = (ctx?: Partial<SerializeContext>): string => (node.childNodes || []).map(c => serialize(c, {
+      ...context,
+      ...ctx,
+    })).join('')
     if (context.options?.inlineStyles === false && INLINE_STYLE_TAGS.has(tag))
       return handleChildren()
     const fn = rules[tag]
@@ -153,7 +181,9 @@ export interface SerializeMarkdownOptions {
 
 export function serializeMarkdown(node: VNode, options: SerializeMarkdownOptions = {}): string {
   const out = `${serialize(node, { level: 0, count: 0, options }).replace(/\n{2,}/g, '\n\n').trim()}\n`
-  return options.wrap && options.wrap > 0 ? wrapMarkdown(out, options.wrap) : out
+  return options.wrap && options.wrap > 0
+    ? wrapMarkdown(out, options.wrap)
+    : out
 }
 
 function wrapMarkdown(text: string, width: number): string {

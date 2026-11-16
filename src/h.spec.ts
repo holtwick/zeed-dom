@@ -2,7 +2,14 @@ import { hArgumentParser } from './h'
 
 describe('h', () => {
   it('should flatten', () => {
-    const values = hArgumentParser('div', ['a', ['b', ['c', 'd'], 'e']])
+    const values = hArgumentParser('div', [
+      'a',
+      [
+        'b',
+        ['c', 'd'],
+        'e',
+      ],
+    ])
     expect(values).toEqual({
       attrs: {},
       children: ['a', 'b', 'c', 'd', 'e'],

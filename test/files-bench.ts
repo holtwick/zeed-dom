@@ -35,14 +35,18 @@ function benchmarkFile(filePath: string, fileName: string): BenchResult {
   }
   catch (error) {
     success = false
-    errorMsg = error instanceof Error ? error.message : String(error)
+    errorMsg = error instanceof Error
+      ? error.message
+      : String(error)
     fileSize = 0
     charsParsed = 0
   }
   return {
     fileName,
     fileSize,
-    parseTime: success ? totalTime / NUM_RUNS : 0,
+    parseTime: success
+      ? totalTime / NUM_RUNS
+      : 0,
     success,
     error: success ? undefined : errorMsg,
     charsParsed,

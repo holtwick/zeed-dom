@@ -81,7 +81,9 @@ export class VNode {
 
   insertBefore(newNode: VNode, node?: VNode) {
     if (newNode !== node) {
-      let index = node ? this._childNodes.indexOf(node) : 0
+      let index = node
+        ? this._childNodes.indexOf(node)
+        : 0
       if (index < 0)
         index = 0
       this._childNodes.splice(index, 0, newNode)
@@ -121,7 +123,9 @@ export class VNode {
       // Fallback for unknown data
       try {
         const text
-          = typeof node === 'string' ? node : JSON.stringify(node, null, 2)
+          = typeof node === 'string'
+            ? node
+            : JSON.stringify(node, null, 2)
         this._childNodes.push(new VTextNode(text))
       }
       catch (err) {
@@ -151,7 +155,9 @@ export class VNode {
   /** Replace content of node with text or nodes */
   replaceChildren(...nodes: any[]) {
     this._childNodes = nodes.map(n =>
-      typeof n === 'string' ? new VTextNode(n) : n.remove(),
+      typeof n === 'string'
+        ? new VTextNode(n)
+        : n.remove(),
     )
     this._fixChildNodesParent()
   }
@@ -163,7 +169,9 @@ export class VNode {
       const index = this._indexInParent()
       if (index >= 0) {
         nodes = nodes.map(n =>
-          typeof n === 'string' ? new VTextNode(n) : n.remove(),
+          typeof n === 'string'
+            ? new VTextNode(n)
+            : n.remove(),
         )
         p._childNodes.splice(index, 1, ...nodes)
         this._parentNode = null
@@ -200,7 +208,7 @@ export class VNode {
 
   get nextSibling() {
     const i = this._indexInParent()
-    if (i != null)
+    if (i >= 0)
       return this.parentNode.childNodes[i + 1] || null
     return null
   }
@@ -286,7 +294,9 @@ export class VNode {
   get parentElement() {
     // DOM spec: parentNode if it is an element, else null
     const p = this.parentNode
-    return p && p.nodeType === VNode.ELEMENT_NODE ? p : null
+    return p && p.nodeType === VNode.ELEMENT_NODE
+      ? p
+      : null
   }
 
   // insertAdjacentHTML(position: 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend', text: string) {
@@ -497,12 +507,14 @@ export class VElement extends VNodeQuery {
   removeAttribute(name: string | number) {
     const originalName = this._findAttributeName(String(name))
     if (originalName)
-      delete this._attributes[name]
+      delete this._attributes[originalName]
   }
 
   hasAttribute(name: any) {
     const originalName = this._findAttributeName(name)
-    return originalName ? this._attributes[originalName] != null : false
+    return originalName
+      ? this._attributes[originalName] != null
+      : false
   }
 
   /// See https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
@@ -787,7 +799,7 @@ export class VHTMLDocument extends VDocument {
         this.appendChild(html)
       }
       body = new VElement('body')
-      html.appendChild(html)
+      html.appendChild(body)
     }
     return body
   }
@@ -811,7 +823,7 @@ export class VHTMLDocument extends VDocument {
         this.appendChild(html)
       }
       head = new VElement('head')
-      html.insertBefore(html)
+      html.insertBefore(head, html.firstChild)
     }
     return head
   }

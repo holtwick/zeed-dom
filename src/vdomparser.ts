@@ -33,12 +33,16 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
   }
 
   const isDoc = html.startsWith('<!')
-  const frag = isDoc ? new VHTMLDocument(true) : new VDocumentFragment()
+  const frag = isDoc
+    ? new VHTMLDocument(true)
+    : new VDocumentFragment()
   const stack: VNode[] = [frag]
 
   const parse = createHtmlParser({
     startElement(tagName: string, attrs: Record<string, string>, isSelfClosing: boolean) {
-      const lowerTagName = tagName.length === 1 ? tagName : tagName.toLowerCase()
+      const lowerTagName = tagName.length === 1
+        ? tagName
+        : tagName.toLowerCase()
       if (lowerTagName === '!doctype') {
         frag.docType = new VDocType()
         return
@@ -58,7 +62,9 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
       }
     },
     endElement(tagName: string) {
-      const lowerTagName = tagName.length === 1 ? tagName : tagName.toLowerCase()
+      const lowerTagName = tagName.length === 1
+        ? tagName
+        : tagName.toLowerCase()
       // Void elements are never pushed onto the stack (see startElement). A stray
       // end tag for one - some real-world (mail) HTML emits `</meta>`, `</img>`,
       // `</br>` - must therefore pop nothing.
@@ -113,7 +119,9 @@ VElement.prototype.insertAdjacentHTML = function (
     if (/^\s*<\/?[a-zA-Z]/.test(text)) {
       throw new Error('HTML parsing failed in insertAdjacentHTML')
     }
-    nodes = [new VTextNode(text)]
+    nodes = [
+      new VTextNode(text),
+    ]
   }
   switch (position) {
     case 'beforebegin':

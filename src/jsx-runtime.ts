@@ -16,7 +16,9 @@ export function jsx(tag: any, props?: Record<string, unknown> | null, _key?: unk
   const { children, ...attrs } = props ?? {}
   if (children === undefined)
     return h(tag, attrs)
-  return h(tag, attrs, ...(Array.isArray(children) ? children : [children]))
+  return h(tag, attrs, ...(Array.isArray(children)
+    ? children
+    : [children]))
 }
 
 export {

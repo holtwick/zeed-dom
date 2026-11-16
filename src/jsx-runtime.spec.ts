@@ -12,7 +12,13 @@ describe('jsx-runtime', () => {
       className: 'list',
       children: [
         jsx('li', { children: 'a' }),
-        jsx('li', { children: ['b', ' & ', jsx('b', { children: 'c' })] }),
+        jsx('li', {
+          children: [
+            'b',
+            ' & ',
+            jsx('b', { children: 'c' }),
+          ],
+        }),
         ['d', 'e'].map(s => jsx('li', { children: s }, s)),
       ],
     })
@@ -26,6 +32,11 @@ describe('jsx-runtime', () => {
   })
 
   it('should render fragments as their children only', () => {
-    expect(jsxs(Fragment, { children: [jsx('i', { children: '1' }), '2'] })).toBe('<i>1</i>2')
+    expect(jsxs(Fragment, {
+      children: [
+        jsx('i', { children: '1' }),
+        '2',
+      ],
+    })).toBe('<i>1</i>2')
   })
 })
