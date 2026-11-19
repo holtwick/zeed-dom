@@ -71,8 +71,20 @@ export class VNode {
     const Ctor = this.constructor as unknown as new () => this
     const node = new Ctor()
     if (deep) {
-      node._childNodes = this._childNodes.map(c => c.cloneNode(true))
-      node._fixChildNodesParent()
+      // Iterative, so deeply nested trees don't overflow the call stack.
+      // Subclasses copy their own fields in `cloneNode(false)`.
+      const stack: [VNode, VNode][] = [
+        [this, node],
+      ]
+      while (stack.length) {
+        const [source, target] = stack.pop()!
+        target._childNodes = source._childNodes.map((c) => {
+          const clone = c.cloneNode(false)
+          stack.push([c, clone])
+          return clone
+        })
+        target._fixChildNodesParent()
+      }
     }
     return node
   }
@@ -282,20 +294,36 @@ export class VNode {
     return null
   }
 
+  /**
+   * Visit this node and all descendants in document order until `fn` returns
+   * true. Iterative, so deeply nested trees don't overflow the call stack.
+   */
+  _walk(fn: (node: VNode) => boolean | void): VNode | undefined {
+    const stack: VNode[] = [this]
+    while (stack.length) {
+      const node = stack.pop()!
+      if (fn(node))
+        return node
+      const children = node._childNodes
+      for (let i = children.length - 1; i >= 0; i--)
+        stack.push(children[i])
+    }
+  }
+
   flatten(): VElement[] {
     const elements: VElement[] = []
-    if (this instanceof VElement)
-      elements.push(this)
-    for (const child of this._childNodes)
-      elements.push(...child.flatten())
+    this._walk((node) => {
+      if (node instanceof VElement)
+        elements.push(node)
+    })
     return elements
   }
 
   flattenNodes(): VNode[] {
     const nodes: VNode[] = []
-    nodes.push(this)
-    for (const child of this._childNodes)
-      nodes.push(...child.flattenNodes())
+    this._walk((node) => {
+      nodes.push(node)
+    })
     return nodes
   }
 
@@ -304,7 +332,12 @@ export class VNode {
   }
 
   get textContent(): string | null {
-    return this._childNodes.map(c => c.textContent).join('')
+    let text = ''
+    this._walk((node) => {
+      if (node.nodeType === VNode.TEXT_NODE)
+        text += node.nodeValue ?? ''
+    })
+    return text
   }
 
   set textContent(text) {
@@ -313,18 +346,27 @@ export class VNode {
       this.appendChild(new VTextNode(text.toString()))
   }
 
-  contains(otherNode: this) {
-    if (otherNode === this)
-      return true
-    // if (this._childNodes.includes(otherNode)) return true
-    return this._childNodes.some(n => n.contains(otherNode))
+  contains(otherNode: VNode | null | undefined) {
+    // Walk up instead of searching the whole subtree. A node whose parent no
+    // longer lists it (e.g. after `innerHTML` was set) is not contained.
+    for (let node = otherNode; node; node = node._parentNode) {
+      if (node === this)
+        return true
+      if (node._parentNode && node._parentNode._childIndex(node) < 0)
+        return false
+    }
+    return false
   }
 
-  get ownerDocument() {
-    if (this.nodeType === VNode.DOCUMENT_NODE || this.nodeType === VNode.DOCUMENT_FRAGMENT_NODE)
+  get ownerDocument(): any {
+    const isDocument = (node: VNode) => node.nodeType === VNode.DOCUMENT_NODE || node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE
+    if (isDocument(this))
       return this
-
-    return this?._parentNode?.ownerDocument
+    for (let node: VNode | null = this._parentNode; node; node = node._parentNode) {
+      if (isDocument(node))
+        return node
+    }
+    return undefined
   }
 
   toString(): string {
@@ -454,14 +496,14 @@ export class VNodeQuery extends VNode {
 
   //
 
-  parent(selector: string) {
+  parent(selector: string): any {
     if (this.matches(selector))
       return this
-
-    if (this.parentNode == null)
-      return null
-
-    return this.parentNode?.parent(selector)
+    for (let node: VNodeQuery | null = this.parentNode; node; node = node.parentNode) {
+      if (node.matches(selector))
+        return node
+    }
+    return null
   }
 
   handle(selector: any, handler: (arg0: VElement, arg1: number) => void) {
@@ -736,11 +778,34 @@ export class VElement extends VNodeQuery {
   //
 
   render(h = htmlVDOM) {
-    return h(
-      this._originalTagName || this.tagName,
-      this._attributes,
-      this._childNodes.map(c => c.render(h)).join(''), // children:string is not escaped again
-    )
+    // Iterative, so deeply nested elements don't overflow the call stack.
+    // Each frame collects the rendered children of one element.
+    interface Frame { element: VElement, index: number, parts: any[] }
+    const stack: Frame[] = [
+      { element: this, index: 0, parts: [] },
+    ]
+    while (true) {
+      const frame = stack[stack.length - 1]!
+      const children = frame.element._childNodes
+      if (frame.index < children.length) {
+        const child = children[frame.index++]
+        if (child instanceof VElement && child.render === VElement.prototype.render)
+          stack.push({ element: child, index: 0, parts: [] })
+        else
+          frame.parts.push(child.render(h))
+        continue
+      }
+      const { element, parts } = frame
+      const result = h(
+        element._originalTagName || element.tagName,
+        element._attributes,
+        parts.join(''), // children:string is not escaped again
+      )
+      stack.pop()
+      if (!stack.length)
+        return result
+      stack[stack.length - 1]!.parts.push(result)
+    }
   }
 }
 

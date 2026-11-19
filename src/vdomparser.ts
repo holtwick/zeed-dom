@@ -26,6 +26,13 @@ export function vdom(obj: VNode | NodeBufferLike | string | null = null): VNode 
   return new VDocumentFragment()
 }
 
+/**
+ * Maximum nesting depth of parsed elements, the same limit as Chrome's HTML
+ * parser. Deeper elements become siblings at this depth, so that recursive
+ * code like the serializers can't overflow the call stack on hostile input.
+ */
+export const MAX_PARSE_DEPTH = 512
+
 export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
   if (typeof html !== 'string') {
     console.error('parseHTML requires string, found', html)
@@ -52,7 +59,7 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
           attrs[name] = unescapeHTML(attrs[name])
         }
       }
-      const parentNode = stack[stack.length - 1]
+      const parentNode = stack[Math.min(stack.length, MAX_PARSE_DEPTH) - 1]
       if (parentNode) {
         const element = document.createElement(tagName, attrs)
         parentNode.appendChild(element)
