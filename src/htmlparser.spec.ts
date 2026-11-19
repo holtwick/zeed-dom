@@ -113,6 +113,7 @@ if (x<1)
             "_childNodes": [
               VTextNode {
                 "_childNodes": [],
+                "_index": 0,
                 "_parentNode": [Circular],
                 "_text": "
       var x = 1 & 4
@@ -127,12 +128,14 @@ if (x<1)
                 "append": [Function],
               },
             ],
+            "_index": 0,
             "_nodeName": "SCRIPT",
             "_originalTagName": "script",
             "_parentNode": [Circular],
             "append": [Function],
           },
         ],
+        "_index": -1,
         "_parentNode": null,
         "append": [Function],
       }

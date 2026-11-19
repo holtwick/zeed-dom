@@ -45,6 +45,8 @@ export class VNode {
 
   _parentNode: any
   _childNodes: any[]
+  /** Cached position in the parent's `_childNodes`, only a hint, see `_indexInParent` */
+  _index = -1
 
   get nodeType(): number {
     console.error('Subclasses should define nodeType!')
@@ -76,7 +78,11 @@ export class VNode {
   }
 
   _fixChildNodesParent() {
-    this._childNodes.forEach(node => (node._parentNode = this))
+    const nodes = this._childNodes
+    for (let i = 0; i < nodes.length; i++) {
+      nodes[i]._parentNode = this
+      nodes[i]._index = i
+    }
   }
 
   insertBefore(newNode: VNode, node?: VNode) {
@@ -117,7 +123,8 @@ export class VNode {
     }
     else if (node instanceof VNode) {
       node.remove()
-      this._childNodes.push(node)
+      node._parentNode = this
+      node._index = this._childNodes.push(node) - 1
     }
     else {
       // Fallback for unknown data
@@ -126,13 +133,14 @@ export class VNode {
           = typeof node === 'string'
             ? node
             : JSON.stringify(node, null, 2)
-        this._childNodes.push(new VTextNode(text))
+        const textNode = new VTextNode(text)
+        textNode._parentNode = this
+        textNode._index = this._childNodes.push(textNode) - 1
       }
       catch (err) {
         console.error(`The data ${node} to be added to ${this.render()} is problematic: ${err}`)
       }
     }
-    this._fixChildNodesParent()
   }
 
   append = this.appendChild
@@ -180,10 +188,23 @@ export class VNode {
     }
   }
 
+  /**
+   * Position in the parent's child list. `_index` is only a hint: mutations
+   * like `insertBefore` or `removeChild` shift siblings without updating it.
+   * If the hint is stale, all siblings are re-indexed once, so walking the
+   * children with `nextSibling` stays O(n) instead of O(n²).
+   */
   _indexInParent() {
-    if (this._parentNode)
-      return this._parentNode.childNodes.indexOf(this)
-    return -1
+    const p = this._parentNode
+    if (!p)
+      return -1
+    const nodes = p._childNodes
+    if (nodes[this._index] === this)
+      return this._index
+    const i = nodes.indexOf(this)
+    if (i >= 0)
+      p._fixChildNodesParent()
+    return i
   }
 
   get parentNode() {
