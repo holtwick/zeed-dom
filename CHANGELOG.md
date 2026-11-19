@@ -2,7 +2,13 @@
 
 All notable changes to zeed-dom. For versions up to 0.17.7 see the [GitHub releases](https://github.com/holtwick/zeed-dom/releases).
 
-## 0.20.0 (unreleased)
+## 0.21.0 (unreleased)
+
+### Changed: Node.js 22 or newer
+
+zeed-dom requires Node.js 22 or newer, `engines` said Node.js 18 before. Node.js 18 and 20 have reached their end of life and no longer get security updates. Bun and browsers are not affected.
+
+## 0.20.0
 
 The public API is unchanged: the same exports, classes, methods and type signatures as in 0.19.2. Some behavior changed, almost always to what a browser DOM does. Of the 258 real-world pages in the test suite, 244 render exactly as before; the other 14 are covered by the parser fixes below.
 

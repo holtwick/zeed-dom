@@ -5,6 +5,7 @@ permissions:
 
 on:
   push:
+    branches: [master]
   pull_request:
 
 jobs:
@@ -22,11 +23,11 @@ jobs:
       - run: npm test
       - run: npm run build
 
-      # The published package still supports Node 18, see `engines`
+      # The oldest Node version the package supports, see `engines`
       - uses: actions/setup-node@v4
         with:
-          node-version: 18.x
-      - name: Load the build on Node 18
+          node-version: 22.x
+      - name: Load the build on Node 22
         run: |
           node -e "const d = require('./dist/index.node.cjs'); if (!d.parseHTML) process.exit(1)"
           node -e "const j = require('./jsx-runtime/index.cjs'); if (!j.jsx) process.exit(1)"
