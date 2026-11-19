@@ -83,6 +83,57 @@ describe('security', () => {
     })
   })
 
+  describe('safeHTML options', () => {
+    it('never keeps event handlers and srcdoc, even when allowed', () => {
+      expect(safeHTML('<p onclick="alert(1)" srcdoc="x">x</p>', {
+        allowedAttrs: {
+          '*': ['onclick', 'srcdoc'],
+        },
+      })).toBe('<p>x</p>')
+    })
+
+    it('checks every allowed attribute that holds a URL', () => {
+      expect(safeHTML('<button formaction="javascript:alert(1)">x</button>', {
+        allowedTags: ['button'],
+        allowedAttrs: {
+          button: ['formaction'],
+        },
+      })).toBe('<button>x</button>')
+      expect(safeHTML('<form action="javascript:alert(1)"><p>x</p></form>', {
+        allowedTags: ['form', 'p'],
+        allowedAttrs: {
+          form: ['action'],
+        },
+      })).toBe('<form><p>x</p></form>')
+      expect(safeHTML('<a href="/x" xlink:href="javascript:alert(1)">x</a>', {
+        allowedAttrs: {
+          a: ['href', 'xlink:href'],
+        },
+      })).toBe('<a href="/x" rel="noopener noreferrer" target="_blank">x</a>')
+      const img = {
+        allowedAttrs: {
+          img: ['src', 'srcset'],
+        },
+      }
+      expect(safeHTML('<img src="a.png" srcset="b.png 2x, javascript:alert(1) 3x">', img)).toBe('<img src="a.png">')
+      expect(safeHTML('<img src="a.png" srcset="b.png 2x, c.png 640w,">', img)).toBe('<img src="a.png" srcset="b.png 2x, c.png 640w,">')
+    })
+  })
+
+  describe('markdown inline code placeholders', () => {
+    const md = (s: string) => serializeMarkdown(parseHTML(s))
+
+    it('can\'t be smuggled into link targets or alt texts', () => {
+      // `\0<n>\0` was replaced with the n-th inline code, which ended the target
+      expect(md('<code>x) [y](javascript:alert(1)</code><a href="a\u00000\u0000b">t</a>')).toBe('==x) [y](javascript:alert(1)==[t](a0b)\n')
+      expect(md('<code>c</code><img src="a.png" alt="\u00000\u0000">')).toBe('==c==![0](a.png)\n')
+    })
+
+    it('keeps code in pre literal', () => {
+      expect(md('<pre><code>&lt;div&gt;\n  x\n</code></pre>')).toBe('```\n<div>\n  x\n\n```\n')
+    })
+  })
+
   describe('denial of service', () => {
     it('parses long style attributes in linear time', () => {
       const started = performance.now()

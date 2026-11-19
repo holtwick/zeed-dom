@@ -87,6 +87,19 @@ function escapeMarkup(text: string): string {
   return text.replace(/<(?=[a-z/!?])/gi, '&lt;')
 }
 
+/**
+ * Attribute value without the placeholder delimiter of inline code, see
+ * `protect`. Text has it removed already, but in `href` or `alt` a
+ * `\0<n>\0` was replaced with the content of the n-th inline code, which
+ * could end the link target and add a `javascript:` link.
+ */
+function attr(node: VElement, name: string): string | null {
+  const value = node.getAttribute(name)
+  return value == null
+    ? null
+    : value.replace(RX_CODE_MARK, '')
+}
+
 /** Text in `[…]`, a `]` would end the label */
 function escapeLabel(text: string): string {
   return text.replace(/[[\]]/g, '\\$&')
@@ -132,6 +145,9 @@ function protect(code: string, ctx?: SerializeContext): string {
 // `==` is highlighting and not a code span, so markup in it has to be escaped
 function inlineCode(node: VElement, h: (ctx?: Partial<SerializeContext>) => string, ctx?: SerializeContext): string {
   const code = h({ pre: true })
+  // `<pre><code>` is a code block already, its text stays literal
+  if (ctx?.pre)
+    return code
   const start = code.length - code.trimStart().length
   const inner = code.trim()
   const lead = code.slice(0, start)
@@ -259,9 +275,9 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
   a: (node, h, ctx) => {
     const text = h({ plainOnly: true }).trim()
     // A `javascript:` link would run script when clicked in the rendered Markdown
-    if (isUnsafeUrl(node.getAttribute('href') ?? ''))
+    if (isUnsafeUrl(attr(node, 'href') ?? ''))
       return text
-    const href = escapeUrl(node.getAttribute('href') ?? '#')
+    const href = escapeUrl(attr(node, 'href') ?? '#')
     if (ctx?.options?.linkStyle === 'autolink') {
       if (!text || text === href)
         return `<${href}>`
@@ -273,15 +289,15 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
     const style = ctx?.options?.imageStyle ?? 'full'
     if (style === 'none')
       return ''
-    const alt = escapeLabel(escapeMarkup((node.getAttribute('alt') ?? '').trim()))
+    const alt = escapeLabel(escapeMarkup((attr(node, 'alt') ?? '').trim()))
     if (style === 'alt') {
       return alt
         ? `[${alt}]`
         : ''
     }
-    if (isUnsafeUrl(node.getAttribute('src') ?? '', true))
+    if (isUnsafeUrl(attr(node, 'src') ?? '', true))
       return ''
-    const src = escapeUrl(node.getAttribute('src') ?? '')
+    const src = escapeUrl(attr(node, 'src') ?? '')
     if (ctx?.options?.linkStyle === 'autolink') {
       if (!alt || alt === src)
         return `<${src}>`
@@ -330,7 +346,7 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
     })).join('')
     if (context.plainOnly) {
       if (tag === 'img')
-        return escapeMarkup((node.getAttribute('alt') ?? '').trim())
+        return escapeMarkup((attr(node, 'alt') ?? '').trim())
       if (tag === 'br')
         return ' '
       return handleChildren()

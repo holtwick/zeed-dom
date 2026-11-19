@@ -77,7 +77,31 @@ export const DEFAULT_ALLOWED_ATTRS: Readonly<Record<string, readonly string[]>> 
  */
 export const DEFAULT_ALLOWED_URL_SCHEMES: readonly string[] = ['http:', 'https:', 'mailto:', 'tel:']
 
-const URL_ATTRS = new Set(['href', 'src'])
+/** Attributes holding a URL, checked like `href` and `src` when allowed */
+const URL_ATTRS = new Set([
+  'href',
+  'src',
+  'action',
+  'formaction',
+  'xlink:href',
+  'poster',
+  'cite',
+  'background',
+  'data',
+  'codebase',
+  'longdesc',
+  'ping',
+])
+
+/**
+ * Attributes that never pass, whatever `allowedAttrs` says: event handlers
+ * run script, `srcdoc` is a whole document. `style` passes when allowed
+ * explicitly, it can't run script in current browsers but can restyle and
+ * load URLs.
+ */
+function isForbiddenAttr(attr: string): boolean {
+  return attr.startsWith('on') || attr === 'srcdoc'
+}
 
 const VOID_TAGS = new Set([
   'br',
@@ -182,10 +206,18 @@ function renderAttrs(node: VElement, tag: string, opts: ResolvedOptions, skip?: 
   for (const attr of opts.allowedAttrs.get(tag) ?? opts.allowedAttrs.get('*')!) {
     if (skip?.includes(attr))
       continue
+    if (isForbiddenAttr(attr))
+      continue
     let value = node.getAttribute(attr)
     if (value == null)
       continue
-    if (URL_ATTRS.has(attr)) {
+    if (attr === 'srcset') {
+      // Every candidate URL must be safe, `url 2x, url 640w`
+      const urls = value.split(',').map(c => normalizeUrl(c).split(/\s+/)[0] ?? '').filter(Boolean)
+      if (!urls.every(u => isSafeUrl(u, 'src', tag, opts)))
+        continue
+    }
+    else if (URL_ATTRS.has(attr)) {
       value = normalizeUrl(value)
       if (!isSafeUrl(value, attr, tag, opts))
         continue

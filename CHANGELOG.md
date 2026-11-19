@@ -37,6 +37,8 @@ Markdown passes HTML through, so the output of `serializeMarkdown` could contain
 
 `safeHTML(html, options)` and `serializeSafeHTML(node, options)` take `allowedTags`, `allowedAttrs`, `allowedUrlSchemes`, `allowRelativeUrls`, `allowDataImages`, `linkRel` and `linkTarget`, see the README. The defaults are exported as `DEFAULT_ALLOWED_TAGS`, `DEFAULT_ALLOWED_ATTRS` and `DEFAULT_ALLOWED_URL_SCHEMES`, the tags dropped with their content as `SERIALIZE_DROP_TAGS`, the option types as `SafeHTMLOptions` and `SerializeMarkdownOptions`.
 
+Whatever `allowedAttrs` says, event handlers (`on…`) and `srcdoc` never pass. Every allowed attribute that holds a URL (`href`, `src`, `action`, `formaction`, `xlink:href`, `poster`, `cite` and others, each candidate of `srcset`) is checked like `href`, so allowing `formaction` can't let `javascript:` through. `style` passes when allowed: it runs no script in current browsers, but can restyle the page and load URLs.
+
 ### Changed: `safeHTML` keeps more of the text and less of the page
 
 Without options the output changes for almost every page, for these reasons:
@@ -56,6 +58,7 @@ Without options the output changes for almost every page, for these reasons:
 - Every line of a block quote is quoted, not only the first.
 - Link labels and headings are plain text, an image inside a link is replaced by its alt text, so `[![Logo](logo.png)](/)` becomes `[Logo](/)`. `[` and `]` in link labels are escaped.
 - Inline code keeps its spaces when lines are wrapped, and markup in it is escaped like in other text.
+- `<pre><code>…</code></pre>` is a plain code block, it had `==` markers around the code inside the block.
 - `iframe`, `object`, `embed`, `noscript`, `svg` and `math` are dropped with their content, like in `safeHTML`.
 - A line with ```` ``` ```` inside a longer code fence no longer ends the code block when wrapping.
 - New options `imageStyle` (`'full'`, `'alt'`, `'none'`) and `headingAnchors`.
