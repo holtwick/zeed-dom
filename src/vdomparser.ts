@@ -44,6 +44,11 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
     ? new VHTMLDocument(true)
     : new VDocumentFragment()
   const stack: VNode[] = [frag]
+  // Lowercase tag names of the open elements in `stack` and how often each is
+  // open, so an end tag without an open element is ignored in O(1) instead of
+  // searching the whole stack, which is quadratic for many stray end tags
+  const stackNames: string[] = ['']
+  const openCount = new Map<string, number>()
 
   const parse = createHtmlParser({
     startElement(tagName: string, attrs: Record<string, string>, isSelfClosing: boolean) {
@@ -64,7 +69,10 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
         const element = document.createElement(tagName, attrs)
         parentNode.appendChild(element)
         if (!SELF_CLOSING_TAGS.includes(lowerTagName) && !isSelfClosing) {
+          const name = tagName.toLowerCase()
           stack.push(element)
+          stackNames.push(name)
+          openCount.set(name, (openCount.get(name) ?? 0) + 1)
         }
       }
     },
@@ -75,18 +83,19 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
       // Void elements are never pushed onto the stack (see startElement). A stray
       // end tag for one - some real-world (mail) HTML emits `</meta>`, `</img>`,
       // `</br>` - must therefore pop nothing.
-      if (SELF_CLOSING_TAGS.includes(lowerTagName))
+      if (SELF_CLOSING_TAGS.includes(lowerTagName) || !openCount.get(lowerTagName))
         return
       // Pop down to the nearest matching open element. Index 0 is the root
       // document/fragment and is never popped, so an unmatched end tag (e.g.
       // `</div>` with no open `div`) is ignored instead of underflowing the
       // stack - which would otherwise orphan every following sibling, including
       // the entire `<body>` after a malformed `<head>`.
-      for (let i = stack.length - 1; i > 0; i--) {
-        if ((stack[i] as VElement).tagName?.toLowerCase() === lowerTagName) {
-          stack.length = i
+      while (stack.length > 1) {
+        const name = stackNames.pop()!
+        stack.pop()
+        openCount.set(name, openCount.get(name)! - 1)
+        if (name === lowerTagName)
           return
-        }
       }
     },
     characters(text: string) {
