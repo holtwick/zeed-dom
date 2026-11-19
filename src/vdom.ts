@@ -107,16 +107,38 @@ export class VNode {
   // The mutations below don't re-index the following siblings, which would
   // cost O(n) per call. `_indexInParent` repairs stale hints when needed.
 
-  insertBefore(newNode: VNode, node?: VNode) {
-    if (newNode !== node) {
-      let index = node
-        ? this._childIndex(node)
-        : 0
-      if (index < 0)
-        index = 0
-      this._childNodes.splice(index, 0, newNode)
-      newNode._parentNode = this
-      newNode._index = index
+  /** Detach all children, so they don't point to this node anymore */
+  _detachChildren() {
+    for (const child of this._childNodes) {
+      child._parentNode = null
+      child._index = -1
+    }
+    this._childNodes = []
+  }
+
+  /**
+   * Like the DOM: `null` as reference node appends, a fragment inserts its
+   * children. Without a reference node (`undefined`), which is a TypeError in
+   * browsers, zeed-dom inserts at the start, as it always did.
+   */
+  insertBefore(newNode: VNode, node?: VNode | null) {
+    if (node === null)
+      return this.appendChild(newNode)
+    if (newNode === node)
+      return
+    const nodes = newNode instanceof VDocumentFragment
+      ? [...newNode._childNodes]
+      : [newNode]
+    for (const n of nodes)
+      n.remove()
+    // Unknown reference node: the DOM throws, zeed-dom inserts at the start
+    const index = node
+      ? Math.max(0, this._childIndex(node))
+      : 0
+    this._childNodes.splice(index, 0, ...nodes)
+    for (let i = 0; i < nodes.length; i++) {
+      nodes[i]!._parentNode = this
+      nodes[i]!._index = index + i
     }
   }
 
@@ -191,36 +213,40 @@ export class VNode {
 
   /** Replace content of node with text or nodes */
   replaceChildren(...nodes: any[]) {
-    this._childNodes = nodes.map(n =>
-      typeof n === 'string'
+    // Collect in a fragment first like the DOM: removes the nodes from their
+    // parents, including this one, and a node given twice is added once
+    const fragment = new VDocumentFragment()
+    for (const n of nodes) {
+      fragment.appendChild(typeof n === 'string'
         ? new VTextNode(n)
-        : n.remove(),
-    )
-    this._fixChildNodesParent()
+        : n)
+    }
+    this._detachChildren()
+    this.appendChild(fragment)
   }
 
   /** Replace node itself with nodes */
   replaceWith(...nodes: any[]) {
-    const p = this._parentNode
-    if (p) {
-      // Remove the new nodes first, they may be siblings and shift the index
-      nodes = nodes.map(n =>
-        typeof n === 'string'
-          ? new VTextNode(n)
-          : n === this
-            ? n
-            : n.remove(),
-      )
-      const index = p._childIndex(this)
-      if (index >= 0) {
-        p._childNodes.splice(index, 1, ...nodes)
-        this._parentNode = null
-        this._index = -1
-        for (let i = 0; i < nodes.length; i++) {
-          nodes[i]._parentNode = p
-          nodes[i]._index = index + i
-        }
-      }
+    const parent = this._parentNode
+    if (!parent || parent._childIndex(this) < 0)
+      return
+    // Like the DOM: the new nodes go where this node is, or if this node is
+    // one of them, before the first following sibling that is not
+    let next = this.nextSibling
+    while (next && nodes.includes(next))
+      next = next.nextSibling
+    const fragment = new VDocumentFragment()
+    for (const n of nodes) {
+      fragment.appendChild(typeof n === 'string'
+        ? new VTextNode(n)
+        : n)
+    }
+    if (this._parentNode === parent) {
+      parent.insertBefore(fragment, this)
+      parent.removeChild(this)
+    }
+    else {
+      parent.insertBefore(fragment, next)
     }
   }
 
@@ -356,7 +382,7 @@ export class VNode {
   }
 
   set textContent(text) {
-    this._childNodes = []
+    this._detachChildren()
     if (text)
       this.appendChild(new VTextNode(text.toString()))
   }

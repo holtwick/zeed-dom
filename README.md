@@ -221,6 +221,16 @@ The full comparison, hostile input cases, known limits and how to run the benchm
 
 ---
 
+## ✅ Tests
+
+The same test suite runs on Node.js (`npm test`), Bun (`npm run test:bun`) and in Chromium, Firefox and WebKit (`npm run test:browser`, needs `npx playwright install` once). Besides the unit tests it contains:
+
+- **Golden files**: the rendered HTML, Markdown, plaintext, safe HTML and text content of 258 real-world pages in `files/` are compared to a snapshot, so output changes can't slip in unnoticed.
+- **Differential tests**: random well-formed HTML is parsed by zeed-dom and by a real DOM (the browser's or jsdom) and the trees must match. Random sequences of `appendChild`, `insertBefore`, `replaceWith`, `replaceChildren` and other mutations must give the same trees as the real DOM.
+- **Timing checks** for hostile input, so a regression to quadratic time fails the suite.
+
+---
+
 ## 📝 Misc
 
 - Use double underscore in JSX for namespaces: `<xhtml__link />` → `<xhtml:link />`

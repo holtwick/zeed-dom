@@ -117,7 +117,9 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
 // Attach parser-dependent methods to VElement prototype
 VElement.prototype.setInnerHTML = function (html) {
   const frag = parseHTML(html)
+  this._detachChildren()
   this._childNodes = frag._childNodes
+  frag._childNodes = []
   this._fixChildNodesParent()
 }
 

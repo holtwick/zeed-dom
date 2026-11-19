@@ -89,7 +89,7 @@ describe('sibling navigation and child mutations', () => {
     expect(namesBackwards(parent)).toEqual(['a', 'b', 'c'])
     parent.innerHTML = '<p>1</p><p>2</p>'
     expect(names(parent)).toEqual(['1', '2'])
-    expect(b.parentNode).toBe(parent) // as before: old children keep their stale parent
+    expect(b.parentNode).toBeNull() // detached like in the DOM
     expect(b.nextSibling).toBeNull()
   })
 
