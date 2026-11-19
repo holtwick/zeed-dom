@@ -202,7 +202,9 @@ export class VNode {
 
   append = this.appendChild
 
-  removeChild(node: VNode) {
+  // The parameter type is kept as it was in 0.19 for API compatibility
+  removeChild(child: { _parentNode: null }) {
+    const node = child as VNode
     const i = this._childIndex(node)
     if (i >= 0) {
       node._parentNode = null
