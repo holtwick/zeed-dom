@@ -1,6 +1,6 @@
 import { escapeHTML } from './encoding'
 import { hFactory } from './h'
-import { htmlVDOM } from './html'
+import { htmlVDOM, xmlVDOM } from './html'
 import { parseStyleDeclarations } from './style'
 import { matchSelector } from './vcss'
 
@@ -862,7 +862,14 @@ export class VElement extends VNodeQuery {
 
   //
 
-  render(h = htmlVDOM) {
+  render(h: any = htmlVDOM) {
+    // `html()` and `xml()` take their children through hArgumentParser, which
+    // escapes text, so the already rendered children would be escaped again.
+    // Use the markup variants that insert a children string as it is.
+    if (h.xml === true)
+      h = xmlVDOM
+    else if (h.html === true)
+      h = htmlVDOM
     // Iterative, so deeply nested elements don't overflow the call stack.
     // Each frame collects the rendered children of one element.
     interface Frame { element: VElement, index: number, parts: any[] }

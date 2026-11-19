@@ -201,6 +201,7 @@ export function html(
 }
 
 export const htmlVDOM = markup.bind(null, false)
+export const xmlVDOM = markup.bind(null, true)
 
 html.firstLine = '<!DOCTYPE html>'
 html.html = true

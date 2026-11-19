@@ -67,6 +67,10 @@ Without options the output changes for almost every page, for these reasons:
 
 Setting `nodeValue`, `textContent` or the new `data` of a text node changes its text, like in the DOM. Before, there were only getters and the text could only be changed through the internal `_text`.
 
+### Fixed: `render(xml)` and `render(html)`
+
+`element.render(xml)` and `element.render(html)` escaped child elements that followed text, `<li>zeed <img src="logo.png"></li>` came out as `<li>zeed &lt;img src=&quot;logo.png&quot; /&gt;</li>`. Both render the markup now, `render(html)` gives the same as `render()`.
+
 ### Performance and robustness
 
 - `element.style` of a `style` attribute of some 10 KB without a colon took about a second because of a quadratic regular expression. It is linear now, with the same result.
