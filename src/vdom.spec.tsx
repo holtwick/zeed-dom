@@ -1,3 +1,4 @@
+import { html } from './html'
 // import Sizzle from './sizzle'
 import { createHTMLDocument, h, VDocument, VDocumentFragment, VElement, VTextNode } from './vdom'
 import { parseHTML } from './vdomparser'
@@ -729,5 +730,15 @@ describe('vdom', () => {
     const el: VElement = parseHTML('<div> <p>Hello</p> </div>').firstChild
     expect(el.childNodes).toHaveLength(3)
     expect(el.children).toHaveLength(1)
+  })
+
+  it('render(xml) and render(html) keep elements after text as markup', () => {
+    const dom = h('ol', { class: 'projects' }, [
+      h('li', null, 'zeed ', h('img', { src: 'logo.png' })),
+      h('li', null, 'a &lt; b'),
+    ])
+    expect(dom.render(xml)).toBe('<ol class="projects"><li>zeed <img src="logo.png" /></li><li>a &amp;lt; b</li></ol>')
+    expect(dom.render(html)).toBe('<ol class="projects"><li>zeed <img src="logo.png"></li><li>a &amp;lt; b</li></ol>')
+    expect(dom.render(html)).toBe(dom.render())
   })
 })

@@ -2,11 +2,81 @@
 
 All notable changes to zeed-dom. For versions up to 0.17.7 see the [GitHub releases](https://github.com/holtwick/zeed-dom/releases).
 
-## 0.21.0 (unreleased)
+## 0.21.0
 
 ### Changed: Node.js 22 or newer
 
 zeed-dom requires Node.js 22 or newer, `engines` said Node.js 18 before. Node.js 18 and 20 have reached their end of life and no longer get security updates. Bun and browsers are not affected.
+
+### Security: untrusted HTML can no longer inject markup
+
+Parsing untrusted HTML and rendering it again, for example after removing some elements, could produce markup that was not in the input. Update if you render HTML from users, mails or other sites.
+
+- An `html` attribute in parsed HTML was inserted as raw content: `<div html="&lt;img src=x onerror=…&gt;">` rendered as `<div><img src=x onerror=…></div>`. It is an ordinary attribute now, also for elements built with the VDOM `h()`. The `html` prop of `html()` and the JSX runtime still inserts raw markup, as documented.
+- Entities in `<script>` and `<style>` were decoded, so `&lt;/style&gt;&lt;img …&gt;` rendered as a real `</style><img …>`. Like in browsers their content is now taken as it is. This also stops the corruption of scripts like `?a=1&section=2`, which turned into `?a=1§ion=2`. 101 of the 258 real-world pages in the test suite render differently for this reason.
+- A `<script>` or `<style>` without end tag contains the rest of the input, like in browsers. Before, the rest was parsed as markup inside it.
+- Style objects in `html()` and JSX are escaped: `style={{ color: userInput }}` could end the attribute.
+- Attribute names that would end the tag (with whitespace, `>` or `=`), for example from `setAttribute(name, …)` or `{...props}` with untrusted keys, are dropped when rendering. Tag names with whitespace, `/` or `>` throw an error, browsers throw an `InvalidCharacterError` for both.
+- `safeHTML` and `serializeMarkdown` lost the content of a `<constructor>` element, and `querySelector('constructor')` threw: they found properties of `Object.prototype`.
+
+### New: `htmlStrict()` and a strict JSX runtime
+
+`html()` and the JSX runtime insert a string child that starts with `<` and ends with `>` as markup, because nested elements arrive as plain strings too. So `<p>{userInput}</p>` lets `<img src=x onerror=…>` through. This is unchanged to keep the API stable, the README now warns about it.
+
+The new `htmlStrict()` escapes every string child and inserts only its own results and strings marked with the new `raw()` as markup. It returns an `HTMLString`, a `String` object: use `String(result)` for a plain string. With `"jsxImportSource": "zeed-dom/strict"` JSX uses it as well. Inside `<script>` and `<style>` strings are not escaped, but `</` becomes `<\/`, so they can't end the element. `raw()` also works with `html()`.
+
+### Changed: `serializeMarkdown` escapes markup and unsafe links
+
+Markdown passes HTML through, so the output of `serializeMarkdown` could contain markup that a Markdown renderer shows as HTML.
+
+- `<` in text before a letter, `/`, `!` or `?` is written as `&lt;`, which a Markdown renderer shows as `<` again. `&lt;img onerror=…&gt;` in the HTML no longer becomes a real `<img onerror=…>`. Code blocks stay literal and use a longer fence when the code contains ```` ``` ````.
+- Links to `javascript:` and `vbscript:` keep only their text, images with such a `src` or with `data:` other than images are dropped, like in `safeHTML`. Real-world pages use `javascript:void(0)` a lot, these links are now plain text.
+- Spaces, `(`, `)`, `<` and `>` in link and image targets are percent-encoded, leading and trailing spaces removed. Before, `href="x)<img …>"` ended the link and left the rest as raw HTML. `[` and `]` in the alt text of images are escaped.
+
+### New: options for `safeHTML`
+
+`safeHTML(html, options)` and `serializeSafeHTML(node, options)` take `allowedTags`, `allowedAttrs`, `allowedUrlSchemes`, `allowRelativeUrls`, `allowDataImages`, `linkRel` and `linkTarget`, see the README. The defaults are exported as `DEFAULT_ALLOWED_TAGS`, `DEFAULT_ALLOWED_ATTRS` and `DEFAULT_ALLOWED_URL_SCHEMES`, the tags dropped with their content as `SERIALIZE_DROP_TAGS`, the option types as `SafeHTMLOptions` and `SerializeMarkdownOptions`.
+
+Whatever `allowedAttrs` says, event handlers (`on…`) and `srcdoc` never pass. Every allowed attribute that holds a URL (`href`, `src`, `action`, `formaction`, `xlink:href`, `poster`, `cite` and others, each candidate of `srcset`) is checked like `href`, so allowing `formaction` can't let `javascript:` through. `style` passes when allowed: it runs no script in current browsers, but can restyle the page and load URLs.
+
+### Changed: `safeHTML` keeps more of the text and less of the page
+
+Without options the output changes for almost every page, for these reasons:
+
+- Inline elements (`b`, `strong`, `em`, `code`, `span`, …) and tables are kept, they were unwrapped before. Links keep `title`, images `title`, `width` and `height`, table cells `colspan` and `rowspan`.
+- An image without `alt` gets none, it got `alt=""` before, which marks an image as decorative.
+- `iframe`, `object`, `embed`, `noscript`, `template`, `svg` and `math` are dropped with their content, like `script` and `style` before. Their text used to end up in the output.
+- A link without `href` or with an empty one keeps only its text, it became `<a href="">` before. `<form>` is unwrapped, its content stays.
+- `<hr>` is written without the invalid end tag `</hr>`.
+- `href` and `src` are written without the control characters and surrounding whitespace that browsers ignore as well.
+
+### Changed: `serializeMarkdown` output closer to the rendered page
+
+- Ordered lists are numbered and start at the `start` attribute, they were bullet lists before. Nested lists are indented to the content of their item, so CommonMark sees them as nested also below `1.`.
+- Whitespace collapses like in a browser: line breaks and indentation of the source no longer end up in the Markdown, and 4 spaces of indentation no longer turn a paragraph into a code block. A no-break space is kept.
+- Paragraphs and `div`s inside a list item stay in the item.
+- Every line of a block quote is quoted, not only the first.
+- Link labels and headings are plain text, an image inside a link is replaced by its alt text, so `[![Logo](logo.png)](/)` becomes `[Logo](/)`. `[` and `]` in link labels are escaped.
+- Inline code keeps its spaces when lines are wrapped, and markup in it is escaped like in other text.
+- `<pre><code>…</code></pre>` is a plain code block, it had `==` markers around the code inside the block.
+- `iframe`, `object`, `embed`, `noscript`, `svg` and `math` are dropped with their content, like in `safeHTML`.
+- A line with ```` ``` ```` inside a longer code fence no longer ends the code block when wrapping.
+- New options `imageStyle` (`'full'`, `'alt'`, `'none'`) and `headingAnchors`.
+
+### New: text nodes can be changed
+
+Setting `nodeValue`, `textContent` or the new `data` of a text node changes its text, like in the DOM. Before, there were only getters and the text could only be changed through the internal `_text`.
+
+### Fixed: `render(xml)` and `render(html)`
+
+`element.render(xml)` and `element.render(html)` escaped child elements that followed text, `<li>zeed <img src="logo.png"></li>` came out as `<li>zeed &lt;img src=&quot;logo.png&quot; /&gt;</li>`. Both render the markup now, `render(html)` gives the same as `render()`.
+
+### Performance and robustness
+
+- `element.style` of a `style` attribute of some 10 KB without a colon took about a second because of a quadratic regular expression. It is linear now, with the same result.
+- `serializeMarkdown` was quadratic for long runs of whitespace in bold or italic text and of line breaks in list items.
+- Selectors with several descendant or `~` combinators like `span div div div` took seconds on deeply nested elements, 28 seconds for four `div`s and 200 levels. Matching now remembers which elements failed, so it is fast for any depth.
+- The cache of parsed selectors holds at most 1000 entries. Selectors built from data like `[data-id="…"]` grew it without end.
 
 ## 0.20.0
 

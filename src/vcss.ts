@@ -1,13 +1,21 @@
 import type { VElement } from './vdom'
 import { parse } from 'css-what'
 
-const cache: Record<string, any> = {}
+// A `Map`, not an object: `'constructor' in {}` is true, so
+// `querySelector('constructor')` returned `Object` and threw. Limited in size,
+// selectors built from data like `[data-id="…"]` grew it without end.
+const cache = new Map<string, any>()
+const CACHE_SIZE = 1000
 
 export function parseSelector(selector: string) {
-  if (!(selector in cache)) {
-    cache[selector] = parse(selector)
+  let parsed = cache.get(selector)
+  if (parsed === undefined) {
+    parsed = parse(selector)
+    if (cache.size >= CACHE_SIZE)
+      cache.delete(cache.keys().next().value!)
+    cache.set(selector, parsed)
   }
-  return cache[selector]
+  return parsed
 }
 
 function previousElement(node: VElement): VElement | null {
@@ -22,6 +30,68 @@ function nextElement(node: VElement): VElement | null {
   return next
 }
 
+// Failures known within one `matchSelector` call, as bitmasks over the index
+// in the rule: `matchRule(el, idx)` is false, no ancestor of `el` matches
+// `idx`, no previous sibling of `el` matches `idx`. Without them
+// `span div div div` on deeply nested `div`s tried every combination of
+// ancestors, which took seconds for four `div`s and 200 levels.
+const failedSelf = new Map<object, number>()
+const failedAncestors = new Map<object, number>()
+const failedSiblings = new Map<object, number>()
+
+function clearMemo() {
+  if (failedSelf.size)
+    failedSelf.clear()
+  if (failedAncestors.size)
+    failedAncestors.clear()
+  if (failedSiblings.size)
+    failedSiblings.clear()
+}
+
+/** Bit for `idx` in the maps above, 0 for very long selectors, which are not memoized */
+function bitFor(idx: number): number {
+  return idx < 30
+    ? 1 << idx
+    : 0
+}
+
+function matchRuleMemo(el: VElement, ruleParts: any[], idx: number, bit: number): boolean {
+  if (bit && ((failedSelf.get(el) ?? 0) & bit))
+    return false
+  const result = matchRule(el, ruleParts, idx)
+  if (!result && bit)
+    failedSelf.set(el, (failedSelf.get(el) ?? 0) | bit)
+  return result
+}
+
+/**
+ * Is there a node in the chain after `el` (`parentNode` or `previousSibling`)
+ * that matches `idx`? A node whose chain is known to fail ends the walk, and
+ * all walked nodes are marked as failing, so each node is walked only once.
+ */
+function matchChain(el: VElement, ruleParts: any[], idx: number, failed: Map<object, number>, ancestors: boolean): boolean {
+  const bit = bitFor(idx)
+  const walked: any[] = [el]
+  let node: any = ancestors
+    ? el.parentNode
+    : el.previousSibling
+  while (node) {
+    if (node.nodeType === 1 && matchRuleMemo(node, ruleParts, idx, bit))
+      return true
+    if (bit && ((failed.get(node) ?? 0) & bit))
+      break
+    walked.push(node)
+    node = ancestors
+      ? node.parentNode
+      : node.previousSibling
+  }
+  if (bit) {
+    for (const n of walked)
+      failed.set(n, (failed.get(n) ?? 0) | bit)
+  }
+  return false
+}
+
 // Module level, not inside `matchSelector`: these were created anew on every
 // call, which showed up in profiles of `querySelectorAll`
 function matchRule(el: VElement | null, ruleParts: any[], idx: number): boolean {
@@ -30,42 +100,20 @@ function matchRule(el: VElement | null, ruleParts: any[], idx: number): boolean 
     return false
   const part = ruleParts[idx]
   switch (part.type) {
-    case 'descendant': {
-      let parent = el.parentNode
-      while (parent) {
-        if (parent.nodeType === 1 && matchRule(parent, ruleParts, idx - 1))
-          return true
-        parent = parent.parentNode
-      }
-      return false
-    }
+    case 'descendant':
+      return matchChain(el, ruleParts, idx - 1, failedAncestors, true)
     case 'child': {
       let parent = el.parentNode
       while (parent && parent.nodeType !== 1) parent = parent.parentNode
-      return !!parent && matchRule(parent, ruleParts, idx - 1)
+      return !!parent && matchRuleMemo(parent, ruleParts, idx - 1, bitFor(idx - 1))
     }
-    case 'sibling': {
-      let prev = el.previousSibling
-      while (prev) {
-        if (prev.nodeType === 1 && matchRule(prev, ruleParts, idx - 1))
-          return true
-        prev = prev.previousSibling
-      }
-      return false
-    }
+    case 'sibling':
+    case 'general': // general sibling combinator (~)
+      return matchChain(el, ruleParts, idx - 1, failedSiblings, false)
     case 'adjacent': {
       let prev = el.previousSibling
       while (prev && prev.nodeType !== 1) prev = prev.previousSibling
-      return !!prev && matchRule(prev, ruleParts, idx - 1)
-    }
-    case 'general': { // general sibling combinator (~)
-      let prev = el.previousSibling
-      while (prev) {
-        if (prev.nodeType === 1 && matchRule(prev, ruleParts, idx - 1))
-          return true
-        prev = prev.previousSibling
-      }
-      return false
+      return !!prev && matchRuleMemo(prev, ruleParts, idx - 1, bitFor(idx - 1))
     }
     default: {
       if (!matchSimple(el, part))
@@ -138,8 +186,14 @@ export function matchSelector(
   element: VElement,
 ) {
   for (const rules of parseSelector(selector)) {
-    if (matchRule(element, rules, rules.length - 1))
-      return true
+    try {
+      if (matchRule(element, rules, rules.length - 1))
+        return true
+    }
+    finally {
+      // Also so the maps don't keep nodes alive
+      clearMemo()
+    }
   }
   return false
 }

@@ -1,6 +1,7 @@
 import { escapeHTML } from './encoding'
 import { hFactory } from './h'
-import { htmlVDOM } from './html'
+import { htmlVDOM, xmlVDOM } from './html'
+import { parseStyleDeclarations } from './style'
 import { matchSelector } from './vcss'
 
 // For node debugging
@@ -502,8 +503,25 @@ export class VTextNode extends VNode {
     return this._text || ''
   }
 
+  // Like in the DOM, `null` becomes an empty string
+  set nodeValue(text: string | null) {
+    this._text = String(text ?? '')
+  }
+
   get textContent(): string | null {
     return this.nodeValue
+  }
+
+  set textContent(text: string | null) {
+    this.nodeValue = text
+  }
+
+  get data(): string {
+    return this._text || ''
+  }
+
+  set data(text: string) {
+    this.nodeValue = text
   }
 
   constructor(text = '') {
@@ -585,6 +603,7 @@ interface Attr {
 export type VElementStyle = Record<string, string> & {
   get length(): number
   getPropertyValue: (name: string) => any
+  cssText: string
 }
 
 export class VElement extends VNodeQuery {
@@ -681,17 +700,8 @@ export class VElement extends VNodeQuery {
 
       const styleString = this.getAttribute('style')
       if (styleString) {
-        let m: string[] | null
-
-        // Thanks to https://github.com/holtwick/zeed-dom/issues/12#issuecomment-2148998665
-        const re = /\s*([\w-]+)\s*:\s*((url\(.*?\)[^;]*|[^;]+))/gi
-
-        // eslint-disable-next-line no-cond-assign
-        while ((m = re.exec(styleString))) {
-          const name = m[1]
-          const value = m[2]?.trim()
-          if (!name || value == null)
-            continue
+        // `url(…)` may contain `;`, see https://github.com/holtwick/zeed-dom/issues/12#issuecomment-2148998665
+        for (const [name, value] of parseStyleDeclarations(styleString)) {
           ++count
           styles[name] = value
           styles[toCamelCase(name)] = value
@@ -708,6 +718,12 @@ export class VElement extends VNodeQuery {
         ...DEFAULTS[this.tagName.toLowerCase()],
         ...styles,
       }
+      // ProseMirror's DOMSerializer sets inline styles this way. Not
+      // enumerable, so it doesn't show up next to the style properties.
+      Object.defineProperty(this._styles, 'cssText', {
+        get: () => this.getAttribute('style') ?? '',
+        set: (value: string) => this.setAttribute('style', String(value ?? '')),
+      })
     }
     return this._styles!
   }
@@ -817,9 +833,14 @@ export class VElement extends VNodeQuery {
   }
 
   get classList() {
-    const classNames = String(this.className ?? '').trim().split(/\s+/g) || []
-    // log('classList', classNames)
+    const classNames = String(this.className ?? '').trim().split(/\s+/g).filter(Boolean)
     return {
+      get length() {
+        return classNames.length
+      },
+      [Symbol.iterator]() {
+        return classNames[Symbol.iterator]()
+      },
       contains(s: any) {
         return classNames.includes(s)
       },
@@ -841,7 +862,14 @@ export class VElement extends VNodeQuery {
 
   //
 
-  render(h = htmlVDOM) {
+  render(h: any = htmlVDOM) {
+    // `html()` and `xml()` take their children through hArgumentParser, which
+    // escapes text, so the already rendered children would be escaped again.
+    // Use the markup variants that insert a children string as it is.
+    if (h.xml === true)
+      h = xmlVDOM
+    else if (h.html === true)
+      h = htmlVDOM
     // Iterative, so deeply nested elements don't overflow the call stack.
     // Each frame collects the rendered children of one element.
     interface Frame { element: VElement, index: number, parts: any[] }

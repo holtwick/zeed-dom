@@ -53,12 +53,12 @@ describe('serialize', () => {
 
       This is a **sample**. > And a link [example](example).
 
-      Some lines 
-       line 
-       line 
+      Some lines
+      line
+      line
 
-      - One
-      - Two
+      1. One
+      2. Two
 
       \`\`\`
 
@@ -95,11 +95,7 @@ describe('serialize', () => {
     // span (should just pass through)
     expect(serializeMarkdown(h('span', null, 'inline'))).toBe('inline\n')
     // table
-    expect(serializeMarkdown(h('table', null,
-      h('caption', null, 'Title'),
-      h('tr', null, h('th', null, 'A'), h('th', null, 'B')),
-      h('tr', null, h('td', null, '1'), h('td', null, '2')),
-    ))).toContain('| A | B |')
+    expect(serializeMarkdown(h('table', null, h('caption', null, 'Title'), h('tr', null, h('th', null, 'A'), h('th', null, 'B')), h('tr', null, h('td', null, '1'), h('td', null, '2'))))).toContain('| A | B |')
     expect(serializeMarkdown(h('caption', null, 'Cap'))).toContain('Cap')
   })
 })

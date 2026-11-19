@@ -171,4 +171,35 @@ describe('vdom api', () => {
     // Collected all 50,000 elements per call before
     expect(performance.now() - started).toBeLessThan(200)
   })
+
+  it('should set inline styles through style.cssText', () => {
+    const el = new VElement('span')
+    expect(el.style.cssText).toBe('')
+    el.style.cssText = 'color: red; text-align: center'
+    expect(el.getAttribute('style')).toBe('color: red; text-align: center')
+    expect(el.style.textAlign).toBe('center')
+    expect(el.outerHTML).toBe('<span style="color: red; text-align: center"></span>')
+  })
+
+  it('should iterate classList', () => {
+    const el = new VElement('code')
+    expect([...el.classList]).toEqual([])
+    expect(el.classList.length).toBe(0)
+    el.className = ' language-ts  hljs '
+    expect([...el.classList]).toEqual(['language-ts', 'hljs'])
+    expect(el.classList.length).toBe(2)
+  })
+
+  it('should set the text of a text node like the DOM', () => {
+    const frag = parseHTML('<p>a <b>b</b></p>')
+    const text = frag.querySelector('p')!.firstChild as VTextNode
+    text.nodeValue = 'x < y '
+    expect(frag.render()).toBe('<p>x &lt; y <b>b</b></p>')
+    text.textContent = 'z'
+    expect(text.data).toBe('z')
+    text.data = 'w'
+    expect(text.nodeValue).toBe('w')
+    text.nodeValue = null
+    expect(frag.render()).toBe('<p><b>b</b></p>')
+  })
 })

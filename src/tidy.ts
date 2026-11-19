@@ -4,6 +4,29 @@ import { VNode, VTextNode } from './vdom'
 export const SELECTOR_BLOCK_ELEMENTS = 'meta,link,script,p,h1,h2,h3,h4,h5,h6,blockquote,div,ul,ol,li,article,section,footer,head,body,title,nav,hr,form'
 export const TAGS_KEEP_CONTENT = ['PRE', 'CODE', 'SCRIPT', 'STYLE', 'TT']
 
+/**
+ * Tags whose whole subtree is dropped by the Markdown and safe HTML
+ * serializers: active content, metadata and embedded foreign documents.
+ * `form` is deliberately missing, mail and newsletter HTML often wraps the
+ * entire body in one and its content has to survive.
+ */
+export const SERIALIZE_DROP_TAGS: ReadonlySet<string> = new Set([
+  'script',
+  'style',
+  'head',
+  'title',
+  'iframe',
+  'object',
+  'embed',
+  'noscript',
+  'template',
+  'svg',
+  'math',
+  'link',
+  'meta',
+  'base',
+])
+
 function level(element: VNode): string {
   let indent = ''
   while (element.parentNode) {

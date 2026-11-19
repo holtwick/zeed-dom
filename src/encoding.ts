@@ -25,3 +25,19 @@ export function escapeHTML(text: string) {
 // })
 
 export const unescapeHTML = (html: string) => decode(html)
+
+/**
+ * URLs that would run script when clicked or loaded. A blocklist on purpose:
+ * everything else (relative paths, `cid:` images in mails, custom app schemes)
+ * passes as before. Control characters and whitespace are ignored by browsers
+ * inside the scheme (`java\tscript:`), so they are ignored here as well.
+ */
+export function isUnsafeUrl(url: string, allowDataImage = false): boolean {
+  // eslint-disable-next-line no-control-regex
+  const scheme = url.replace(/[\x00-\x20\x7F]/g, '').match(/^([a-z][a-z0-9+.-]*):/i)?.[1]?.toLowerCase()
+  if (scheme === 'javascript' || scheme === 'vbscript')
+    return true
+  if (scheme === 'data')
+    return !(allowDataImage && /^\s*data:image\//i.test(url))
+  return false
+}
