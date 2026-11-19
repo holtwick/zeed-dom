@@ -70,6 +70,8 @@
     "inspect:parser": "tsx --inspect-brk test/htmlparser-bench.ts",
     "start": "npm run watch",
     "test": "vitest src --coverage --globals --run",
+    "test:browser": "vitest --config vitest.browser.config.ts --run",
+    "test:bun": "bunx --bun vitest src --globals --run",
     "watch": "npm run build:tsdown -- --watch"
   },
   "dependencies": {
@@ -80,9 +82,11 @@
     "@antfu/eslint-config": "^10.0.0",
     "@antfu/ni": "^30.6.0",
     "@types/node": "^26.6.6",
+    "@vitest/browser-playwright": "^5.1.0",
     "@vitest/coverage-v8": "^5.1.0",
     "c8": "^12.0.0",
     "eslint": "^10.15.0",
+    "playwright": "^1.65.1",
     "tsdown": "^0.23.7",
     "tsx": "^4.23.15",
     "typedoc": "^0.28.20",

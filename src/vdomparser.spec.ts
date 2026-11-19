@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer'
 import { VElement, VNode } from './vdom'
 import { parseHTML, vdom } from './vdomparser'
 
@@ -52,8 +51,13 @@ describe('vDOM Parser', () => {
   it('vdom should handle VNode, Buffer, string, and fallback', () => {
     const node = new VNode()
     expect(vdom(node)).toBe(node)
-    const buf = Buffer.from('<div>buf</div>', 'utf-8')
-    expect(vdom(buf).render()).toBe('<div>buf</div>')
+    // Buffer only exists in Node.js and Bun, not in browsers
+    // eslint-disable-next-line node/prefer-global/buffer
+    const Buffer = (globalThis as any).Buffer
+    if (Buffer) {
+      const buf = Buffer.from('<div>buf</div>', 'utf-8')
+      expect(vdom(buf).render()).toBe('<div>buf</div>')
+    }
     expect(vdom('<div>str</div>').render()).toBe('<div>str</div>')
     expect(vdom(null).constructor.name).toBe('VDocumentFragment')
   })
