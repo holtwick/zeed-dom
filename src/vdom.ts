@@ -107,6 +107,22 @@ export class VNode {
   // The mutations below don't re-index the following siblings, which would
   // cost O(n) per call. `_indexInParent` repairs stale hints when needed.
 
+  /**
+   * True, and a warning, if `node` is this node or one of its ancestors:
+   * inserting it here would make a node its own ancestor, and walks over the
+   * tree would never end. The DOM throws a HierarchyRequestError then.
+   */
+  _rejectsChild(node: unknown, parent: VNode = this): boolean {
+    if (!(node instanceof VNode))
+      return false
+    // A node without children can only be the parent itself, cheap for parsing
+    if (node === parent || (node._childNodes.length > 0 && node.contains(parent))) {
+      console.warn('Cannot insert a node into itself or one of its descendants', node)
+      return true
+    }
+    return false
+  }
+
   /** Detach all children, so they don't point to this node anymore */
   _detachChildren() {
     for (const child of this._childNodes) {
@@ -124,7 +140,7 @@ export class VNode {
   insertBefore(newNode: VNode, node?: VNode | null) {
     if (node === null)
       return this.appendChild(newNode)
-    if (newNode === node)
+    if (newNode === node || this._rejectsChild(newNode))
       return
     const nodes = newNode instanceof VDocumentFragment
       ? [...newNode._childNodes]
@@ -143,12 +159,8 @@ export class VNode {
   }
 
   appendChild(node: VNode | VNode[] | string | string[] | null | undefined) {
-    if (node == null)
+    if (node == null || this._rejectsChild(node))
       return
-    if (node === this) {
-      console.warn('Cannot appendChild to self')
-      return
-    }
     // log('appendChild', node, this)
 
     if (node instanceof VDocument)
@@ -215,6 +227,9 @@ export class VNode {
   replaceChildren(...nodes: any[]) {
     // Collect in a fragment first like the DOM: removes the nodes from their
     // parents, including this one, and a node given twice is added once
+    // Check first, moving the nodes into the fragment would change the tree
+    if (nodes.some(n => this._rejectsChild(n)))
+      return
     const fragment = new VDocumentFragment()
     for (const n of nodes) {
       fragment.appendChild(typeof n === 'string'
@@ -228,7 +243,7 @@ export class VNode {
   /** Replace node itself with nodes */
   replaceWith(...nodes: any[]) {
     const parent = this._parentNode
-    if (!parent || parent._childIndex(this) < 0)
+    if (!parent || parent._childIndex(this) < 0 || nodes.some(n => this._rejectsChild(n, parent)))
       return
     // Like the DOM: the new nodes go where this node is, or if this node is
     // one of them, before the first following sibling that is not

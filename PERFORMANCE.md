@@ -48,7 +48,7 @@ The pages are the HTML files in [`files/`](files/). The ProseMirror document use
 
 Servers often parse HTML or render documents that come from users. The work is synchronous, so a slow input blocks the event loop. zeed-dom keeps the following in linear time or bounded:
 
-- **Parsing** is linear in the length of the input, whatever it contains. The tokenizer scans once from left to right and does not use backtracking regular expressions. Unclosed tags, comments, quotes and stray end tags cannot make it slow.
+- **Parsing** is linear in the length of the input, whatever it contains. The tokenizer scans once from left to right and does not use backtracking regular expressions. Unclosed tags, comments, quotes, `<script>` and `<style>` elements and stray end tags cannot make it slow.
 - **Nesting depth** of parsed elements is limited to 512 (`MAX_PARSE_DEPTH`), the same limit as Chrome's HTML parser. Deeper elements become siblings at that depth, so deeply nested input cannot overflow the call stack.
 - **Tree walks** (`render`, `outerHTML`, `textContent`, `querySelector`, `querySelectorAll`, `cloneNode`, `contains`) are iterative and work for trees of any depth built in code.
 - **`appendChild`, `nextSibling` and `previousSibling`** are O(1). Each node keeps its position in the parent as a hint, which is repaired on demand after other mutations.
@@ -84,6 +84,8 @@ Before these fixes, several of the inputs below took seconds to minutes in zeed-
 ## Limits
 
 - **Inserting or removing at the front** of a parent with very many children (`insertBefore(x, parent.firstChild)`, `removeChild(parent.firstChild)`) is O(n) per call, because children are stored in an array. It is fast in practice because only the array items move, but a linked list would be needed to make it O(1).
+- **Mutating while walking the siblings** of a parent with very many children, like removing some children in a `nextSibling` loop, is O(n) per mutation: the next sibling lookup after a mutation re-indexes all siblings once. `tidyDOM` does this too. It only matters for thousands of siblings; ProseMirror and tiptap only append or only read and are not affected.
+- **Inserting a node into itself or one of its descendants** is ignored with a warning, the DOM throws a `HierarchyRequestError` instead. The check walks up from the parent, so `appendChild` and `insertBefore` of a node with children are O(depth).
 - **The serializers** `serializeMarkdown`, `serializePlaintext` and `serializeSafeHTML` are recursive. With parsed input they are safe thanks to the depth limit. Trees nested thousands of levels deep that are built in code can still overflow the call stack there.
 - **CSS combinators** like `a b` and `a ~ b` walk the ancestors or previous siblings for each candidate element, as in other simple selector engines.
 

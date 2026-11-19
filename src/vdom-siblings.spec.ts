@@ -105,6 +105,34 @@ describe('sibling navigation and child mutations', () => {
     expect(c.parentNode).toBeNull()
   })
 
+  it('refuses to insert a node into itself or its descendants, like the DOM', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warn.mockRestore())
+    const root = new VElement('div')
+    const a = el('a')
+    const b = el('b')
+    root.appendChild(a)
+    a.appendChild(b)
+    const html = root.render()
+
+    b.replaceWith(a) // made `a` its own parent, then render() never ended
+    a.appendChild(a)
+    b.appendChild(a)
+    b.insertBefore(root, b.firstChild)
+    b.insertBefore(a, null)
+    b.replaceChildren(a)
+    a.replaceChildren(a) // removed `a` from `root` before
+    expect(root.render()).toBe(html)
+    expect(a.parentNode).toBe(root)
+    expect(b.parentNode).toBe(a)
+    expect(root.contains(b)).toBe(true)
+    expect(warn).toHaveBeenCalledTimes(7)
+
+    // Moving within the own subtree is fine
+    b.replaceWith(el('x'), b)
+    expect(names(a)).toEqual(['a', 'x', 'b'])
+  })
+
   it('removes and inserts at the front without re-indexing all siblings', () => {
     // Still O(n) per call for moving the array items, but that is fast
     const count = 30_000

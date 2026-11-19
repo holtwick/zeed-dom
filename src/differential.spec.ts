@@ -317,13 +317,23 @@ function checkLinks(nodes: any[]) {
 
 describe('differential: DOM mutations', () => {
   it('gives the same trees as a real DOM after random mutations', () => {
+    // Rejected insertions into a node's own subtree warn
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warn.mockRestore())
     fc.assert(fc.property(fc.array(opArb, { maxLength: 12 }), (ops) => {
       const refNodes = createNodes(ref)
       const zeedNodes = createNodes(createHTMLDocument())
       for (const op of ops) {
         // Only what the DOM accepts, zeed-dom is lenient with invalid calls
         // like inserting a node into itself
-        if (isHierarchyError(refNodes, op) || !applyOp(refNodes, op))
+        if (isHierarchyError(refNodes, op)) {
+          // The DOM throws, zeed-dom warns and must leave the tree unchanged
+          const before = zeedNodes.map(structure)
+          applyOp(zeedNodes, op)
+          expect(zeedNodes.map(structure)).toEqual(before)
+          continue
+        }
+        if (!applyOp(refNodes, op))
           continue
         applyOp(zeedNodes, op)
       }
