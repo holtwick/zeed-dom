@@ -60,6 +60,22 @@ jobs:
         with:
           node-version: 24.x
       - run: npm install
-      - run: npx playwright install --with-deps chromium firefox webkit
+
+      # The browser binaries are cached per Playwright version, there is no
+      # lockfile so the version is read from what npm installed
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium firefox webkit
+      # The system libraries are not part of the cache
+      - if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium firefox webkit
+
       # The whole suite in Chromium, Firefox and WebKit
       - run: npm run test:browser

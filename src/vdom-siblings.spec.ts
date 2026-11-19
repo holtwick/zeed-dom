@@ -147,8 +147,9 @@ describe('sibling navigation and child mutations', () => {
     expect(parent.firstChild.textContent).toBe(String(count - 1))
     expect(parent.firstChild.nextSibling.textContent).toBe(String(count - 2))
     expect(parent.lastChild.previousSibling.textContent).toBe('1')
-    // Re-parenting all children per call took seconds here
-    expect(performance.now() - started).toBeLessThan(1000)
+    // Re-parenting all children per call took seconds here (~7s locally with
+    // coverage, vs. ~0.3s now and ~1.5s on CI runners)
+    expect(performance.now() - started).toBeLessThan(3000)
   })
 
   it('builds, walks and parses large parents in linear time', () => {
