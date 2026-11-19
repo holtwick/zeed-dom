@@ -62,6 +62,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "perf": "tsx test/files-bench.ts",
+    "perf:compare": "tsx test/compare-bench.ts",
     "perf:files": "tsx test/files-bench.ts",
     "perf:parser": "tsx test/htmlparser-bench.ts",
     "prepublishOnly": "npm test && npm run build",
