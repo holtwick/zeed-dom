@@ -71,7 +71,7 @@
     "start": "npm run watch",
     "test": "vitest src --coverage --globals --run",
     "test:browser": "vitest --config vitest.browser.config.ts --run",
-    "test:bun": "bunx --bun vitest src --globals --run",
+    "test:bun": "bunx --bun vitest src --globals --run --pool=threads",
     "watch": "npm run build:tsdown -- --watch"
   },
   "dependencies": {
