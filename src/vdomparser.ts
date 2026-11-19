@@ -50,11 +50,26 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
   const stackNames: string[] = ['']
   const openCount = new Map<string, number>()
 
+  // `stack[k]` is at depth k. Elements deeper than `MAX_PARSE_DEPTH` become
+  // children of the element one level above, i.e. siblings at the limit.
+  const elementParent = () => stack[Math.min(stack.length - 1, MAX_PARSE_DEPTH - 1)]
+
+  // Text goes into the innermost open element. Beyond the limit that element
+  // may have later siblings by now (`<b>…</b>` closed after it), then the
+  // text is appended after them, so the document order stays the same.
+  const textParent = () => {
+    const top = stack[stack.length - 1]!
+    if (stack.length - 1 < MAX_PARSE_DEPTH)
+      return top
+    const container = stack[MAX_PARSE_DEPTH - 1]!
+    return container.lastChild === top
+      ? top
+      : container
+  }
+
   const parse = createHtmlParser({
     startElement(tagName: string, attrs: Record<string, string>, isSelfClosing: boolean) {
-      const lowerTagName = tagName.length === 1
-        ? tagName
-        : tagName.toLowerCase()
+      const lowerTagName = tagName.toLowerCase()
       if (lowerTagName === '!doctype') {
         frag.docType = new VDocType()
         return
@@ -64,21 +79,18 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
           attrs[name] = unescapeHTML(attrs[name])
         }
       }
-      const parentNode = stack[Math.min(stack.length, MAX_PARSE_DEPTH) - 1]
+      const parentNode = elementParent()
       if (parentNode) {
         const element = document.createElement(tagName, attrs)
         parentNode.appendChild(element)
         if (!SELF_CLOSING_TAGS.includes(lowerTagName) && !isSelfClosing) {
-          const name = tagName.toLowerCase()
           stack.push(element)
-          stackNames.push(name)
-          openCount.set(name, (openCount.get(name) ?? 0) + 1)
+          stackNames.push(lowerTagName)
+          openCount.set(lowerTagName, (openCount.get(lowerTagName) ?? 0) + 1)
         }
       }
     },
     endElement(tagName: string) {
-      // Always lowercase, no shortcut for single letters: `</B>` has to match
-      // the open `b` element below
       const lowerTagName = tagName.toLowerCase()
       // Void elements are never pushed onto the stack (see startElement). A stray
       // end tag for one - some real-world (mail) HTML emits `</meta>`, `</img>`,
@@ -100,7 +112,7 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
     },
     characters(text: string) {
       text = unescapeHTML(text)
-      const parentNode = stack[stack.length - 1]
+      const parentNode = textParent()
       if (parentNode?.lastChild?.nodeType === VNode.TEXT_NODE) {
         parentNode.lastChild._text += text
       }

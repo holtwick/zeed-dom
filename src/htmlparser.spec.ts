@@ -194,12 +194,19 @@ if (x<1)
     expect(attrs('<a href=>')).toEqual({ href: true })
     expect(attrs('<a path=a/b/c>')).toEqual({ path: 'a/b/c' })
     expect(attrs('<a\nb\n=\n"1"\n>')).toEqual({ b: '1' })
-    expect(parseHTML('<img src=x/><br/><br /><hr b/><p>t</p>').render()).toBe('<img src="x"><br><br><hr b><p>t</p>')
+    expect(parseHTML('<img src=x/><br/><br /><hr b/><p>t</p>').render()).toBe('<img src="x/"><br><br><hr b><p>t</p>')
+    // Like in browsers, the slash belongs to an unquoted value
+    expect(parseHTML('<a href=http://x.com/>link</a>after').render()).toBe('<a href="http://x.com/">link</a>after')
     expect(parseHTML('x<!-->a<!--->b<!---->c').render()).toBe('xabc')
     expect(parseHTML('a<3 b').render()).toBe('a&lt;3 b')
     expect(parseHTML('<b><i>x</B>y</i></b>z').render()).toBe('<b><i>x</i></b>yz')
     expect(parseHTML('a<!-- b<!-- c').render()).toBe('a&lt;!-- b&lt;!-- c')
-    expect(parseHTML('<p>x<a href="y</p>').render()).toBe('<p>x&lt;a href=&quot;y&lt;/p&gt;</p>')
+    // A quote that is never closed ends at the next `>`
+    expect(parseHTML('<p>x<a href="y</p>').render()).toBe('<p>x<a href="y&lt;/p"></a></p>')
+    expect(parseHTML('<p title="x>a</p><p>b</p>').render()).toBe('<p title="x">a</p><p>b</p>')
+    expect(parseHTML('<p title=\'x>a</p><p>b</p>').render()).toBe('<p title="x">a</p><p>b</p>')
+    // Without any `>` the rest is text
+    expect(parseHTML('a<p title="x').render()).toBe('a&lt;p title=&quot;x')
   })
 
   it('should parse pathological input in linear time', () => {
@@ -211,6 +218,10 @@ if (x<1)
       '< x\n<b>'.repeat(20_000),
       'x<!-- '.repeat(20_000),
       `${'<b>'.repeat(20_000)}${'</x>'.repeat(20_000)}`,
+      '<script>'.repeat(40_000),
+      '<style>'.repeat(40_000),
+      '<a title="x>'.repeat(20_000),
+      '<a title=\'x>'.repeat(20_000),
     ]
     for (const html of cases) {
       const started = performance.now()

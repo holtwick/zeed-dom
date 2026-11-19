@@ -1,7 +1,7 @@
 export interface HtmlParserScanner {
   characters: (text: string) => void
   comment: (text: string) => void
-  startElement: (tagName: string, attrs: Record<string, any>, isSelfColse: boolean, raw: string) => void
+  startElement: (tagName: string, attrs: Record<string, any>, isSelfColse: boolean) => void
   endElement: (tagName: string) => void
 }
 
@@ -53,6 +53,11 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
     // without searching to the end again, which would be quadratic
     let noMoreGt = false
     let noMoreCommentEnd = false
+    // The same for closing quotes and the ends of raw text elements
+    let noMoreDoubleQuote = false
+    let noMoreSingleQuote = false
+    let noMoreScriptEnd = false
+    let noMoreStyleEnd = false
 
     while (pos < length) {
       // Text up to the next `<`
@@ -193,13 +198,27 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
 
         const q = html.charCodeAt(j)
         if (q === CH_DQUOTE || q === CH_SQUOTE) {
-          const close = html.indexOf(q === CH_DQUOTE
-            ? '"'
-            : '\'', j + 1)
-          if (close < 0)
-            return -1
-          attrs[name] = html.slice(j + 1, close)
-          i = close + 1
+          const isDouble = q === CH_DQUOTE
+          const close = (isDouble ? noMoreDoubleQuote : noMoreSingleQuote)
+            ? -1
+            : html.indexOf(isDouble ? '"' : '\'', j + 1)
+          if (close >= 0) {
+            attrs[name] = html.slice(j + 1, close)
+            i = close + 1
+          }
+          else {
+            if (isDouble)
+              noMoreDoubleQuote = true
+            else
+              noMoreSingleQuote = true
+            // The quote is never closed: the value ends at the next `>`, so
+            // `<p title="x>a</p>` keeps the rest of the document as markup
+            const gt = html.indexOf('>', j + 1)
+            if (gt < 0)
+              return -1
+            attrs[name] = html.slice(j + 1, gt)
+            i = gt
+          }
         }
         else if (q === CH_GT) {
           // `<a b=>`
@@ -214,31 +233,22 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
               break
             j++
           }
-          let value = html.slice(valueStart, j)
-          // `<img src=x/>` is self closing with `src="x"`, as before
-          if (html.charCodeAt(j) === CH_GT && value.length > 1 && value.endsWith('/')) {
-            value = value.slice(0, -1)
-            isSelfClose = true
-          }
-          attrs[name] = value
+          // Like in browsers a trailing slash belongs to the value:
+          // `<a href=http://x.com/>` keeps the URL and is not self closing
+          attrs[name] = html.slice(valueStart, j)
           i = j
-          if (isSelfClose) {
-            i++
-            break
-          }
         }
       }
 
-      scanner.startElement(tagName, attrs, isSelfClose, html.slice(start, i))
+      scanner.startElement(tagName, attrs, isSelfClose)
 
       // Raw text elements
       const lowerTagName = tagName.toLowerCase()
-      const endRe = lowerTagName === 'script'
-        ? scriptEndRe
-        : lowerTagName === 'style'
-          ? styleEndRe
-          : null
-      if (endRe) {
+      const isScript = lowerTagName === 'script'
+      if (isScript
+        ? !noMoreScriptEnd
+        : lowerTagName === 'style' && !noMoreStyleEnd) {
+        const endRe = isScript ? scriptEndRe : styleEndRe
         endRe.lastIndex = i
         if (endRe.test(html)) {
           const textEnd = endRe.lastIndex - (lowerTagName.length + 2)
@@ -246,6 +256,10 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
             scanner.characters(html.slice(i, textEnd))
           return textEnd
         }
+        if (isScript)
+          noMoreScriptEnd = true
+        else
+          noMoreStyleEnd = true
       }
       return i
     }

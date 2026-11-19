@@ -60,6 +60,12 @@ describe('deeply nested trees', () => {
     expect(serializeSafeHTML(doc)).toContain('<p>after</p>')
   })
 
+  it('keeps the document order beyond the depth limit', () => {
+    const doc = parseHTML(`${'<div>'.repeat(MAX_PARSE_DEPTH + 1)}<b>bold</b>after<i>x</i>end`)
+    expect(doc.textContent).toBe('boldafterxend')
+    expect(depth(doc)).toBe(MAX_PARSE_DEPTH)
+  })
+
   it('keeps nesting up to the limit', () => {
     const doc = parseHTML(`${'<i>'.repeat(MAX_PARSE_DEPTH)}x`)
     expect(depth(doc)).toBe(MAX_PARSE_DEPTH)
