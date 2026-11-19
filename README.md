@@ -71,7 +71,15 @@ Take any HTML node or document and serialize it to another format:
   - `wrap`: column to soft-wrap long lines at (e.g. `80`); `0` or omitted disables wrapping. Code fences and table rows are not wrapped, and list-item continuations keep the proper indent.
   - `linkStyle`: how `<a href="…">…</a>` and `<img src="…" alt="…">` are rendered. `'inline'` (default) → `[text](url)` / `![alt](src)`, `'autolink'` → `text <url>` / `alt <src>` (or just `<url>` / `<src>` when the label is empty or equals the URL).
   - `inlineStyles`: when `false`, strips inline text-styling tags (`b`, `strong`, `i`, `em`, `u`, `mark`, `tt`, `code`, `strike`, `del`, `ins`, `sub`, `sup`) and emits their content as plain text. Default `true`.
-- `serializeSafeHTML(node)` or `safeHTML(htmlString)`: Allow only basic tags and attributes
+  - `imageStyle`: `'full'` (default) → `![alt](src)`, `'alt'` → only `[alt]`, `'none'` drops images.
+  - `headingAnchors`: when `true`, the `id` of a heading is appended as ` {#id}` (Pandoc / kramdown). Default `false`.
+- `serializeSafeHTML(node, options?)` or `safeHTML(htmlString, options?)`: Untrusted HTML reduced to allowed tags and attributes. Scripts, styles, embedded documents (`iframe`, `object`, `svg`, …) and event handlers never pass, links get `rel="noopener noreferrer" target="_blank"`. Options:
+  - `allowedTags`: tags to keep, others are unwrapped and their content stays. Default `DEFAULT_ALLOWED_TAGS`: block, inline and table elements, `a`, `img`, `br`.
+  - `allowedAttrs`: attributes to keep per tag, the key `'*'` applies to every tag. Default `DEFAULT_ALLOWED_ATTRS`: `href`, `title` on links, `src`, `alt`, `title`, `width`, `height` on images, `colspan`, `rowspan` (and `scope`) on table cells.
+  - `allowedUrlSchemes`: schemes allowed in `href` and `src`, like `['https:', 'mailto:']` or `DEFAULT_ALLOWED_URL_SCHEMES`. Default: everything except `javascript:`, `vbscript:` and `data:`, so `cid:` images in mails keep working.
+  - `allowRelativeUrls`: URLs without scheme. Default `true`.
+  - `allowDataImages`: `data:image/…` as `src` of an image. Default `true`.
+  - `linkRel`, `linkTarget`: added to every link, `''` keeps the allowed ones of the source. Defaults `'noopener noreferrer'` and `'_blank'`.
 
 ### Virtual DOM Example (no JSX)
 

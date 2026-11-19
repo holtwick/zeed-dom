@@ -503,8 +503,25 @@ export class VTextNode extends VNode {
     return this._text || ''
   }
 
+  // Like in the DOM, `null` becomes an empty string
+  set nodeValue(text: string | null) {
+    this._text = String(text ?? '')
+  }
+
   get textContent(): string | null {
     return this.nodeValue
+  }
+
+  set textContent(text: string | null) {
+    this.nodeValue = text
+  }
+
+  get data(): string {
+    return this._text || ''
+  }
+
+  set data(text: string) {
+    this.nodeValue = text
   }
 
   constructor(text = '') {

@@ -63,7 +63,7 @@ describe('security', () => {
 
   describe('serializers', () => {
     it('does not look up rules on the prototype', () => {
-      expect(safeHTML('<constructor><img src=x><script>alert(1)</script></constructor>')).toBe('<img src="x" alt="">')
+      expect(safeHTML('<constructor><img src=x><script>alert(1)</script></constructor>')).toBe('<img src="x">')
       expect(serializeMarkdown(parseHTML('<constructor><b>x</b></constructor>'))).toBe('**x**\n')
       expect(parseHTML('<p>x</p>').querySelector('constructor')).toBeUndefined()
       expect(parseHTML('<p>x</p>').querySelectorAll('toString')).toEqual([])

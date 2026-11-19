@@ -189,4 +189,17 @@ describe('vdom api', () => {
     expect([...el.classList]).toEqual(['language-ts', 'hljs'])
     expect(el.classList.length).toBe(2)
   })
+
+  it('should set the text of a text node like the DOM', () => {
+    const frag = parseHTML('<p>a <b>b</b></p>')
+    const text = frag.querySelector('p')!.firstChild as VTextNode
+    text.nodeValue = 'x < y '
+    expect(frag.render()).toBe('<p>x &lt; y <b>b</b></p>')
+    text.textContent = 'z'
+    expect(text.data).toBe('z')
+    text.data = 'w'
+    expect(text.nodeValue).toBe('w')
+    text.nodeValue = null
+    expect(frag.render()).toBe('<p><b>b</b></p>')
+  })
 })

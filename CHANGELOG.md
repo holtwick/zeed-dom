@@ -33,6 +33,37 @@ Markdown passes HTML through, so the output of `serializeMarkdown` could contain
 - Links to `javascript:` and `vbscript:` keep only their text, images with such a `src` or with `data:` other than images are dropped, like in `safeHTML`. Real-world pages use `javascript:void(0)` a lot, these links are now plain text.
 - Spaces, `(`, `)`, `<` and `>` in link and image targets are percent-encoded, leading and trailing spaces removed. Before, `href="x)<img …>"` ended the link and left the rest as raw HTML. `[` and `]` in the alt text of images are escaped.
 
+### New: options for `safeHTML`
+
+`safeHTML(html, options)` and `serializeSafeHTML(node, options)` take `allowedTags`, `allowedAttrs`, `allowedUrlSchemes`, `allowRelativeUrls`, `allowDataImages`, `linkRel` and `linkTarget`, see the README. The defaults are exported as `DEFAULT_ALLOWED_TAGS`, `DEFAULT_ALLOWED_ATTRS` and `DEFAULT_ALLOWED_URL_SCHEMES`, the tags dropped with their content as `SERIALIZE_DROP_TAGS`, the option types as `SafeHTMLOptions` and `SerializeMarkdownOptions`.
+
+### Changed: `safeHTML` keeps more of the text and less of the page
+
+Without options the output changes for almost every page, for these reasons:
+
+- Inline elements (`b`, `strong`, `em`, `code`, `span`, …) and tables are kept, they were unwrapped before. Links keep `title`, images `title`, `width` and `height`, table cells `colspan` and `rowspan`.
+- An image without `alt` gets none, it got `alt=""` before, which marks an image as decorative.
+- `iframe`, `object`, `embed`, `noscript`, `template`, `svg` and `math` are dropped with their content, like `script` and `style` before. Their text used to end up in the output.
+- A link without `href` or with an empty one keeps only its text, it became `<a href="">` before. `<form>` is unwrapped, its content stays.
+- `<hr>` is written without the invalid end tag `</hr>`.
+- `href` and `src` are written without the control characters and surrounding whitespace that browsers ignore as well.
+
+### Changed: `serializeMarkdown` output closer to the rendered page
+
+- Ordered lists are numbered and start at the `start` attribute, they were bullet lists before. Nested lists are indented to the content of their item, so CommonMark sees them as nested also below `1.`.
+- Whitespace collapses like in a browser: line breaks and indentation of the source no longer end up in the Markdown, and 4 spaces of indentation no longer turn a paragraph into a code block. A no-break space is kept.
+- Paragraphs and `div`s inside a list item stay in the item.
+- Every line of a block quote is quoted, not only the first.
+- Link labels and headings are plain text, an image inside a link is replaced by its alt text, so `[![Logo](logo.png)](/)` becomes `[Logo](/)`. `[` and `]` in link labels are escaped.
+- Inline code keeps its spaces when lines are wrapped, and markup in it is escaped like in other text.
+- `iframe`, `object`, `embed`, `noscript`, `svg` and `math` are dropped with their content, like in `safeHTML`.
+- A line with ```` ``` ```` inside a longer code fence no longer ends the code block when wrapping.
+- New options `imageStyle` (`'full'`, `'alt'`, `'none'`) and `headingAnchors`.
+
+### New: text nodes can be changed
+
+Setting `nodeValue`, `textContent` or the new `data` of a text node changes its text, like in the DOM. Before, there were only getters and the text could only be changed through the internal `_text`.
+
 ### Performance and robustness
 
 - `element.style` of a `style` attribute of some 10 KB without a colon took about a second because of a quadratic regular expression. It is linear now, with the same result.
