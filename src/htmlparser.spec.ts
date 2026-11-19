@@ -173,4 +173,46 @@ if (x<1)
       expect(text).toEqual(t)
     }
   })
+
+  it('should not take a later line for a tag that does not parse', () => {
+    // The regular expressions had the `m` flag, so `^` matched at any line
+    expect(parseHTML('< x\n<b>y</b>').render()).toBe('&lt; x\n<b>y</b>')
+    expect(parseHTML('a </ x\n</b>c').render()).toBe('a &lt;/ x\nc')
+    expect(parseHTML('<p>A:<</p>\n<!-- x -->').render()).toBe('<p>A:&lt;</p>\n')
+  })
+
+  it('should parse attributes', () => {
+    const attrs = (html: string) => (parseHTML(html).firstChild as any)._attributes
+    expect(attrs('<a b c=1 d="2" e=\'3\' f = "4">')).toEqual({
+      b: true,
+      c: '1',
+      d: '2',
+      e: '3',
+      f: '4',
+    })
+    expect(attrs('<a title="x > y" alt=\'"\'>')).toEqual({ title: 'x > y', alt: '"' })
+    expect(attrs('<a href=>')).toEqual({ href: true })
+    expect(attrs('<a path=a/b/c>')).toEqual({ path: 'a/b/c' })
+    expect(attrs('<a\nb\n=\n"1"\n>')).toEqual({ b: '1' })
+    expect(parseHTML('<img src=x/><br/><br /><hr b/><p>t</p>').render()).toBe('<img src="x"><br><br><hr b><p>t</p>')
+    expect(parseHTML('x<!-->a<!--->b<!---->c').render()).toBe('xabc')
+    expect(parseHTML('a<3 b').render()).toBe('a&lt;3 b')
+    expect(parseHTML('<p>x<a href="y</p>').render()).toBe('<p>x&lt;a href=&quot;y&lt;/p&gt;</p>')
+  })
+
+  it('should parse pathological input in linear time', () => {
+    const cases = [
+      '<a\n'.repeat(20_000),
+      '<a href="x '.repeat(20_000),
+      '<a b=1 '.repeat(20_000),
+      '</a'.repeat(20_000),
+      '< x\n<b>'.repeat(20_000),
+    ]
+    for (const html of cases) {
+      const started = performance.now()
+      parseHTML(html)
+      // Backtracking regular expressions took seconds to minutes here
+      expect(performance.now() - started).toBeLessThan(500)
+    }
+  })
 })
