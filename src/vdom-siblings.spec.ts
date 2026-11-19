@@ -93,6 +93,36 @@ describe('sibling navigation and child mutations', () => {
     expect(b.nextSibling).toBeNull()
   })
 
+  it('replaces a node with its own siblings', () => {
+    const parent = new VElement('div')
+    const a = el('a')
+    const b = el('b')
+    const c = el('c')
+    parent.appendChild([a, b, c])
+    c.replaceWith(a, el('x'))
+    expect(names(parent)).toEqual(['b', 'a', 'x'])
+    expect(namesBackwards(parent)).toEqual(['b', 'a', 'x'])
+    expect(c.parentNode).toBeNull()
+  })
+
+  it('removes and inserts at the front without re-indexing all siblings', () => {
+    // Still O(n) per call for moving the array items, but that is fast
+    const count = 30_000
+    const parent = new VElement('div')
+    for (let i = 0; i < count; i++)
+      parent.appendChild(new VElement('p'))
+    const started = performance.now()
+    while (parent.firstChild)
+      parent.removeChild(parent.firstChild)
+    for (let i = 0; i < count; i++)
+      parent.insertBefore(el(String(i)), parent.firstChild)
+    expect(parent.firstChild.textContent).toBe(String(count - 1))
+    expect(parent.firstChild.nextSibling.textContent).toBe(String(count - 2))
+    expect(parent.lastChild.previousSibling.textContent).toBe('1')
+    // Re-parenting all children per call took seconds here
+    expect(performance.now() - started).toBeLessThan(1000)
+  })
+
   it('builds, walks and parses large parents in linear time', () => {
     const count = 100_000
     const started = performance.now()

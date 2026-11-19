@@ -123,32 +123,30 @@ VElement.prototype.insertAdjacentHTML = function (
       new VTextNode(text),
     ]
   }
+  const insert = (parent: VNode, index: number) => {
+    parent._childNodes.splice(index, 0, ...nodes)
+    for (let i = 0; i < nodes.length; i++) {
+      nodes[i]!._parentNode = parent
+      nodes[i]!._index = index + i
+    }
+  }
   switch (position) {
     case 'beforebegin':
-      if (this.parentNode) {
-        const idx = this._indexInParent()
-        if (idx >= 0) {
-          this.parentNode._childNodes.splice(idx, 0, ...nodes)
-          this.parentNode._fixChildNodesParent()
-        }
-      }
-      break
-    case 'afterbegin':
-      this._childNodes.unshift(...nodes)
-      this._fixChildNodesParent()
-      break
-    case 'beforeend':
-      this._childNodes.push(...nodes)
-      this._fixChildNodesParent()
-      break
     case 'afterend':
       if (this.parentNode) {
         const idx = this._indexInParent()
         if (idx >= 0) {
-          this.parentNode._childNodes.splice(idx + 1, 0, ...nodes)
-          this.parentNode._fixChildNodesParent()
+          insert(this.parentNode, position === 'beforebegin'
+            ? idx
+            : idx + 1)
         }
       }
+      break
+    case 'afterbegin':
+      insert(this, 0)
+      break
+    case 'beforeend':
+      insert(this, this._childNodes.length)
       break
   }
 }

@@ -85,15 +85,26 @@ export class VNode {
     }
   }
 
+  /** Position of `node` in `_childNodes` or -1, uses the `_index` hint if valid */
+  _childIndex(node: VNode) {
+    return this._childNodes[node._index] === node
+      ? node._index
+      : this._childNodes.indexOf(node)
+  }
+
+  // The mutations below don't re-index the following siblings, which would
+  // cost O(n) per call. `_indexInParent` repairs stale hints when needed.
+
   insertBefore(newNode: VNode, node?: VNode) {
     if (newNode !== node) {
       let index = node
-        ? this._childNodes.indexOf(node)
+        ? this._childIndex(node)
         : 0
       if (index < 0)
         index = 0
       this._childNodes.splice(index, 0, newNode)
-      this._fixChildNodesParent()
+      newNode._parentNode = this
+      newNode._index = index
     }
   }
 
@@ -145,12 +156,18 @@ export class VNode {
 
   append = this.appendChild
 
-  removeChild(node: { _parentNode: null }) {
-    const i = this._childNodes.indexOf(node)
+  removeChild(node: VNode) {
+    const i = this._childIndex(node)
     if (i >= 0) {
       node._parentNode = null
-      this._childNodes.splice(i, 1)
-      this._fixChildNodesParent()
+      node._index = -1
+      // `shift` and `pop` are much faster than `splice` on large arrays in V8
+      if (i === 0)
+        this._childNodes.shift()
+      else if (i === this._childNodes.length - 1)
+        this._childNodes.pop()
+      else
+        this._childNodes.splice(i, 1)
     }
   }
 
@@ -174,16 +191,23 @@ export class VNode {
   replaceWith(...nodes: any[]) {
     const p = this._parentNode
     if (p) {
-      const index = this._indexInParent()
-      if (index >= 0) {
-        nodes = nodes.map(n =>
-          typeof n === 'string'
-            ? new VTextNode(n)
+      // Remove the new nodes first, they may be siblings and shift the index
+      nodes = nodes.map(n =>
+        typeof n === 'string'
+          ? new VTextNode(n)
+          : n === this
+            ? n
             : n.remove(),
-        )
+      )
+      const index = p._childIndex(this)
+      if (index >= 0) {
         p._childNodes.splice(index, 1, ...nodes)
         this._parentNode = null
-        p._fixChildNodesParent()
+        this._index = -1
+        for (let i = 0; i < nodes.length; i++) {
+          nodes[i]._parentNode = p
+          nodes[i]._index = index + i
+        }
       }
     }
   }
