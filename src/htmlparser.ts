@@ -41,9 +41,6 @@ function isTagStart(c: number) {
  * time is linear in the length of the input, whatever it contains. A start
  * tag that is still open at the end of the input (`<a href="x`) is reported
  * as text together with everything after it.
- *
- * Originally based on code by Erik Arvidsson, Mozilla Public License
- * http://erik.eae.net/simplehtmlparser/simplehtmlparser.js
  */
 export function createHtmlParser(scanner: HtmlParserScanner) {
   const scriptEndRe = /<\/script/gi

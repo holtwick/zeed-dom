@@ -1,16 +1,22 @@
 /* eslint-disable no-console */
 /**
- * Compare zeed-dom with linkedom, happy-dom and jsdom.
+ * Compare zeed-dom with linkedom, happy-dom and jsdom on Node.js and Bun.
  *
  * Setup once: `cd test && npm install --no-package-lock`
  * Run: `npm run perf:compare` (from the project root)
  *
- * Options: `--runs=3` (best of n), `--only=zeed-dom,linkedom`
+ * Options:
+ * - `--write` updates the tables in PERFORMANCE.md and README.md
+ * - `--runs=3` best of n runs
+ * - `--only=zeed-dom,linkedom` compare only some libraries
+ * - `--runtimes=node,bun` default is Node.js, plus Bun if installed
  *
- * Each library runs in its own process, so they don't share heap and JIT.
+ * Every combination of runtime and library runs in its own process, so they
+ * don't share heap and JIT.
  */
 import { execFileSync } from 'node:child_process'
-import { readdirSync, readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { arch, cpus, platform } from 'node:os'
 import { join } from 'node:path'
 import process from 'node:process'
 import { Window } from 'happy-dom'
@@ -25,9 +31,13 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   return [k, v ?? 'true']
 }))
 const RUNS = Number(args.runs ?? 3)
-const ONLY = args.only?.split(',')
+const ONLY: string[] | undefined = args.only?.split(',')
 /** Set in the child processes, which print their results as JSON */
 const CHILD = args.child === 'true'
+
+const ROOT = join(import.meta.dirname, '..')
+
+// Libraries
 
 interface Adapter {
   name: string
@@ -50,7 +60,6 @@ const happySettings = {
   disableIframePageLoading: true,
   disableComputedStyleRendering: true,
 }
-
 const happyWindows = new WeakMap<any, Window>()
 
 // jsdom reports CSS it can't parse to the console otherwise
@@ -83,6 +92,7 @@ const allAdapters: Adapter[] = [
       happyWindows.set(window.document, window)
       return window.document
     },
+    // Async, the window is only freed after the promise resolved
     close: doc => happyWindows.get(doc)?.happyDOM.close(),
   },
   {
@@ -97,7 +107,7 @@ const adapters = allAdapters.filter(a => !ONLY || ONLY.includes(a.name))
 
 // Test data
 
-const filesDir = join(import.meta.dirname, '..', 'files')
+const filesDir = join(ROOT, 'files')
 const files = readdirSync(filesDir)
   .filter(f => f.endsWith('.html'))
   .map(f => readFileSync(join(filesDir, f), 'utf-8'))
@@ -140,36 +150,67 @@ function time(fn: () => void) {
   return performance.now() - start
 }
 
-// Operations. Each run returns the measured times in ms by operation name.
+// Benchmarks. Each returns the measured time in ms per operation.
 
-const OP_PARSE = `parse ${files.length} pages (${(filesSize / 1e6).toFixed(1)} MB)`
-const OP_SERIALIZE = 'serialize the pages'
-const OP_QUERY = 'querySelectorAll("a[href]") on the pages'
-const OP_WALK = 'walk the pages with firstChild/nextSibling'
-const OP_BUILD = `appendChild ${BUILD_CHILDREN / 1000}k elements to one parent`
-const OP_PM_SERIALIZE = `ProseMirror DOMSerializer, ${PM_PARAGRAPHS / 1000}k paragraphs`
-const OP_PM_PARSE = `ProseMirror DOMParser, ${PM_PARAGRAPHS / 1000}k paragraphs`
+const OP = {
+  parse: `Parse ${files.length} real-world pages (${(filesSize / 1e6).toFixed(1)} MB)`,
+  serialize: 'Serialize the pages',
+  query: '`querySelectorAll("a[href]")` on the pages',
+  walk: 'Walk the pages with `firstChild` / `nextSibling`',
+  build: `\`appendChild\` ${BUILD_CHILDREN.toLocaleString('en')} elements to one parent`,
+  pmSerialize: `ProseMirror \`DOMSerializer\`, ${PM_PARAGRAPHS.toLocaleString('en')} paragraphs`,
+  pmParse: `ProseMirror \`DOMParser\`, ${PM_PARAGRAPHS.toLocaleString('en')} paragraphs`,
+}
 
-const runs: ((a: Adapter) => Promise<Record<string, number>>)[] = [
-  // Pages are freed one by one, keeping all in memory needs GBs for jsdom
-  async (a) => {
-    const t = {
-      [OP_PARSE]: 0,
-      [OP_SERIALIZE]: 0,
-      [OP_QUERY]: 0,
-      [OP_WALK]: 0,
-    }
-    for (const html of files) {
-      let doc: any
-      t[OP_PARSE] += time(() => doc = a.parse(html))
-      t[OP_SERIALIZE] += time(() => a.serialize(doc))
-      t[OP_QUERY] += time(() => doc.querySelectorAll('a[href]'))
-      t[OP_WALK] += time(() => walk(doc))
-      await a.close?.(doc)
-    }
-    return t
+const HOSTILE = {
+  tags: 'Parse `\'<a\\n\'.repeat(2000)`, 6 KB of unclosed tags',
+  comments: 'Parse 20,000 unclosed `<!--`',
+  firstChild: '`querySelectorAll("p:first-child")` among 20,000 siblings',
+  body: '1,000 × `document.body` with 100,000 elements',
+  deep: 'Parse 6,000 nested unclosed tags and serialize',
+}
+
+interface Benchmark {
+  ops: string[]
+  run: (a: Adapter) => Promise<Record<string, number>>
+}
+
+/** Benchmark of a single operation, `fn` returns the measured time */
+function single(op: string, fn: (a: Adapter) => Promise<number>): Benchmark {
+  return {
+    ops: [op],
+    run: async a => ({ [op]: await fn(a) }),
+  }
+}
+
+const benchmarks: Benchmark[] = [
+  {
+    ops: [
+      OP.parse,
+      OP.serialize,
+      OP.query,
+      OP.walk,
+    ],
+    // Pages are freed one by one, keeping all in memory needs GBs for jsdom
+    async run(a) {
+      const t = {
+        [OP.parse]: 0,
+        [OP.serialize]: 0,
+        [OP.query]: 0,
+        [OP.walk]: 0,
+      }
+      for (const html of files) {
+        let doc: any
+        t[OP.parse] += time(() => doc = a.parse(html))
+        t[OP.serialize] += time(() => a.serialize(doc))
+        t[OP.query] += time(() => doc.querySelectorAll('a[href]'))
+        t[OP.walk] += time(() => walk(doc))
+        await a.close?.(doc)
+      }
+      return t
+    },
   },
-  async (a) => {
+  single(OP.build, async (a) => {
     const doc = a.create()
     const t = time(() => {
       const parent = doc.createElement('div')
@@ -183,89 +224,255 @@ const runs: ((a: Adapter) => Promise<Record<string, number>>)[] = [
         throw new Error('wrong number of nodes')
     })
     await a.close?.(doc)
-    return { [OP_BUILD]: t }
+    return t
+  }),
+  {
+    ops: [OP.pmSerialize, OP.pmParse],
+    async run(a) {
+      const doc = a.create()
+      const div = doc.createElement('div')
+      const tSerialize = time(() => {
+        div.appendChild(pmSerializer.serializeFragment(pmDoc.content, { document: doc }))
+        if (!div.innerHTML)
+          throw new Error('nothing serialized')
+      })
+      let node: any
+      const tParse = time(() => node = pmParser.parse(div))
+      if (!node.eq(pmDoc))
+        throw new Error('ProseMirror round trip differs')
+      await a.close?.(doc)
+      return { [OP.pmSerialize]: tSerialize, [OP.pmParse]: tParse }
+    },
   },
-  async (a) => {
-    const doc = a.create()
-    const div = doc.createElement('div')
-    const tSerialize = time(() => {
-      div.appendChild(pmSerializer.serializeFragment(pmDoc.content, { document: doc }))
-      div.innerHTML // eslint-disable-line ts/no-unused-expressions
-    })
-    let node: any
-    const tParse = time(() => node = pmParser.parse(div))
-    if (!node.eq(pmDoc))
-      throw new Error('ProseMirror round trip differs')
+  single(HOSTILE.tags, async (a) => {
+    let doc: any
+    const t = time(() => doc = a.parse('<a\n'.repeat(2000)))
     await a.close?.(doc)
-    return { [OP_PM_SERIALIZE]: tSerialize, [OP_PM_PARSE]: tParse }
-  },
+    return t
+  }),
+  single(HOSTILE.comments, async (a) => {
+    let doc: any
+    const t = time(() => doc = a.parse('x<!-- '.repeat(20_000)))
+    await a.close?.(doc)
+    return t
+  }),
+  single(HOSTILE.firstChild, async (a) => {
+    const doc = a.parse(`<body>${'<p>x</p>'.repeat(20_000)}</body>`)
+    const t = time(() => {
+      if (doc.querySelectorAll('p:first-child').length !== 1)
+        throw new Error('wrong number of matches')
+    })
+    await a.close?.(doc)
+    return t
+  }),
+  single(HOSTILE.body, async (a) => {
+    const doc = a.parse(`<!DOCTYPE html><html><head><title>t</title></head><body>${'<p>x</p>'.repeat(100_000)}</body></html>`)
+    const t = time(() => {
+      for (let i = 0; i < 1000; i++) {
+        if (!doc.body)
+          throw new Error('no body')
+      }
+    })
+    await a.close?.(doc)
+    return t
+  }),
+  single(HOSTILE.deep, async (a) => {
+    let doc: any
+    const t = time(() => {
+      doc = a.parse(`${'<b>'.repeat(6000)}x`)
+      a.serialize(doc)
+    })
+    await a.close?.(doc)
+    return t
+  }),
 ]
 
-// Run
+/** Time in ms, or an error message */
+type Results = Record<string, number | string>
 
-async function measure(a: Adapter) {
-  const best: Record<string, number> = {}
-  for (const run of runs) {
+async function measure(a: Adapter): Promise<Results> {
+  const best: Results = {}
+  for (const benchmark of benchmarks) {
     try {
       for (let r = 0; r < RUNS; r++) {
-        for (const [op, t] of Object.entries(await run(a)))
-          best[op] = Math.min(best[op] ?? Infinity, t)
+        for (const [op, t] of Object.entries(await benchmark.run(a)))
+          best[op] = Math.min(Number(best[op] ?? Infinity), t)
       }
     }
     catch (err) {
-      console.error(`${a.name}:`, err)
+      for (const op of benchmark.ops) {
+        best[op] = err instanceof RangeError
+          ? 'stack overflow'
+          : 'error'
+      }
+      console.error(`${a.name}: ${err instanceof Error
+        ? err.message
+        : err}`)
     }
   }
   return best
 }
 
-async function measureAll() {
-  const out: Record<string, Record<string, number>> = {}
+// Child process: measure and print the results as JSON
+
+async function child() {
+  const out: Record<string, Results> = {}
   for (const a of adapters)
     out[a.name] = await measure(a)
   console.log(JSON.stringify(out))
 }
 
-if (CHILD) {
-  void measureAll()
-}
-else {
-  const results: Record<string, Record<string, number>> = {}
-  for (const a of adapters) {
-    process.stderr.write(`${a.name}…\n`)
-    const out = execFileSync(process.execPath, [
-      ...process.execArgv,
-      process.argv[1]!,
-      `--only=${a.name}`,
-      `--runs=${RUNS}`,
-      '--child',
-    ], {
+// Main process: run the children, print or write the tables
+
+function output(command: string, args: string[]) {
+  try {
+    return execFileSync(command, args, {
       encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'inherit'],
-      maxBuffer: 1e7,
-    })
-    Object.assign(results, JSON.parse(out.trim().split('\n').pop()!))
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+  }
+  catch {
+    return undefined
+  }
+}
+
+function packageVersion(dir: string) {
+  return JSON.parse(readFileSync(join(dir, 'package.json'), 'utf-8')).version
+}
+
+function formatCell(value: number | string | undefined, base: number | string | undefined) {
+  if (value == null)
+    return '–'
+  if (typeof value === 'string')
+    return value
+  const ms = value < 10
+    ? value.toFixed(1)
+    : Math.round(value).toLocaleString('en')
+  if (typeof base !== 'number' || base === value)
+    return `${ms} ms`
+  const factor = value / base
+  const rounded = factor < 0.1
+    ? factor.toFixed(2)
+    : factor < 10
+      ? factor.toFixed(1)
+      : Math.round(factor).toLocaleString('en')
+  return `${ms} ms (${rounded}×)`
+}
+
+function table(results: Record<string, Results>, ops: string[], title = 'Operation') {
+  const names = adapters.map(a => a.name)
+  const lines = [
+    `| ${title} | ${names.join(' | ')} |`,
+    `| --- | ${names.map(() => '---:').join(' | ')} |`,
+  ]
+  for (const op of ops) {
+    const base = results['zeed-dom']?.[op]
+    lines.push(`| ${op} | ${names.map(n => formatCell(results[n]?.[op], base)).join(' | ')} |`)
+  }
+  return lines.join('\n')
+}
+
+/** Replace the text between `<!-- name:start -->` and `<!-- name:end -->` */
+function replaceMarked(file: string, name: string, content: string) {
+  const path = join(ROOT, file)
+  const text = readFileSync(path, 'utf-8')
+  const start = `<!-- ${name}:start -->`
+  const end = `<!-- ${name}:end -->`
+  const from = text.indexOf(start)
+  const to = text.indexOf(end)
+  if (from < 0 || to < from)
+    throw new Error(`Markers ${start} … ${end} missing in ${file}`)
+  writeFileSync(path, `${text.slice(0, from + start.length)}\n\n${content}\n\n${text.slice(to)}`)
+  console.error(`Updated ${file}`)
+}
+
+function main() {
+  const script = process.argv[1]!
+  const runtimes = [
+    {
+      name: 'Node.js',
+      command: 'node',
+      args: ['--import', 'tsx', script],
+    },
+    {
+      name: 'Bun',
+      command: 'bun',
+      args: [script],
+    },
+  ].filter(r => args.runtimes
+    ? args.runtimes.split(',').includes(r.command)
+    : output(r.command, ['--version']))
+
+  const versions: string[] = []
+  const all: Record<string, Record<string, Results>> = {}
+  for (const runtime of runtimes) {
+    versions.push(`${runtime.name} ${output(runtime.command, ['--version'])?.replace(/^v/, '')}`)
+    const results: Record<string, Results> = {}
+    for (const a of adapters) {
+      console.error(`${runtime.name} / ${a.name} …`)
+      const out = execFileSync(runtime.command, [
+        ...runtime.args,
+        `--only=${a.name}`,
+        `--runs=${RUNS}`,
+        '--child',
+      ], {
+        cwd: ROOT,
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'inherit'],
+        maxBuffer: 1e7,
+      })
+      Object.assign(results, JSON.parse(out.trim().split('\n').pop()!))
+    }
+    all[runtime.name] = results
   }
 
-  const ops = [
-    OP_PARSE,
-    OP_SERIALIZE,
-    OP_QUERY,
-    OP_WALK,
-    OP_BUILD,
-    OP_PM_SERIALIZE,
-    OP_PM_PARSE,
+  // `+changes` if the measured sources differ from the commit
+  const changed = output('git', [
+    '-C',
+    ROOT,
+    'status',
+    '--porcelain',
+    '--',
+    'src',
+  ])
+  const hash = output('git', [
+    '-C',
+    ROOT,
+    'rev-parse',
+    '--short',
+    'HEAD',
+  ])
+  const commit = hash && `${hash}${changed ? '+changes' : ''}`
+  const libraries = [
+    `zeed-dom ${packageVersion(ROOT)}${commit
+      ? ` (${commit})`
+      : ''}`,
+    ...adapters
+      .filter(a => a.name !== 'zeed-dom')
+      .map(a => `${a.name} ${packageVersion(join(ROOT, 'test', 'node_modules', a.name))}`),
   ]
-  console.log(`\nBest of ${RUNS} runs, Node ${process.version}, ${process.platform} ${process.arch}\n`)
-  console.log(`| Operation | ${adapters.map(a => a.name).join(' | ')} |`)
-  console.log(`| --- | ${adapters.map(() => '---:').join(' | ')} |`)
-  for (const op of ops) {
-    const cells = adapters.map((a) => {
-      const t = results[a.name]?.[op]
-      return t == null
-        ? 'error'
-        : `${Math.round(t)} ms`
-    })
-    console.log(`| ${op} | ${cells.join(' | ')} |`)
+  const environment = `Generated by \`npm run perf:compare -- --write\` on ${new Date().toISOString().slice(0, 10)}: best of ${RUNS} runs on ${cpus()[0]?.model ?? arch()} (${platform()} ${arch()}) with ${versions.join(' and ')}. Libraries: ${libraries.join(', ')}. The factor in parentheses is the time relative to zeed-dom.`
+
+  const perRuntime = (ops: string[]) => Object.entries(all)
+    .map(([runtime, results]) => `### ${runtime}\n\n${table(results, ops)}`)
+    .join('\n\n')
+  const comparison = `${environment}\n\n${perRuntime(Object.values(OP))}`
+  const hostile = perRuntime(Object.values(HOSTILE))
+  const summary = Object.entries(all)
+    .map(([runtime, results]) => table(results, [OP.parse, OP.build, OP.pmSerialize], runtime))
+    .join('\n\n')
+
+  if (args.write === 'true') {
+    replaceMarked('PERFORMANCE.md', 'perf-compare', comparison)
+    replaceMarked('PERFORMANCE.md', 'perf-hostile', hostile)
+    replaceMarked('README.md', 'perf-summary', `${summary}\n\n${environment}`)
+  }
+  else {
+    console.log(`\n${comparison}\n\n## Hostile input\n\n${hostile}`)
   }
 }
+
+if (CHILD)
+  void child()
+else
+  main()
