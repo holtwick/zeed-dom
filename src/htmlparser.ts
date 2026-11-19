@@ -52,8 +52,10 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
   function parse(html: string) {
     const length = html.length
     let pos = 0
-    // Set once no `>` follows anymore, so later `</x` fail without searching again
+    // Set once no `>` or `-->` follows anymore, so later `</x` or `<!--` fail
+    // without searching to the end again, which would be quadratic
     let noMoreGt = false
+    let noMoreCommentEnd = false
 
     while (pos < length) {
       // Text up to the next `<`
@@ -71,12 +73,15 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
       // Comment
       if (next === CH_BANG && html.startsWith('<!--', pos)) {
         // From `pos + 2`: `<!-->` and `<!--->` are empty comments, like in browsers
-        const end = html.indexOf('-->', pos + 2)
+        const end = noMoreCommentEnd
+          ? -1
+          : html.indexOf('-->', pos + 2)
         if (end >= 0) {
           scanner.comment(html.slice(pos + 4, end))
           pos = end + 3
         }
         else {
+          noMoreCommentEnd = true
           scanner.characters('<')
           pos += 1
         }

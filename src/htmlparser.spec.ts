@@ -197,6 +197,7 @@ if (x<1)
     expect(parseHTML('<img src=x/><br/><br /><hr b/><p>t</p>').render()).toBe('<img src="x"><br><br><hr b><p>t</p>')
     expect(parseHTML('x<!-->a<!--->b<!---->c').render()).toBe('xabc')
     expect(parseHTML('a<3 b').render()).toBe('a&lt;3 b')
+    expect(parseHTML('a<!-- b<!-- c').render()).toBe('a&lt;!-- b&lt;!-- c')
     expect(parseHTML('<p>x<a href="y</p>').render()).toBe('<p>x&lt;a href=&quot;y&lt;/p&gt;</p>')
   })
 
@@ -207,6 +208,7 @@ if (x<1)
       '<a b=1 '.repeat(20_000),
       '</a'.repeat(20_000),
       '< x\n<b>'.repeat(20_000),
+      'x<!-- '.repeat(20_000),
     ]
     for (const html of cases) {
       const started = performance.now()
