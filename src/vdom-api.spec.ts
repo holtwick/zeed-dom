@@ -171,4 +171,22 @@ describe('vdom api', () => {
     // Collected all 50,000 elements per call before
     expect(performance.now() - started).toBeLessThan(200)
   })
+
+  it('should set inline styles through style.cssText', () => {
+    const el = new VElement('span')
+    expect(el.style.cssText).toBe('')
+    el.style.cssText = 'color: red; text-align: center'
+    expect(el.getAttribute('style')).toBe('color: red; text-align: center')
+    expect(el.style.textAlign).toBe('center')
+    expect(el.outerHTML).toBe('<span style="color: red; text-align: center"></span>')
+  })
+
+  it('should iterate classList', () => {
+    const el = new VElement('code')
+    expect([...el.classList]).toEqual([])
+    expect(el.classList.length).toBe(0)
+    el.className = ' language-ts  hljs '
+    expect([...el.classList]).toEqual(['language-ts', 'hljs'])
+    expect(el.classList.length).toBe(2)
+  })
 })

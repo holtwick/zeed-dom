@@ -585,6 +585,7 @@ interface Attr {
 export type VElementStyle = Record<string, string> & {
   get length(): number
   getPropertyValue: (name: string) => any
+  cssText: string
 }
 
 export class VElement extends VNodeQuery {
@@ -708,6 +709,12 @@ export class VElement extends VNodeQuery {
         ...DEFAULTS[this.tagName.toLowerCase()],
         ...styles,
       }
+      // ProseMirror's DOMSerializer sets inline styles this way. Not
+      // enumerable, so it doesn't show up next to the style properties.
+      Object.defineProperty(this._styles, 'cssText', {
+        get: () => this.getAttribute('style') ?? '',
+        set: (value: string) => this.setAttribute('style', String(value ?? '')),
+      })
     }
     return this._styles!
   }
@@ -817,9 +824,14 @@ export class VElement extends VNodeQuery {
   }
 
   get classList() {
-    const classNames = String(this.className ?? '').trim().split(/\s+/g) || []
-    // log('classList', classNames)
+    const classNames = String(this.className ?? '').trim().split(/\s+/g).filter(Boolean)
     return {
+      get length() {
+        return classNames.length
+      },
+      [Symbol.iterator]() {
+        return classNames[Symbol.iterator]()
+      },
       contains(s: any) {
         return classNames.includes(s)
       },
