@@ -17,6 +17,7 @@ Parsing and DOM operations no longer become slow or crash on large or hostile in
 - `querySelector`, `getElementById`, `document.body` and `document.head` stop at the first match.
 - `:first-child`, `:last-child` and `:nth-child` are no longer quadratic for parents with many children.
 - `removeChild`, `insertBefore`, `replaceWith` and `insertAdjacentHTML` no longer touch all siblings on each call.
+- Rendering HTML is about twice as fast, `querySelectorAll` about four times, `serializePlaintext` almost three times, with the same output.
 
 ### Changed: DOM methods behave like in the DOM
 

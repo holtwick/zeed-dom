@@ -2,6 +2,10 @@ import type { VElement } from './vdom'
 import { SELECTOR_BLOCK_ELEMENTS } from './tidy'
 import { isVElement, VNode } from './vdom'
 
+// Built once, not for every element
+const BLOCK_TAGS = new Set(SELECTOR_BLOCK_ELEMENTS.split(','))
+const DROP_TAGS = new Set(['title', 'script', 'style'])
+
 interface SerializeContext {
   level: number
   count: 0
@@ -28,26 +32,15 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
       ...ctx,
     })).join('')
 
-    const rules: Record<string, () => string> = {}
-
-    SELECTOR_BLOCK_ELEMENTS.split(',').forEach((tag) => {
-      rules[tag] = () => `\n\n${handleChildren().trim()}\n\n`
-    })
-
-    // After the block rules, not before: `SELECTOR_BLOCK_ELEMENTS` lists
-    // `title` and `script` itself, so declaring these first meant the block
-    // handler overwrote them and their raw text ended up in the output.
-    rules.br = () => `${handleChildren()}\n`
-    rules.title = () => ''
-    rules.script = () => ''
-    rules.style = () => ''
-
-    const fn = rules[tag]
-
-    if (fn)
-      return fn()
-    else
-      return handleChildren()
+    // Order as before: dropped tags win over `br`, which wins over blocks.
+    // `SELECTOR_BLOCK_ELEMENTS` lists `title` and `script` itself.
+    if (DROP_TAGS.has(tag))
+      return ''
+    if (tag === 'br')
+      return `${handleChildren()}\n`
+    if (BLOCK_TAGS.has(tag))
+      return `\n\n${handleChildren().trim()}\n\n`
+    return handleChildren()
   }
   return node.textContent ?? ''
 }

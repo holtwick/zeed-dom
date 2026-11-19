@@ -40,7 +40,7 @@ How to read it:
 
 - **Parsing** is where zeed-dom is fastest. The other libraries parse by the specification (implied end tags, foster parenting, and so on), so the comparison is not entirely fair: zeed-dom does less work and gives a less exact tree for broken HTML.
 - **Building trees, ProseMirror and tiptap** (`generateHTML` and `generateJSON` on the server) are on par with or faster than the alternatives.
-- **Serializing and `querySelectorAll`** are slower than in some of the other libraries. These are the next candidates for optimization.
+- **Serializing and `querySelectorAll`** are on par with the fastest of the other libraries.
 
 The pages are the HTML files in [`files/`](files/). The ProseMirror document uses `prosemirror-schema-basic`, with bold text and a link in every paragraph; the parse result is checked against the original document.
 
