@@ -2,7 +2,7 @@
 
 All notable changes to zeed-dom. For versions up to 0.17.7 see the [GitHub releases](https://github.com/holtwick/zeed-dom/releases).
 
-## 0.21.0 (unreleased)
+## 0.21.0
 
 ### Changed: Node.js 22 or newer
 
