@@ -27,6 +27,8 @@ export const SELF_CLOSING_TAGS = [
   'command',
 ]
 
+const SELF_CLOSING_SET = new Set(SELF_CLOSING_TAGS)
+
 export const CDATA = (s: string) => `<![CDATA[${s}]]>`
 export const HTML = (s: string) => s
 
@@ -49,16 +51,17 @@ export function markup(
       || children == null
   )
 
-  const parts: string[] = []
-  tag = tag.replace(/__/g, ':')
+  let out = ''
+  if (tag.includes('__'))
+    tag = tag.replace(/__/g, ':')
 
   // React fragment <>...</> and ours: <noop>...</noop>
   if (tag !== 'noop' && tag !== '') {
     if (tag !== 'cdata') {
-      parts.push(`<${tag}`)
+      out += `<${tag}`
     }
     else {
-      parts.push('<![CDATA[')
+      out += '<![CDATA['
     }
 
     // Add attributes
@@ -68,11 +71,12 @@ export function markup(
       const v = attrs[name]
       if (name === 'html')
         continue
-      if (name.toLowerCase() === 'classname')
+      if (name.length === 9 && name.toLowerCase() === 'classname')
         name = 'class'
-      name = name.replace(/__/g, ':')
+      if (name.includes('__'))
+        name = name.replace(/__/g, ':')
       if (v === true) {
-        parts.push(` ${name}`)
+        out += ` ${name}`
       }
       else if (name === 'style' && typeof v === 'object') {
         const styleStr = Object.entries(v)
@@ -85,31 +89,31 @@ export function markup(
           })
           .join(';')
         if (styleStr)
-          parts.push(` ${name}="${styleStr}"`)
+          out += ` ${name}="${styleStr}"`
       }
       else if (v !== false && v != null) {
-        parts.push(` ${name}="${escapeHTML(v.toString())}"`)
+        out += ` ${name}="${escapeHTML(v.toString())}"`
       }
     }
 
-    const isSelfClosing = !xmlMode && SELF_CLOSING_TAGS.includes(tag)
+    const isSelfClosing = !xmlMode && SELF_CLOSING_SET.has(tag)
     if (tag !== 'cdata') {
       if (xmlMode && !hasChildren) {
-        parts.push(' />')
-        return parts.join('')
+        out += ' />'
+        return out
       }
       else {
-        parts.push('>')
+        out += '>'
       }
     }
     if (isSelfClosing)
-      return parts.join('')
+      return out
   }
 
   // Append children
   if (hasChildren) {
     if (typeof children === 'string') {
-      parts.push(children)
+      out += children
     }
     else if (children && children.length > 0) {
       for (const child of children) {
@@ -120,19 +124,19 @@ export function markup(
             if (c == null || c === false)
               continue
             if ((typeof c === 'string' && c.startsWith('<') && c.endsWith('>')) || tag === 'script' || tag === 'style') {
-              parts.push(c)
+              out += c
             }
             else {
-              parts.push(escapeHTML(c.toString()))
+              out += escapeHTML(c.toString())
             }
           }
         }
         else {
           if ((typeof child === 'string' && child.startsWith('<') && child.endsWith('>')) || tag === 'script' || tag === 'style') {
-            parts.push(child)
+            out += child
           }
           else {
-            parts.push(escapeHTML(child.toString()))
+            out += escapeHTML(child.toString())
           }
         }
       }
@@ -140,17 +144,17 @@ export function markup(
   }
 
   if (attrs.html)
-    parts.push(attrs.html)
+    out += attrs.html
 
   if (tag !== 'noop' && tag !== '') {
     if (tag !== 'cdata') {
-      parts.push(`</${tag}>`)
+      out += `</${tag}>`
     }
     else {
-      parts.push(']]>')
+      out += ']]>'
     }
   }
-  return parts.join('')
+  return out
 }
 
 export function html(

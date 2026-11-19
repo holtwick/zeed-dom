@@ -31,3 +31,34 @@ jobs:
           node -e "const d = require('./dist/index.node.cjs'); if (!d.parseHTML) process.exit(1)"
           node -e "const j = require('./jsx-runtime/index.cjs'); if (!j.jsx) process.exit(1)"
           node --input-type=module -e "const d = await import('./dist/index.node.js'); const j = await import('./jsx-runtime/index.js'); if (!d.parseHTML || !j.jsx) process.exit(1)"
+
+  bun:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: oven-sh/setup-bun@v2
+      - run: npm install
+      # The whole suite with Bun as the runtime
+      - run: npm run test:bun
+      - run: npm run build
+      - name: Load the build with Bun
+        run: |
+          bun -e "const d = require('./dist/index.node.cjs'); if (!d.parseHTML) process.exit(1)"
+          bun -e "const d = await import('./dist/index.node.js'); const j = await import('./jsx-runtime/index.js'); if (!d.parseHTML || !j.jsx) process.exit(1)"
+
+  browser:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - run: npm install
+      - run: npx playwright install --with-deps chromium firefox webkit
+      # The whole suite in Chromium, Firefox and WebKit
+      - run: npm run test:browser

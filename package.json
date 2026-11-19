@@ -1,7 +1,7 @@
 {
   "name": "zeed-dom",
   "type": "module",
-  "version": "0.19.2",
+  "version": "0.20.0",
   "description": "🌱 Lightweight offline DOM",
   "author": {
     "name": "Dirk Holtwick",
@@ -62,6 +62,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "perf": "tsx test/files-bench.ts",
+    "perf:compare": "tsx test/compare-bench.ts",
     "perf:files": "tsx test/files-bench.ts",
     "perf:parser": "tsx test/htmlparser-bench.ts",
     "prepublishOnly": "npm test && npm run build",
@@ -69,6 +70,8 @@
     "inspect:parser": "tsx --inspect-brk test/htmlparser-bench.ts",
     "start": "npm run watch",
     "test": "vitest src --coverage --globals --run",
+    "test:browser": "vitest --config vitest.browser.config.ts --run",
+    "test:bun": "bunx --bun vitest src --globals --run",
     "watch": "npm run build:tsdown -- --watch"
   },
   "dependencies": {
@@ -78,10 +81,15 @@
   "devDependencies": {
     "@antfu/eslint-config": "^10.0.0",
     "@antfu/ni": "^30.6.0",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^26.6.6",
+    "@vitest/browser-playwright": "^5.1.0",
     "@vitest/coverage-v8": "^5.1.0",
     "c8": "^12.0.0",
     "eslint": "^10.15.0",
+    "fast-check": "^4.10.2",
+    "jsdom": "^31.0.1",
+    "playwright": "^1.65.1",
     "tsdown": "^0.23.7",
     "tsx": "^4.23.15",
     "typedoc": "^0.28.20",

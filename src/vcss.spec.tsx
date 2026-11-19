@@ -1,5 +1,6 @@
 import { matchSelector } from './vcss'
 import { createHTMLDocument, h } from './vdom'
+import { parseHTML } from './vdomparser'
 
 const _keepH = h
 
@@ -367,4 +368,17 @@ describe('css', () => {
   //   let element = <h1>...</h1>
   //   expect(matchSelector('[id]', element)).toBe(false)
   // })
+
+  it('should match child pseudo classes on wide parents in linear time', () => {
+    const count = 20_000
+    const doc = parseHTML(`<div>${'<p>x</p> '.repeat(count)}</div>`)
+    const started = performance.now()
+    expect(doc.querySelectorAll('p:first-child').length).toBe(1)
+    expect(doc.querySelectorAll('p:last-child').length).toBe(1)
+    expect(doc.querySelectorAll('p:nth-child(3)').length).toBe(1)
+    expect(doc.querySelectorAll('p:nth-child(3)')[0]).toBe(doc.querySelector('div')!.children[2])
+    expect(doc.querySelectorAll('p:nth-child(x)').length).toBe(0)
+    // Collecting all element children per test took seconds here
+    expect(performance.now() - started).toBeLessThan(1000)
+  })
 })

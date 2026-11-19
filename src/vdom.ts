@@ -45,6 +45,8 @@ export class VNode {
 
   _parentNode: any
   _childNodes: any[]
+  /** Cached position in the parent's `_childNodes`, only a hint, see `_indexInParent` */
+  _index = -1
 
   get nodeType(): number {
     console.error('Subclasses should define nodeType!')
@@ -69,35 +71,96 @@ export class VNode {
     const Ctor = this.constructor as unknown as new () => this
     const node = new Ctor()
     if (deep) {
-      node._childNodes = this._childNodes.map(c => c.cloneNode(true))
-      node._fixChildNodesParent()
+      // Iterative, so deeply nested trees don't overflow the call stack.
+      // Subclasses copy their own fields in `cloneNode(false)`.
+      const stack: [VNode, VNode][] = [
+        [this, node],
+      ]
+      while (stack.length) {
+        const [source, target] = stack.pop()!
+        target._childNodes = source._childNodes.map((c) => {
+          const clone = c.cloneNode(false)
+          stack.push([c, clone])
+          return clone
+        })
+        target._fixChildNodesParent()
+      }
     }
     return node
   }
 
   _fixChildNodesParent() {
-    this._childNodes.forEach(node => (node._parentNode = this))
+    const nodes = this._childNodes
+    for (let i = 0; i < nodes.length; i++) {
+      nodes[i]._parentNode = this
+      nodes[i]._index = i
+    }
   }
 
-  insertBefore(newNode: VNode, node?: VNode) {
-    if (newNode !== node) {
-      let index = node
-        ? this._childNodes.indexOf(node)
-        : 0
-      if (index < 0)
-        index = 0
-      this._childNodes.splice(index, 0, newNode)
-      this._fixChildNodesParent()
+  /** Position of `node` in `_childNodes` or -1, uses the `_index` hint if valid */
+  _childIndex(node: VNode) {
+    return this._childNodes[node._index] === node
+      ? node._index
+      : this._childNodes.indexOf(node)
+  }
+
+  // The mutations below don't re-index the following siblings, which would
+  // cost O(n) per call. `_indexInParent` repairs stale hints when needed.
+
+  /**
+   * True, and a warning, if `node` is this node or one of its ancestors:
+   * inserting it here would make a node its own ancestor, and walks over the
+   * tree would never end. The DOM throws a HierarchyRequestError then.
+   */
+  _rejectsChild(node: unknown, parent: VNode = this): boolean {
+    if (!(node instanceof VNode))
+      return false
+    // A node without children can only be the parent itself, cheap for parsing
+    if (node === parent || (node._childNodes.length > 0 && node.contains(parent))) {
+      console.warn('Cannot insert a node into itself or one of its descendants', node)
+      return true
+    }
+    return false
+  }
+
+  /** Detach all children, so they don't point to this node anymore */
+  _detachChildren() {
+    for (const child of this._childNodes) {
+      child._parentNode = null
+      child._index = -1
+    }
+    this._childNodes = []
+  }
+
+  /**
+   * Like the DOM: `null` as reference node appends, a fragment inserts its
+   * children. Without a reference node (`undefined`), which is a TypeError in
+   * browsers, zeed-dom inserts at the start, as it always did.
+   */
+  insertBefore(newNode: VNode, node?: VNode | null) {
+    if (node === null)
+      return this.appendChild(newNode)
+    if (newNode === node || this._rejectsChild(newNode))
+      return
+    const nodes = newNode instanceof VDocumentFragment
+      ? [...newNode._childNodes]
+      : [newNode]
+    for (const n of nodes)
+      n.remove()
+    // Unknown reference node: the DOM throws, zeed-dom inserts at the start
+    const index = node
+      ? Math.max(0, this._childIndex(node))
+      : 0
+    this._childNodes.splice(index, 0, ...nodes)
+    for (let i = 0; i < nodes.length; i++) {
+      nodes[i]!._parentNode = this
+      nodes[i]!._index = index + i
     }
   }
 
   appendChild(node: VNode | VNode[] | string | string[] | null | undefined) {
-    if (node == null)
+    if (node == null || this._rejectsChild(node))
       return
-    if (node === this) {
-      console.warn('Cannot appendChild to self')
-      return
-    }
     // log('appendChild', node, this)
 
     if (node instanceof VDocument)
@@ -117,7 +180,8 @@ export class VNode {
     }
     else if (node instanceof VNode) {
       node.remove()
-      this._childNodes.push(node)
+      node._parentNode = this
+      node._index = this._childNodes.push(node) - 1
     }
     else {
       // Fallback for unknown data
@@ -126,23 +190,32 @@ export class VNode {
           = typeof node === 'string'
             ? node
             : JSON.stringify(node, null, 2)
-        this._childNodes.push(new VTextNode(text))
+        const textNode = new VTextNode(text)
+        textNode._parentNode = this
+        textNode._index = this._childNodes.push(textNode) - 1
       }
       catch (err) {
         console.error(`The data ${node} to be added to ${this.render()} is problematic: ${err}`)
       }
     }
-    this._fixChildNodesParent()
   }
 
   append = this.appendChild
 
-  removeChild(node: { _parentNode: null }) {
-    const i = this._childNodes.indexOf(node)
+  // The parameter type is kept as it was in 0.19 for API compatibility
+  removeChild(child: { _parentNode: null }) {
+    const node = child as VNode
+    const i = this._childIndex(node)
     if (i >= 0) {
       node._parentNode = null
-      this._childNodes.splice(i, 1)
-      this._fixChildNodesParent()
+      node._index = -1
+      // `shift` and `pop` are much faster than `splice` on large arrays in V8
+      if (i === 0)
+        this._childNodes.shift()
+      else if (i === this._childNodes.length - 1)
+        this._childNodes.pop()
+      else
+        this._childNodes.splice(i, 1)
     }
   }
 
@@ -154,36 +227,63 @@ export class VNode {
 
   /** Replace content of node with text or nodes */
   replaceChildren(...nodes: any[]) {
-    this._childNodes = nodes.map(n =>
-      typeof n === 'string'
+    // Collect in a fragment first like the DOM: removes the nodes from their
+    // parents, including this one, and a node given twice is added once
+    // Check first, moving the nodes into the fragment would change the tree
+    if (nodes.some(n => this._rejectsChild(n)))
+      return
+    const fragment = new VDocumentFragment()
+    for (const n of nodes) {
+      fragment.appendChild(typeof n === 'string'
         ? new VTextNode(n)
-        : n.remove(),
-    )
-    this._fixChildNodesParent()
+        : n)
+    }
+    this._detachChildren()
+    this.appendChild(fragment)
   }
 
   /** Replace node itself with nodes */
   replaceWith(...nodes: any[]) {
-    const p = this._parentNode
-    if (p) {
-      const index = this._indexInParent()
-      if (index >= 0) {
-        nodes = nodes.map(n =>
-          typeof n === 'string'
-            ? new VTextNode(n)
-            : n.remove(),
-        )
-        p._childNodes.splice(index, 1, ...nodes)
-        this._parentNode = null
-        p._fixChildNodesParent()
-      }
+    const parent = this._parentNode
+    if (!parent || parent._childIndex(this) < 0 || nodes.some(n => this._rejectsChild(n, parent)))
+      return
+    // Like the DOM: the new nodes go where this node is, or if this node is
+    // one of them, before the first following sibling that is not
+    let next = this.nextSibling
+    while (next && nodes.includes(next))
+      next = next.nextSibling
+    const fragment = new VDocumentFragment()
+    for (const n of nodes) {
+      fragment.appendChild(typeof n === 'string'
+        ? new VTextNode(n)
+        : n)
+    }
+    if (this._parentNode === parent) {
+      parent.insertBefore(fragment, this)
+      parent.removeChild(this)
+    }
+    else {
+      parent.insertBefore(fragment, next)
     }
   }
 
+  /**
+   * Position in the parent's child list. `_index` is only a hint: mutations
+   * like `insertBefore` or `removeChild` shift siblings without updating it.
+   * If the hint is stale, all siblings are re-indexed once, so walking the
+   * children with `nextSibling` stays O(n) instead of O(n²).
+   */
   _indexInParent() {
-    if (this._parentNode)
-      return this._parentNode.childNodes.indexOf(this)
-    return -1
+    const p = this._parentNode
+    if (!p)
+      return -1
+    const nodes = p._childNodes
+    if (nodes[this._index] === this)
+      return this._index
+    const i = nodes.indexOf(this)
+    if (i >= 0)
+      p._fixChildNodesParent()
+    return i
   }
 
   get parentNode() {
@@ -237,20 +337,51 @@ export class VNode {
     return null
   }
 
+  /**
+   * Visit this node and all descendants in document order until `fn` returns
+   * true. Iterative, so deeply nested trees don't overflow the call stack.
+   */
+  _walk(fn: (node: VNode) => boolean | void): VNode | undefined {
+    if (fn(this))
+      return this
+    // One list and position per level, so a wide parent costs nothing until
+    // its children are visited
+    const lists: VNode[][] = [this._childNodes]
+    const positions: number[] = [0]
+    while (lists.length) {
+      const top = lists.length - 1
+      const children = lists[top]!
+      const i = positions[top]!
+      if (i >= children.length) {
+        lists.pop()
+        positions.pop()
+        continue
+      }
+      positions[top] = i + 1
+      const node = children[i]!
+      if (fn(node))
+        return node
+      if (node._childNodes.length) {
+        lists.push(node._childNodes)
+        positions.push(0)
+      }
+    }
+  }
+
   flatten(): VElement[] {
     const elements: VElement[] = []
-    if (this instanceof VElement)
-      elements.push(this)
-    for (const child of this._childNodes)
-      elements.push(...child.flatten())
+    this._walk((node) => {
+      if (node instanceof VElement)
+        elements.push(node)
+    })
     return elements
   }
 
   flattenNodes(): VNode[] {
     const nodes: VNode[] = []
-    nodes.push(this)
-    for (const child of this._childNodes)
-      nodes.push(...child.flattenNodes())
+    this._walk((node) => {
+      nodes.push(node)
+    })
     return nodes
   }
 
@@ -259,27 +390,41 @@ export class VNode {
   }
 
   get textContent(): string | null {
-    return this._childNodes.map(c => c.textContent).join('')
+    let text = ''
+    this._walk((node) => {
+      if (node.nodeType === VNode.TEXT_NODE)
+        text += node.nodeValue ?? ''
+    })
+    return text
   }
 
   set textContent(text) {
-    this._childNodes = []
+    this._detachChildren()
     if (text)
       this.appendChild(new VTextNode(text.toString()))
   }
 
-  contains(otherNode: this) {
-    if (otherNode === this)
-      return true
-    // if (this._childNodes.includes(otherNode)) return true
-    return this._childNodes.some(n => n.contains(otherNode))
+  contains(otherNode: VNode | null | undefined) {
+    // Walk up instead of searching the whole subtree. A node whose parent no
+    // longer lists it (e.g. after `innerHTML` was set) is not contained.
+    for (let node = otherNode; node; node = node._parentNode) {
+      if (node === this)
+        return true
+      if (node._parentNode && node._parentNode._childIndex(node) < 0)
+        return false
+    }
+    return false
   }
 
-  get ownerDocument() {
-    if (this.nodeType === VNode.DOCUMENT_NODE || this.nodeType === VNode.DOCUMENT_FRAGMENT_NODE)
+  get ownerDocument(): any {
+    const isDocument = (node: VNode) => node.nodeType === VNode.DOCUMENT_NODE || node.nodeType === VNode.DOCUMENT_FRAGMENT_NODE
+    if (isDocument(this))
       return this
-
-    return this?._parentNode?.ownerDocument
+    for (let node: VNode | null = this._parentNode; node; node = node._parentNode) {
+      if (isDocument(node))
+        return node
+    }
+    return undefined
   }
 
   toString(): string {
@@ -382,8 +527,13 @@ export class VTextNode extends VNode {
 }
 
 export class VNodeQuery extends VNode {
+  /** First element in document order, including this one, for which `fn` is true */
+  _findElement(fn: (element: VElement) => boolean): VElement | undefined {
+    return this._walk(node => node instanceof VElement && fn(node)) as VElement | undefined
+  }
+
   getElementById(name: string) {
-    return this.flatten().find(e => e._attributes.id === name)
+    return this._findElement(e => e._attributes.id === name)
   }
 
   getElementsByClassName(name: any) {
@@ -399,7 +549,8 @@ export class VNodeQuery extends VNode {
   }
 
   querySelector(selector: string) {
-    return this.flatten().find(e => e.matches(selector))
+    // Stops at the first match instead of collecting all elements first
+    return this._findElement(e => e.matches(selector))
   }
 
   getElementsByName(name: string) {
@@ -409,14 +560,14 @@ export class VNodeQuery extends VNode {
 
   //
 
-  parent(selector: string) {
+  parent(selector: string): any {
     if (this.matches(selector))
       return this
-
-    if (this.parentNode == null)
-      return null
-
-    return this.parentNode?.parent(selector)
+    for (let node: VNodeQuery | null = this.parentNode; node; node = node.parentNode) {
+      if (node.matches(selector))
+        return node
+    }
+    return null
   }
 
   handle(selector: any, handler: (arg0: VElement, arg1: number) => void) {
@@ -691,11 +842,34 @@ export class VElement extends VNodeQuery {
   //
 
   render(h = htmlVDOM) {
-    return h(
-      this._originalTagName || this.tagName,
-      this._attributes,
-      this._childNodes.map(c => c.render(h)).join(''), // children:string is not escaped again
-    )
+    // Iterative, so deeply nested elements don't overflow the call stack.
+    // Each frame collects the rendered children of one element.
+    interface Frame { element: VElement, index: number, parts: any[] }
+    const stack: Frame[] = [
+      { element: this, index: 0, parts: [] },
+    ]
+    while (true) {
+      const frame = stack[stack.length - 1]!
+      const children = frame.element._childNodes
+      if (frame.index < children.length) {
+        const child = children[frame.index++]
+        if (child instanceof VElement && child.render === VElement.prototype.render)
+          stack.push({ element: child, index: 0, parts: [] })
+        else
+          frame.parts.push(child.render(h))
+        continue
+      }
+      const { element, parts } = frame
+      const result = h(
+        element._originalTagName || element.tagName,
+        element._attributes,
+        parts.join(''), // children:string is not escaped again
+      )
+      stack.pop()
+      if (!stack.length)
+        return result
+      stack[stack.length - 1]!.parts.push(result)
+    }
   }
 }
 

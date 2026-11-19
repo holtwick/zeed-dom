@@ -113,6 +113,7 @@ if (x<1)
             "_childNodes": [
               VTextNode {
                 "_childNodes": [],
+                "_index": 0,
                 "_parentNode": [Circular],
                 "_text": "
       var x = 1 & 4
@@ -127,12 +128,14 @@ if (x<1)
                 "append": [Function],
               },
             ],
+            "_index": 0,
             "_nodeName": "SCRIPT",
             "_originalTagName": "script",
             "_parentNode": [Circular],
             "append": [Function],
           },
         ],
+        "_index": -1,
         "_parentNode": null,
         "append": [Function],
       }
@@ -168,6 +171,63 @@ if (x<1)
     for (const t of tests) {
       const { textContent: text } = parseHTML(t) as VHTMLDocument
       expect(text).toEqual(t)
+    }
+  })
+
+  it('should not take a later line for a tag that does not parse', () => {
+    // The regular expressions had the `m` flag, so `^` matched at any line
+    expect(parseHTML('< x\n<b>y</b>').render()).toBe('&lt; x\n<b>y</b>')
+    expect(parseHTML('a </ x\n</b>c').render()).toBe('a &lt;/ x\nc')
+    expect(parseHTML('<p>A:<</p>\n<!-- x -->').render()).toBe('<p>A:&lt;</p>\n')
+  })
+
+  it('should parse attributes', () => {
+    const attrs = (html: string) => (parseHTML(html).firstChild as any)._attributes
+    expect(attrs('<a b c=1 d="2" e=\'3\' f = "4">')).toEqual({
+      b: true,
+      c: '1',
+      d: '2',
+      e: '3',
+      f: '4',
+    })
+    expect(attrs('<a title="x > y" alt=\'"\'>')).toEqual({ title: 'x > y', alt: '"' })
+    expect(attrs('<a href=>')).toEqual({ href: true })
+    expect(attrs('<a path=a/b/c>')).toEqual({ path: 'a/b/c' })
+    expect(attrs('<a\nb\n=\n"1"\n>')).toEqual({ b: '1' })
+    expect(parseHTML('<img src=x/><br/><br /><hr b/><p>t</p>').render()).toBe('<img src="x/"><br><br><hr b><p>t</p>')
+    // Like in browsers, the slash belongs to an unquoted value
+    expect(parseHTML('<a href=http://x.com/>link</a>after').render()).toBe('<a href="http://x.com/">link</a>after')
+    expect(parseHTML('x<!-->a<!--->b<!---->c').render()).toBe('xabc')
+    expect(parseHTML('a<3 b').render()).toBe('a&lt;3 b')
+    expect(parseHTML('<b><i>x</B>y</i></b>z').render()).toBe('<b><i>x</i></b>yz')
+    expect(parseHTML('a<!-- b<!-- c').render()).toBe('a&lt;!-- b&lt;!-- c')
+    // A quote that is never closed ends at the next `>`
+    expect(parseHTML('<p>x<a href="y</p>').render()).toBe('<p>x<a href="y&lt;/p"></a></p>')
+    expect(parseHTML('<p title="x>a</p><p>b</p>').render()).toBe('<p title="x">a</p><p>b</p>')
+    expect(parseHTML('<p title=\'x>a</p><p>b</p>').render()).toBe('<p title="x">a</p><p>b</p>')
+    // Without any `>` the rest is text
+    expect(parseHTML('a<p title="x').render()).toBe('a&lt;p title=&quot;x')
+  })
+
+  it('should parse pathological input in linear time', () => {
+    const cases = [
+      '<a\n'.repeat(20_000),
+      '<a href="x '.repeat(20_000),
+      '<a b=1 '.repeat(20_000),
+      '</a'.repeat(20_000),
+      '< x\n<b>'.repeat(20_000),
+      'x<!-- '.repeat(20_000),
+      `${'<b>'.repeat(20_000)}${'</x>'.repeat(20_000)}`,
+      '<script>'.repeat(40_000),
+      '<style>'.repeat(40_000),
+      '<a title="x>'.repeat(20_000),
+      '<a title=\'x>'.repeat(20_000),
+    ]
+    for (const html of cases) {
+      const started = performance.now()
+      parseHTML(html)
+      // Backtracking regular expressions took seconds to minutes here
+      expect(performance.now() - started).toBeLessThan(500)
     }
   })
 })
