@@ -156,4 +156,19 @@ describe('vdom api', () => {
     expect(el.childNodes.length).toBe(2)
     expect(el.textContent).toBe('42{\n  "a": 1\n}')
   })
+
+  it('should find the first match in document order and stop there', () => {
+    const doc = parseHTML(`<div id="a"><p id="b"><i class="x" id="c"></i></p><i class="x" id="d"></i></div>${'<p></p>'.repeat(50_000)}`)
+    const div = doc.querySelector('div') as VElement
+    expect(doc.querySelector('.x')?.id).toBe('c')
+    expect(doc.querySelector('div > .x')?.id).toBe('d')
+    expect(doc.getElementById('d')?.id).toBe('d')
+    expect(div.querySelector('div')).toBe(div) // includes the element itself, as before
+    expect(doc.querySelector('span')).toBeUndefined()
+    const started = performance.now()
+    for (let i = 0; i < 1000; i++)
+      doc.querySelector('i')
+    // Collected all 50,000 elements per call before
+    expect(performance.now() - started).toBeLessThan(200)
+  })
 })

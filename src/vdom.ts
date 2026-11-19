@@ -299,14 +299,29 @@ export class VNode {
    * true. Iterative, so deeply nested trees don't overflow the call stack.
    */
   _walk(fn: (node: VNode) => boolean | void): VNode | undefined {
-    const stack: VNode[] = [this]
-    while (stack.length) {
-      const node = stack.pop()!
+    if (fn(this))
+      return this
+    // One list and position per level, so a wide parent costs nothing until
+    // its children are visited
+    const lists: VNode[][] = [this._childNodes]
+    const positions: number[] = [0]
+    while (lists.length) {
+      const top = lists.length - 1
+      const children = lists[top]!
+      const i = positions[top]!
+      if (i >= children.length) {
+        lists.pop()
+        positions.pop()
+        continue
+      }
+      positions[top] = i + 1
+      const node = children[i]!
       if (fn(node))
         return node
-      const children = node._childNodes
-      for (let i = children.length - 1; i >= 0; i--)
-        stack.push(children[i])
+      if (node._childNodes.length) {
+        lists.push(node._childNodes)
+        positions.push(0)
+      }
     }
   }
 
@@ -469,8 +484,13 @@ export class VTextNode extends VNode {
 }
 
 export class VNodeQuery extends VNode {
+  /** First element in document order, including this one, for which `fn` is true */
+  _findElement(fn: (element: VElement) => boolean): VElement | undefined {
+    return this._walk(node => node instanceof VElement && fn(node)) as VElement | undefined
+  }
+
   getElementById(name: string) {
-    return this.flatten().find(e => e._attributes.id === name)
+    return this._findElement(e => e._attributes.id === name)
   }
 
   getElementsByClassName(name: any) {
@@ -486,7 +506,8 @@ export class VNodeQuery extends VNode {
   }
 
   querySelector(selector: string) {
-    return this.flatten().find(e => e.matches(selector))
+    // Stops at the first match instead of collecting all elements first
+    return this._findElement(e => e.matches(selector))
   }
 
   getElementsByName(name: string) {
