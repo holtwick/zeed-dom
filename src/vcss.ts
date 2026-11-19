@@ -10,6 +10,18 @@ export function parseSelector(selector: string) {
   return cache[selector]
 }
 
+function previousElement(node: VElement): VElement | null {
+  let prev = node.previousSibling
+  while (prev && prev.nodeType !== 1) prev = prev.previousSibling
+  return prev
+}
+
+function nextElement(node: VElement): VElement | null {
+  let next = node.nextSibling
+  while (next && next.nodeType !== 1) next = next.nextSibling
+  return next
+}
+
 export function matchSelector(
   selector: string,
   element: VElement,
@@ -100,17 +112,22 @@ export function matchSelector(
         const parent = element.parentNode
         if (!parent || !parent.childNodes)
           return false
-        const elementChildren = parent.childNodes.filter((n: any) => n.nodeType === 1)
+        // Walk the siblings instead of collecting all element children, which
+        // made `querySelectorAll('p:first-child')` quadratic for wide parents
         if (name === 'first-child')
-          return elementChildren[0] === element
+          return !previousElement(element)
         if (name === 'last-child')
-          return elementChildren[elementChildren.length - 1] === element
+          return !nextElement(element)
         if (name === 'nth-child') {
-          const idx = elementChildren.indexOf(element)
           // `data` is the argument as string, e.g. `'12'`, not a list
           const nth = data && data.length > 0
             ? Number.parseInt(data, 10) - 1
             : 0
+          if (!(nth >= 0))
+            return false
+          let idx = 0
+          for (let prev = previousElement(element); prev && idx <= nth; prev = previousElement(prev))
+            idx++
           return idx === nth
         }
         return false
