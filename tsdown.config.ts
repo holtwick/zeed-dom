@@ -5,6 +5,7 @@ export default defineConfig({
     'src/index.browser.ts',
     'src/index.node.ts',
     'src/jsx-runtime.ts',
+    'src/jsx-runtime-strict.ts',
   ],
   format: ['esm', 'cjs'],
   dts: true,

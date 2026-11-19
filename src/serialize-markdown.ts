@@ -1,4 +1,6 @@
 import type { VElement } from './vdom'
+import { isUnsafeUrl } from './encoding'
+import { hasOwn } from './utils'
 import { isVElement, VNode } from './vdom'
 
 interface SerializeContext {
@@ -8,6 +10,8 @@ interface SerializeContext {
   /** Row counter of the enclosing table */
   row?: { n: number }
   options?: SerializeMarkdownOptions
+  /** Inside `<pre>`, which becomes a code block where text is literal */
+  pre?: boolean
 }
 
 const INLINE_STYLE_TAGS = new Set([
@@ -51,10 +55,52 @@ function outside(ws: string): string {
  * not emphasis in Markdown. Content without such whitespace is unchanged.
  */
 function wrapInline(content: string, open: string, close = open): string {
-  const [, lead = '', inner, trail = ''] = content.match(/^(\s*)([\s\S]*?)(\s*)$/)!
+  // `trimStart` / `trimEnd` instead of `/^(\s*)([\s\S]*?)(\s*)$/`, which is
+  // quadratic for long runs of whitespace inside the content
+  const start = content.length - content.trimStart().length
+  const inner = content.trim()
+  const lead = content.slice(0, start)
+  const trail = content.slice(start + inner.length)
   if (!inner)
     return outside(lead + trail)
   return `${outside(lead)}${open}${inner}${close}${outside(trail)}`
+}
+
+/**
+ * Text that looks like markup: `<` before a letter, `/`, `!` or `?`. Markdown
+ * passes HTML through, so `&lt;img onerror=…&gt;` in the HTML became a real
+ * `<img onerror=…>` in the Markdown. `&lt;` shows the same `<` when rendered.
+ */
+function escapeMarkup(text: string): string {
+  return text.replace(/<(?=[a-z/!?])/gi, '&lt;')
+}
+
+/**
+ * Link and image targets: characters that would end the target (`)`, spaces)
+ * or an autolink (`>`) are percent-encoded, otherwise
+ * `href="x)<img onerror=…>"` left the rest of the URL as raw HTML.
+ */
+function escapeUrl(url: string): string {
+  // Leading and trailing spaces and control characters are ignored by browsers
+  let start = 0
+  let end = url.length
+  while (start < end && url.charCodeAt(start) <= 32)
+    start++
+  while (end > start && url.charCodeAt(end - 1) <= 32)
+    end--
+  return url.slice(start, end).replace(/[\s()<>]/g, c => c === '('
+    ? '%28'
+    : c === ')'
+      ? '%29'
+      : encodeURIComponent(c))
+}
+
+/** A run of backticks longer than any in `text`, so the content can't close the code block */
+function fenceFor(text: string): string {
+  let longest = 2
+  for (const run of text.match(/`+/g) ?? [])
+    longest = Math.max(longest, run.length)
+  return '`'.repeat(longest + 1)
 }
 
 // Build rules map only once for performance
@@ -73,7 +119,12 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
   sup: (node, h) => wrapInline(h(), '^'),
   li: (node, h, ctx) => {
     const indent = '  '.repeat(Math.max(0, (ctx?.level ?? 1) - 1))
-    const content = h().replace(/\n+$/, '')
+    // `trimEnd` and not `/\n+$/`, which is quadratic for many line breaks
+    let content = h()
+    let end = content.length
+    while (end > 0 && content.charCodeAt(end - 1) === 10)
+      end--
+    content = content.slice(0, end)
     return `${indent}- ${content}\n`
   },
   br: (node, h) => `\n`,
@@ -92,7 +143,11 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
       : `\n\n${inner}\n\n`
   },
   blockquote: (node, h) => `\n\n> ${h()}\n\n`,
-  pre: (node, h) => `\n\n\`\`\`\n${h()}\n\`\`\`\n\n`,
+  pre: (node, h) => {
+    const content = h({ pre: true })
+    const fence = fenceFor(content)
+    return `\n\n${fence}\n${content}\n${fence}\n\n`
+  },
   p: (node, h) => `\n\n${h()}\n\n`,
   div: (node, h) => `\n\n${h()}\n\n`,
   h1: (node, h) => `\n\n# ${h()}\n\n`,
@@ -103,8 +158,11 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
   h6: (node, h) => `\n\n###### ${h()}\n\n`,
   hr: () => `\n\n---\n\n`,
   a: (node, h, ctx) => {
-    const href = node.getAttribute('href') ?? '#'
     const text = h()
+    // A `javascript:` link would run script when clicked in the rendered Markdown
+    if (isUnsafeUrl(node.getAttribute('href') ?? ''))
+      return text
+    const href = escapeUrl(node.getAttribute('href') ?? '#')
     if (ctx?.options?.linkStyle === 'autolink') {
       const trimmed = text.trim()
       if (!trimmed || trimmed === href)
@@ -114,8 +172,10 @@ const rules: Record<string, (node: VElement, handleChildren: (ctx?: Partial<Seri
     return `[${text}](${href})`
   },
   img: (node, _h, ctx) => {
-    const src = node.getAttribute('src') ?? ''
-    const alt = node.getAttribute('alt') ?? ''
+    if (isUnsafeUrl(node.getAttribute('src') ?? '', true))
+      return ''
+    const src = escapeUrl(node.getAttribute('src') ?? '')
+    const alt = escapeMarkup(node.getAttribute('alt') ?? '').replace(/[[\]]/g, '\\$&')
     if (ctx?.options?.linkStyle === 'autolink') {
       if (!alt || alt === src)
         return `<${src}>`
@@ -164,13 +224,19 @@ function serialize(node: VNode | VElement, context: SerializeContext = {
     })).join('')
     if (context.options?.inlineStyles === false && INLINE_STYLE_TAGS.has(tag))
       return handleChildren()
-    const fn = rules[tag]
+    // Own properties only, `<constructor>` found `Object` before
+    const fn = hasOwn(rules, tag)
+      ? rules[tag]
+      : undefined
     if (fn)
       return fn(node as VElement, handleChildren, context)
     else
       return handleChildren()
   }
-  return node.textContent ?? ''
+  const text = node.textContent ?? ''
+  return context.pre
+    ? text
+    : escapeMarkup(text)
 }
 
 export interface SerializeMarkdownOptions {

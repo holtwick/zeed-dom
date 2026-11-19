@@ -175,6 +175,26 @@ const { hFactory } = require('zeed-dom')
 export const h = hFactory({ document })
 ```
 
+### ⚠️ Untrusted text in `html()` and JSX
+
+`html()` and the JSX runtime return plain strings, so a nested element can't be told apart from text. A string child that starts with `<` and ends with `>` is therefore inserted as markup, not escaped. With untrusted input this is an XSS hole:
+
+```jsx
+const name = '<img src=x onerror=alert(1)>'
+html('p', null, name) // <p><img src=x onerror=alert(1)></p>
+```
+
+Escape such text yourself with `escapeHTML(name)`, or use the strict variant. `htmlStrict()` escapes every string and inserts only its own results and strings marked with `raw()` as markup:
+
+```jsx
+import { htmlStrict as h, raw } from 'zeed-dom'
+
+h('p', null, name) // <p>&lt;img src=x onerror=alert(1)&gt;</p>
+h('p', null, raw('<b>trusted</b>')) // <p><b>trusted</b></p>
+```
+
+It returns an `HTMLString` (a `String` object), use `String(result)` or `` `${result}` `` for a plain string. For the automatic JSX runtime set `"jsxImportSource": "zeed-dom/strict"`. The VDOM `h()` from `hFactory()` and `render()` always escape text.
+
 ---
 
 ## 🧪 API Highlights

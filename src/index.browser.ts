@@ -1,6 +1,7 @@
 export { escapeHTML, unescapeHTML } from './encoding'
 export * from './h'
 export { CDATA, html } from './html'
+export { htmlStrict, HTMLString, raw } from './html-strict'
 
 export { handleHTML } from './manipulate'
 export { serializeMarkdown } from './serialize-markdown'

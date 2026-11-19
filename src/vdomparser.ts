@@ -110,8 +110,12 @@ export function parseHTML(html: string): VDocumentFragment | VHTMLDocument {
           return
       }
     },
-    characters(text: string) {
-      text = unescapeHTML(text)
+    characters(text: string, isRawText?: boolean) {
+      // Like in browsers `&lt;` in a script or style stays as it is. Decoded it
+      // became `<` and was rendered as such, so `&lt;/style&gt;` closed the
+      // element after a round trip and the rest of its content became markup.
+      if (!isRawText)
+        text = unescapeHTML(text)
       const parentNode = textParent()
       if (parentNode?.lastChild?.nodeType === VNode.TEXT_NODE) {
         parentNode.lastChild._text += text

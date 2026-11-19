@@ -29,6 +29,38 @@ export const SELF_CLOSING_TAGS = [
 
 const SELF_CLOSING_SET = new Set(SELF_CLOSING_TAGS)
 
+// A tag or attribute name containing one of these would end the tag early
+// and let the rest of the name become attributes or markup, for example
+// `setAttribute('x onload=alert(1)', '')`. Browsers reject such names with an
+// `InvalidCharacterError`. The parser never produces them, it ends names there.
+const INVALID_TAG_NAME_RE = /[\s/>]/
+// `=` is allowed at the start, `<a =x>` is parsed to an attribute `=x` like in browsers
+const INVALID_ATTRIBUTE_NAME_RE = /[\s>]|.=/
+
+/**
+ * Markup that is inserted as it is when used as a child of `html()` or the
+ * JSX runtime. Returned by `htmlStrict()`, the strict JSX runtime and `raw()`.
+ */
+export class HTMLString extends String {}
+
+function renderChild(child: any, tag: string, strict: boolean): string {
+  if (child instanceof HTMLString)
+    return child.toString()
+  if (tag === 'script' || tag === 'style') {
+    // Strict: `<\/script>` means the same in JavaScript strings and CSS, but
+    // can't end the element
+    return strict
+      ? String(child).replace(/<\//g, '<\\/')
+      : child
+  }
+  // Not strict: a string looking like markup is taken as markup, because
+  // nested `html()` calls return plain strings. Untrusted text that starts
+  // with `<` and ends with `>` is inserted unescaped, see `htmlStrict()`.
+  if (!strict && typeof child === 'string' && child.startsWith('<') && child.endsWith('>'))
+    return child
+  return escapeHTML(child.toString())
+}
+
 export const CDATA = (s: string) => `<![CDATA[${s}]]>`
 export const HTML = (s: string) => s
 
@@ -42,6 +74,7 @@ export function markup(
   tag: string,
   attrs: any = {},
   children?: any[] | string,
+  strict = false,
 ) {
   const hasChildren = !(
     (typeof children === 'string' && children === '')
@@ -54,6 +87,15 @@ export function markup(
   let out = ''
   if (tag.includes('__'))
     tag = tag.replace(/__/g, ':')
+  if (INVALID_TAG_NAME_RE.test(tag))
+    throw new Error(`Invalid tag name: ${JSON.stringify(tag)}`)
+
+  // The `html` prop of `html()` / JSX inserts raw markup. An element of the
+  // VDOM renders with its children as one string, there `html` is an ordinary
+  // attribute: it may come from parsed, untrusted HTML like `<div html="…">`.
+  const rawHTML = typeof children === 'string'
+    ? undefined
+    : attrs.html
 
   // React fragment <>...</> and ours: <noop>...</noop>
   if (tag !== 'noop' && tag !== '') {
@@ -69,16 +111,18 @@ export function markup(
       if (!name || !hasOwn(attrs, name))
         continue
       const v = attrs[name]
-      if (name === 'html')
+      if (name === 'html' && typeof children !== 'string')
         continue
       if (name.length === 9 && name.toLowerCase() === 'classname')
         name = 'class'
       if (name.includes('__'))
         name = name.replace(/__/g, ':')
+      if (INVALID_ATTRIBUTE_NAME_RE.test(name))
+        continue
       if (v === true) {
         out += ` ${name}`
       }
-      else if (name === 'style' && typeof v === 'object') {
+      else if (name === 'style' && typeof v === 'object' && !(v instanceof HTMLString)) {
         const styleStr = Object.entries(v)
           .filter(([, val]) => val != null)
           .map(([k, val]) => {
@@ -89,7 +133,7 @@ export function markup(
           })
           .join(';')
         if (styleStr)
-          out += ` ${name}="${styleStr}"`
+          out += ` ${name}="${escapeHTML(styleStr)}"`
       }
       else if (v !== false && v != null) {
         out += ` ${name}="${escapeHTML(v.toString())}"`
@@ -123,28 +167,18 @@ export function markup(
           for (const c of child) {
             if (c == null || c === false)
               continue
-            if ((typeof c === 'string' && c.startsWith('<') && c.endsWith('>')) || tag === 'script' || tag === 'style') {
-              out += c
-            }
-            else {
-              out += escapeHTML(c.toString())
-            }
+            out += renderChild(c, tag, strict)
           }
         }
         else {
-          if ((typeof child === 'string' && child.startsWith('<') && child.endsWith('>')) || tag === 'script' || tag === 'style') {
-            out += child
-          }
-          else {
-            out += escapeHTML(child.toString())
-          }
+          out += renderChild(child, tag, strict)
         }
       }
     }
   }
 
-  if (attrs.html)
-    out += attrs.html
+  if (rawHTML)
+    out += rawHTML
 
   if (tag !== 'noop' && tag !== '') {
     if (tag !== 'cdata') {

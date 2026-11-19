@@ -1,5 +1,6 @@
 import type { VElement } from './vdom'
-import { escapeHTML } from './encoding'
+import { escapeHTML, isUnsafeUrl } from './encoding'
+import { hasOwn } from './utils'
 import { isVElement, VNode } from './vdom'
 import { parseHTML } from './vdomparser'
 
@@ -9,22 +10,6 @@ interface SerializeContext {
   level: number
   count: 0
   mode?: 'ol' | 'ul'
-}
-
-/**
- * URLs that would run script when clicked or loaded. A blocklist on purpose:
- * everything else (relative paths, `cid:` images in mails, custom app schemes)
- * passes as before. Control characters and whitespace are ignored by browsers
- * inside the scheme (`java\tscript:`), so they are ignored here as well.
- */
-function isUnsafeUrl(url: string, allowDataImage = false): boolean {
-  // eslint-disable-next-line no-control-regex
-  const scheme = url.replace(/[\x00-\x20\x7F]/g, '').match(/^([a-z][a-z0-9+.-]*):/i)?.[1]?.toLowerCase()
-  if (scheme === 'javascript' || scheme === 'vbscript')
-    return true
-  if (scheme === 'data')
-    return !(allowDataImage && /^\s*data:image\//i.test(url))
-  return false
 }
 
 // Build rules map only once for performance
@@ -61,7 +46,10 @@ function serialize(node: VNode, context: SerializeContext = {
       ...context,
       ...ctx,
     })).join('')
-    const fn = baseRules[tag]
+    // Own properties only, `<constructor>` found `Object` before
+    const fn = hasOwn(baseRules, tag)
+      ? baseRules[tag]
+      : undefined
     if (fn)
       return fn(node, handleChildren)
     return handleChildren()

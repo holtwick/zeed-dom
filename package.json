@@ -40,6 +40,16 @@
       "browser": "./jsx-runtime/index.js",
       "import": "./jsx-runtime/index.js",
       "require": "./jsx-runtime/index.cjs"
+    },
+    "./strict/jsx-runtime": {
+      "types": "./dist/jsx-runtime-strict.d.ts",
+      "import": "./dist/jsx-runtime-strict.js",
+      "require": "./dist/jsx-runtime-strict.cjs"
+    },
+    "./strict/jsx-dev-runtime": {
+      "types": "./dist/jsx-runtime-strict.d.ts",
+      "import": "./dist/jsx-runtime-strict.js",
+      "require": "./dist/jsx-runtime-strict.cjs"
     }
   },
   "main": "dist/index.node.cjs",

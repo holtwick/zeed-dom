@@ -1,5 +1,6 @@
 export interface HtmlParserScanner {
-  characters: (text: string) => void
+  /** `isRawText` is set for the content of `<script>` and `<style>`, which has no entities */
+  characters: (text: string, isRawText?: boolean) => void
   comment: (text: string) => void
   startElement: (tagName: string, attrs: Record<string, any>, isSelfColse: boolean) => void
   endElement: (tagName: string) => void
@@ -53,11 +54,9 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
     // without searching to the end again, which would be quadratic
     let noMoreGt = false
     let noMoreCommentEnd = false
-    // The same for closing quotes and the ends of raw text elements
+    // The same for closing quotes
     let noMoreDoubleQuote = false
     let noMoreSingleQuote = false
-    let noMoreScriptEnd = false
-    let noMoreStyleEnd = false
 
     while (pos < length) {
       // Text up to the next `<`
@@ -245,21 +244,18 @@ export function createHtmlParser(scanner: HtmlParserScanner) {
       // Raw text elements
       const lowerTagName = tagName.toLowerCase()
       const isScript = lowerTagName === 'script'
-      if (isScript
-        ? !noMoreScriptEnd
-        : lowerTagName === 'style' && !noMoreStyleEnd) {
+      if (isScript || lowerTagName === 'style') {
         const endRe = isScript ? scriptEndRe : styleEndRe
         endRe.lastIndex = i
-        if (endRe.test(html)) {
-          const textEnd = endRe.lastIndex - (lowerTagName.length + 2)
-          if (textEnd > i)
-            scanner.characters(html.slice(i, textEnd))
-          return textEnd
-        }
-        if (isScript)
-          noMoreScriptEnd = true
-        else
-          noMoreStyleEnd = true
+        // Without an end tag the rest of the input is the content, like in
+        // browsers. Parsed as markup, `&lt;/script&gt;` in it was decoded to
+        // a `</script>` inside the script and the rest became markup on render.
+        const textEnd = endRe.test(html)
+          ? endRe.lastIndex - (lowerTagName.length + 2)
+          : length
+        if (textEnd > i)
+          scanner.characters(html.slice(i, textEnd), true)
+        return textEnd
       }
       return i
     }

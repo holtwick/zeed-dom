@@ -8,6 +8,38 @@ All notable changes to zeed-dom. For versions up to 0.17.7 see the [GitHub relea
 
 zeed-dom requires Node.js 22 or newer, `engines` said Node.js 18 before. Node.js 18 and 20 have reached their end of life and no longer get security updates. Bun and browsers are not affected.
 
+### Security: untrusted HTML can no longer inject markup
+
+Parsing untrusted HTML and rendering it again, for example after removing some elements, could produce markup that was not in the input. Update if you render HTML from users, mails or other sites.
+
+- An `html` attribute in parsed HTML was inserted as raw content: `<div html="&lt;img src=x onerror=…&gt;">` rendered as `<div><img src=x onerror=…></div>`. It is an ordinary attribute now, also for elements built with the VDOM `h()`. The `html` prop of `html()` and the JSX runtime still inserts raw markup, as documented.
+- Entities in `<script>` and `<style>` were decoded, so `&lt;/style&gt;&lt;img …&gt;` rendered as a real `</style><img …>`. Like in browsers their content is now taken as it is. This also stops the corruption of scripts like `?a=1&section=2`, which turned into `?a=1§ion=2`. 101 of the 258 real-world pages in the test suite render differently for this reason.
+- A `<script>` or `<style>` without end tag contains the rest of the input, like in browsers. Before, the rest was parsed as markup inside it.
+- Style objects in `html()` and JSX are escaped: `style={{ color: userInput }}` could end the attribute.
+- Attribute names that would end the tag (with whitespace, `>` or `=`), for example from `setAttribute(name, …)` or `{...props}` with untrusted keys, are dropped when rendering. Tag names with whitespace, `/` or `>` throw an error, browsers throw an `InvalidCharacterError` for both.
+- `safeHTML` and `serializeMarkdown` lost the content of a `<constructor>` element, and `querySelector('constructor')` threw: they found properties of `Object.prototype`.
+
+### New: `htmlStrict()` and a strict JSX runtime
+
+`html()` and the JSX runtime insert a string child that starts with `<` and ends with `>` as markup, because nested elements arrive as plain strings too. So `<p>{userInput}</p>` lets `<img src=x onerror=…>` through. This is unchanged to keep the API stable, the README now warns about it.
+
+The new `htmlStrict()` escapes every string child and inserts only its own results and strings marked with the new `raw()` as markup. It returns an `HTMLString`, a `String` object: use `String(result)` for a plain string. With `"jsxImportSource": "zeed-dom/strict"` JSX uses it as well. Inside `<script>` and `<style>` strings are not escaped, but `</` becomes `<\/`, so they can't end the element. `raw()` also works with `html()`.
+
+### Changed: `serializeMarkdown` escapes markup and unsafe links
+
+Markdown passes HTML through, so the output of `serializeMarkdown` could contain markup that a Markdown renderer shows as HTML.
+
+- `<` in text before a letter, `/`, `!` or `?` is written as `&lt;`, which a Markdown renderer shows as `<` again. `&lt;img onerror=…&gt;` in the HTML no longer becomes a real `<img onerror=…>`. Code blocks stay literal and use a longer fence when the code contains ```` ``` ````.
+- Links to `javascript:` and `vbscript:` keep only their text, images with such a `src` or with `data:` other than images are dropped, like in `safeHTML`. Real-world pages use `javascript:void(0)` a lot, these links are now plain text.
+- Spaces, `(`, `)`, `<` and `>` in link and image targets are percent-encoded, leading and trailing spaces removed. Before, `href="x)<img …>"` ended the link and left the rest as raw HTML. `[` and `]` in the alt text of images are escaped.
+
+### Performance and robustness
+
+- `element.style` of a `style` attribute of some 10 KB without a colon took about a second because of a quadratic regular expression. It is linear now, with the same result.
+- `serializeMarkdown` was quadratic for long runs of whitespace in bold or italic text and of line breaks in list items.
+- Selectors with several descendant or `~` combinators like `span div div div` took seconds on deeply nested elements, 28 seconds for four `div`s and 200 levels. Matching now remembers which elements failed, so it is fast for any depth.
+- The cache of parsed selectors holds at most 1000 entries. Selectors built from data like `[data-id="…"]` grew it without end.
+
 ## 0.20.0
 
 The public API is unchanged: the same exports, classes, methods and type signatures as in 0.19.2. Some behavior changed, almost always to what a browser DOM does. Of the 258 real-world pages in the test suite, 244 render exactly as before; the other 14 are covered by the parser fixes below.

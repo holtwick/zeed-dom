@@ -1,6 +1,7 @@
 import { escapeHTML } from './encoding'
 import { hFactory } from './h'
 import { htmlVDOM } from './html'
+import { parseStyleDeclarations } from './style'
 import { matchSelector } from './vcss'
 
 // For node debugging
@@ -682,17 +683,8 @@ export class VElement extends VNodeQuery {
 
       const styleString = this.getAttribute('style')
       if (styleString) {
-        let m: string[] | null
-
-        // Thanks to https://github.com/holtwick/zeed-dom/issues/12#issuecomment-2148998665
-        const re = /\s*([\w-]+)\s*:\s*((url\(.*?\)[^;]*|[^;]+))/gi
-
-        // eslint-disable-next-line no-cond-assign
-        while ((m = re.exec(styleString))) {
-          const name = m[1]
-          const value = m[2]?.trim()
-          if (!name || value == null)
-            continue
+        // `url(…)` may contain `;`, see https://github.com/holtwick/zeed-dom/issues/12#issuecomment-2148998665
+        for (const [name, value] of parseStyleDeclarations(styleString)) {
           ++count
           styles[name] = value
           styles[toCamelCase(name)] = value
